@@ -4,7 +4,6 @@ from TumaGo import settings
 from django.conf.urls.static import static
 from .views.UserViews import views, userViews
 from .views.DriverViews import authViews, driverViews
-from .views import email
 
 urlpatterns = [
     path('signup/', views.signup, name='signup'),
