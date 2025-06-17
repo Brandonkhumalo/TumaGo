@@ -25,3 +25,6 @@ media/
 # System
 .DS_Store
 Thumbs.db
+
+# Firebase secrets
+TumaGo/firebase/delivery.json
