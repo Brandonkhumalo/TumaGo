@@ -81,7 +81,7 @@ class DriverLocations(models.Model):
     longitude = models.CharField(max_length=50, null=True, blank=True)
     
 class DriverFinances(models.Model):
-    driver = models.ForeignKey('CustomUser', on_delete=models.CASCADE, related_name='driver_finances')
+    driver = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='driver_finances')
     earnings = models.DecimalField(max_digits=100000, decimal_places=2, default=0.00)
     charges = models.DecimalField(max_digits=100000, decimal_places=2, default=0.00)
     profit = models.DecimalField(max_digits=100000, decimal_places=2, default=0.00)
@@ -93,28 +93,27 @@ class DriverFinances(models.Model):
     total_trips = models.IntegerField(default=0)
 
     def save(self, *args, **kwargs):
-        # Get today's date
         today = timezone.now().date()
         self.today = today
-        # Increment total_trips by 1 on every save
-        if self.pk:  # If object already exists, fetch previous value
+
+        # Increment total_trips by 1 on every save - careful with this logic!
+        if self.pk:
             previous = DriverFinances.objects.get(pk=self.pk)
             self.total_trips = previous.total_trips + 1
         else:
-            self.total_trips = 1  # First time creation starts at 1
+            self.total_trips = 1
 
-        # Set week_start to the previous Sunday
-        weekday = today.weekday()  # Monday = 0, Sunday = 6
+        # Calculate week_start (previous Sunday) and week_end (Saturday)
         days_since_sunday = (today.weekday() + 1) % 7
         self.week_start = today - timedelta(days=days_since_sunday)
         self.week_end = self.week_start + timedelta(days=6)
 
-        # Set month_start and month_end
+        # Calculate month_start (1st day) and month_end (last day)
         self.month_start = today.replace(day=1)
         last_day = monthrange(today.year, today.month)[1]
         self.month_end = today.replace(day=last_day)
 
-        # auto-calculate profit
+        # Calculate profit automatically
         self.profit = self.earnings - self.charges
 
         super().save(*args, **kwargs)
@@ -138,6 +137,7 @@ class Delivery(models.Model):
     origin_lng = models.FloatField(null=True, blank=True)
     destination_lat = models.FloatField(null=True, blank=True)
     destination_lng = models.FloatField(null=True, blank=True)
+    date = models.DateField(auto_now_add=True)
     vehicle = models.CharField(max_length=50, null=True, blank=True)
     fare = models.DecimalField(max_digits=6, decimal_places=2, null=False, blank=False)
     payment_method = models.CharField(max_length=50, null=False, blank=False)

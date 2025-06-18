@@ -2,7 +2,9 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.pagination import PageNumberPagination
+from rest_framework.generics import ListAPIView
+from rest_framework.pagination import CursorPagination
+from .pagination import DeliveryCursorPagination
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from ...serializers.driverSerializer.authSerializers import UserSerializer
@@ -272,12 +274,12 @@ def get_deliveries(request):
 
     # Get deliveries related to the user (as client or driver)
     deliveries = Delivery.objects.filter(
-    Q(client=user) | Q(driver=user)).order_by('-start_time')  # Optional: latest first
+    Q(client=user) | Q(driver=user)).order_by('-start_time')  # Optional: latest first ..... must match ordering in pagination class
 
     # Paginate
-    paginator = PageNumberPagination()
-    paginator.page_size = 5  # Redundant if set in settings.py
+    paginator = DeliveryCursorPagination
     result_page = paginator.paginate_queryset(deliveries, request)
-
     serializer = DeliverySerializer(result_page, many=True)
     return paginator.get_paginated_response(serializer.data)
+
+'''Create Driver Finances'''

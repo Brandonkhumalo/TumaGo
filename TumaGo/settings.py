@@ -70,7 +70,7 @@ REST_FRAMEWORK = {
         'TumaGo_Server.token.JWTAuthentication',
     ),
 
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.CursorPagination',
     'PAGE_SIZE': 5,
 
     'DEFAULT_PERMISSION_CLASSES': [
