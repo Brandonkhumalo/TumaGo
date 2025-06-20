@@ -121,7 +121,7 @@ class DriverFinances(models.Model):
 class DriverVehicle(models.Model):
     driver = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='driver_vehicles')
     delivery_vehicle = models.CharField(max_length=50, null=False, blank=False)
-    car_name = models.CharField(max_length=50, null=False, blank=False)
+    vehicle_name = models.CharField(max_length=50, null=False, blank=False)
     number_plate = models.CharField(max_length=50, null=False, blank=False)
     color = models.CharField(max_length=50, null=False, blank=False)
     vehicle_model = models.CharField(max_length=50, null=False, blank=False)

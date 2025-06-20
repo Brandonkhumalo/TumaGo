@@ -116,6 +116,34 @@ def send_request_to_driver(driver, request_payload, trip_id):
         print(f"Error sending FCM message: {e}")
         return False
     
+def driver_found(user, delivery_payload, delivery_id):
+    if not user.fcm_token:
+        return
+    
+    message = messaging.Message(
+        token=user.fcm_token,
+        data={
+            "type": "delivery",
+            "driver_name": delivery_payload["driver"],
+            "vehicle": str(delivery_payload["delivery_vehicle"]),
+            "vehicle_name": str(delivery_payload["vehicle_name"]),
+            "number_plate": str(delivery_payload["number_plate"]),
+            "vehicle_model": str(delivery_payload["vehicle_model"]),
+            "color": str(delivery_payload["color"]),
+            "trip_id": str(delivery_id),
+        },
+        notification=messaging.Notification(
+            title="Driver Found",
+            body=f"A driver has accepted your request!",
+        )
+    )
+
+    try:
+        response = messaging.send(message)
+        print(f"Driver found notification sent successfully: {response}")
+    except Exception as e:
+        print(f"Failed to send FCM notification: {e}")
+    
 def no_trip_found(user):
     """
     Send an FCM notification to the user informing them that no drivers were found.

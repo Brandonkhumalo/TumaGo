@@ -10,6 +10,7 @@ from django.shortcuts import get_object_or_404
 from ...serializers.driverSerializer.authSerializers import UserSerializer
 from ...serializers.driverSerializer.rideSerializers import DeliverySerializer
 from ...models import DriverFinances, DriverVehicle, TripRequest, Delivery, CustomUser
+from .deliveryMatching.delivery import driver_found
 import googlemaps
 from django.conf import settings
 from firebase_admin import messaging
@@ -181,6 +182,23 @@ def AcceptTrip(request):
             payment_method=payment_method
         )
 
+        # ✅ Get driver's vehicle
+        driver_vehicle = DriverVehicle.objects.filter(driver=driver).first()
+        if not driver_vehicle:
+            return Response({'error': 'Driver vehicle not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # ✅ Build delivery payload (driver details + vehicle)
+        deliveryData = {
+            "driver": f"{driver.name} {driver.surname}",
+            "delivery_vehicle": driver_vehicle.delivery_vehicle,
+            "vehicle_name": driver_vehicle.vehicle_name,
+            "number_plate": driver_vehicle.number_plate,
+            "vehicle_model": driver_vehicle.vehicle_model,
+            "color": driver_vehicle.color,
+        }
+
+        driver_found(client, deliveryData, str(delivery.delivery_id))
+
         # Ensure the user is a driver before updating availability
         if Driver.role == CustomUser.DRIVER:
             Driver.driver_available = False
@@ -281,5 +299,3 @@ def get_deliveries(request):
     result_page = paginator.paginate_queryset(deliveries, request)
     serializer = DeliverySerializer(result_page, many=True)
     return paginator.get_paginated_response(serializer.data)
-
-'''Create Driver Finances'''
