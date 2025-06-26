@@ -2,8 +2,6 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.generics import ListAPIView
-from rest_framework.pagination import CursorPagination
 from .pagination import DeliveryCursorPagination
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
@@ -13,7 +11,6 @@ from ...models import DriverFinances, DriverVehicle, TripRequest, Delivery, Cust
 from .deliveryMatching.delivery import driver_found
 import googlemaps
 from django.conf import settings
-from firebase_admin import messaging
 from TumaGo.firebase_init import initialize_firebase
 from datetime import date, timedelta
 from django.db.models import Sum
@@ -189,12 +186,14 @@ def AcceptTrip(request):
 
         # ✅ Build delivery payload (driver details + vehicle)
         deliveryData = {
-            "driver": f"{driver.name} {driver.surname}",
+            "driver": f"{driver.name.capitalize()} {driver.surname.capitalize()}",
             "delivery_vehicle": driver_vehicle.delivery_vehicle,
             "vehicle_name": driver_vehicle.vehicle_name,
             "number_plate": driver_vehicle.number_plate,
             "vehicle_model": driver_vehicle.vehicle_model,
             "color": driver_vehicle.color,
+            "rating":driver.rating,
+            "total_ratings":driver.rating_count,
         }
 
         driver_found(client, deliveryData, str(delivery.delivery_id))
@@ -233,11 +232,12 @@ def end_trip(request):
     client = delivery.client
     client_id = str(client.id)
 
-    if not delivery_id or not client_id or rating is None:
-        return Response({"error": "delivery_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+    if not delivery_id or not client_id or rating_received is None:
+        return Response({"error": "delivery_id is required"},
+                        {"error": "rating is required"},
+                        status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        delivery = Delivery.objects.get(delivery_id=delivery_id)
         driver_vehicle = delivery.vehicle
         rating = Decimal(str(rating))
 

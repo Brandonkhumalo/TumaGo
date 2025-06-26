@@ -131,6 +131,8 @@ def driver_found(user, delivery_payload, delivery_id):
             "vehicle_model": str(delivery_payload["vehicle_model"]),
             "color": str(delivery_payload["color"]),
             "delivery_id": str(delivery_id),
+            "rating": str(delivery_payload["rating"]),
+            "total_ratings": str(delivery_payload["total_ratings"]),
         },
         notification=messaging.Notification(
             title="Driver Found",
