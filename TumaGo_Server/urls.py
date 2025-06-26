@@ -12,6 +12,7 @@ urlpatterns = [
     path('sync/time/', views.sync_time, name='Sync_Time'),
     path('trip_Expense/', userViews.GetTripExpenses, name='Trip_Expense'),
     path('cancel/delivery/', userViews.cancel_delivery, name='cancel_delivery'),
+    path('rate/driver/', userViews.rate_driver, name='rate_driver'),
 
     path('login/', views.login, name='login'),
     path('verify_token/', views.VerifyToken, name='VerifyToken'),
