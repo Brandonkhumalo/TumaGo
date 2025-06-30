@@ -69,7 +69,7 @@ class CustomUser(AbstractUser):
         return f"{self.email} ({self.role})"
     
 class BlacklistedToken(models.Model):
-    token = models.TextField(unique=True)
+    token = models.CharField(max_length=255, unique=True)
     blacklisted_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
