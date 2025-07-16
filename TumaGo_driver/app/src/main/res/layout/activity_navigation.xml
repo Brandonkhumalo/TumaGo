@@ -1,0 +1,192 @@
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <LinearLayout
+        android:id="@+id/layout1"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="@color/white">
+
+        <fragment
+            android:id="@+id/map"
+            android:name="com.google.android.gms.maps.SupportMapFragment"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"/>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/startTrip"
+            android:layout_width="match_parent"
+            android:layout_height="65dp"
+            app:strokeColor="@color/white"
+            android:backgroundTint="@color/white"
+            android:visibility="gone">
+
+            <Button
+                android:id="@+id/Navigate"
+                android:layout_width="match_parent"
+                android:layout_height="55dp"
+                android:text="Start Delivery"
+                android:fontFamily="sans-serif-black"
+                android:textSize="18sp"
+                android:textColor="@color/black"
+                android:backgroundTint="@color/dark_blue"
+                android:layout_marginTop="5dp"
+                android:layout_marginHorizontal="10dp"/>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/endTrip"
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            app:strokeColor="@color/white"
+            android:backgroundTint="@color/white"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="30dp"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="5dp"
+                    android:layout_marginHorizontal="10dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="End Trip"
+                        android:fontFamily="sans-serif-black"
+                        android:textSize="20sp"
+                        android:textColor="@color/black"
+                        android:layout_weight="1"/>
+
+                    <TextView
+                        android:id="@+id/deliveryPrice"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="$50"
+                        android:fontFamily="sans-serif-black"
+                        android:textSize="20sp"
+                        android:textColor="@color/black"/>
+
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/End"
+                    android:layout_width="match_parent"
+                    android:layout_height="55dp"
+                    android:text="Finish Delivery"
+                    android:fontFamily="sans-serif-black"
+                    android:textSize="18sp"
+                    android:textColor="@color/black"
+                    android:backgroundTint="@color/dark_blue"
+                    android:layout_marginTop="5dp"
+                    android:layout_marginHorizontal="10dp"/>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/layout2"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#99000000"
+        android:orientation="vertical"
+        android:layout_gravity="top|start"
+        android:gravity="center"
+        android:visibility="gone">
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="350dp"
+            android:layout_height="200dp"
+            android:background="@color/white">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Rate delivery"
+                    android:textColor="@color/black"
+                    android:textSize="20sp"
+                    android:gravity="center"
+                    android:layout_marginVertical="15dp"/>
+
+                <LinearLayout
+                    android:id="@+id/starLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="20dp"
+                    android:gravity="center">
+
+                    <ImageView
+                        android:id="@+id/star1"
+                        android:layout_width="45dp"
+                        android:layout_height="45dp"
+                        android:src="@drawable/ic_star_outline"
+                        android:padding="5dp" />
+
+                    <ImageView
+                        android:id="@+id/star2"
+                        android:layout_width="45dp"
+                        android:layout_height="45dp"
+                        android:src="@drawable/ic_star_outline"
+                        android:padding="5dp"
+                        android:layout_marginHorizontal="10dp"/>
+
+                    <ImageView
+                        android:id="@+id/star3"
+                        android:layout_width="45dp"
+                        android:layout_height="45dp"
+                        android:src="@drawable/ic_star_outline"
+                        android:padding="5dp" />
+
+                    <ImageView
+                        android:id="@+id/star4"
+                        android:layout_width="45dp"
+                        android:layout_height="45dp"
+                        android:src="@drawable/ic_star_outline"
+                        android:padding="5dp"
+                        android:layout_marginHorizontal="10dp"/>
+
+                    <ImageView
+                        android:id="@+id/star5"
+                        android:layout_width="45dp"
+                        android:layout_height="45dp"
+                        android:src="@drawable/ic_star_outline"
+                        android:padding="5dp" />
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/rateButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="55dp"
+                    android:backgroundTint="@color/dark_blue"
+                    android:text="Rate"
+                    android:textColor="@color/white"
+                    android:textSize="18sp"
+                    android:layout_marginHorizontal="10dp"/>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+    </LinearLayout>
+
+</FrameLayout>

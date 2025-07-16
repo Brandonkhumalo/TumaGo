@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/tuma_go"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/tuma_go_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.TumaGo"
+        android:usesCleartextTraffic="true"
+        tools:targetApi="31">
+        <activity
+            android:name=".auth.TermsAgreement"
+            android:exported="false" />
+        <activity
+            android:name=".Activities.ResetPassword"
+            android:exported="false" />
+        <activity
+            android:name=".Activities.RateDeliver"
+            android:exported="false" />
+        <activity
+            android:name=".Activities.DeliveryDetails"
+            android:exported="false" />
+        <activity
+            android:name=".Activities.GetParcels"
+            android:exported="false" />
+
+        <service
+            android:name=".helper.NoDriverFoundHelper"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <activity
+            android:name=".Activities.NoDriverFound"
+            android:exported="false" />
+        <activity
+            android:name=".Activities.ConfirmDelivery"
+            android:exported="false" />
+        <activity
+            android:name=".Activities.UserProfile"
+            android:exported="false" />
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyAVw3B6eS91Vw5aBew8cCoTwhu2zy3atiI" />
+
+        <activity
+            android:name=".auth.UserInfo"
+            android:exported="false" />
+        <activity
+            android:name=".auth.SignUp"
+            android:exported="false" />
+        <activity
+            android:name=".auth.Login"
+            android:exported="false" />
+        <activity
+            android:name=".auth.EmailVerification"
+            android:exported="false" />
+        <activity
+            android:name=".auth.Splash_screen"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".Activities.MainActivity"
+            android:exported="true" />
+    </application>
+
+</manifest>

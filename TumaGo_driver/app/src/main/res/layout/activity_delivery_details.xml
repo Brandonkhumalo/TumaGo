@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".activities.DeliveryDetails"
+    android:background="@color/white">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <fragment
+            android:id="@+id/map"
+            android:name="com.google.android.gms.maps.SupportMapFragment"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/tripDetailsCard"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="@color/grey"
+            android:backgroundTint="@color/white">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_margin="10dp">
+
+                    <TextView
+                        android:id="@+id/RequesterName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Anton"
+                        android:fontFamily="sans-serif-black"
+                        android:textSize="18sp"
+                        android:textColor="@color/black"
+                        android:layout_weight="1"
+                        android:layout_marginLeft="5dp"/>
+
+                    <TextView
+                        android:id="@+id/DeliveryFare"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="$20.50"
+                        android:fontFamily="sans-serif-black"
+                        android:textSize="18sp"
+                        android:textColor="@color/black"
+                        android:layout_marginRight="5dp"/>
+
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@color/grey"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_margin="10dp">
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:src="@drawable/location2"/>
+
+                    <TextView
+                        android:id="@+id/drop_off"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="3 king street germiston south"
+                        android:textColor="@color/blackish"
+                        android:fontFamily="sans-serif-medium"
+                        android:textSize="16sp"
+                        android:layout_gravity="center"
+                        android:layout_marginLeft="5dp"
+                        android:layout_weight="1"/>
+
+                    <TextView
+                        android:id="@+id/distance"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="68km"
+                        android:textColor="@color/blackish"
+                        android:fontFamily="sans-serif-medium"
+                        android:textSize="16sp"
+                        android:layout_gravity="center"
+                        android:layout_marginRight="5dp"/>
+
+                </LinearLayout>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/acceptCard"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    app:strokeWidth="1dp"
+                    app:strokeColor="@color/material_dynamic_neutral90"
+                    android:backgroundTint="@color/material_dynamic_neutral90"
+                    android:layout_marginHorizontal="5dp"
+                    app:cardCornerRadius="10dp">
+
+                    <LinearLayout
+                        android:id="@+id/acceptTrip"
+                        android:layout_width="wrap_content"
+                        android:layout_height="50dp"
+                        android:orientation="vertical"
+                        android:background="@drawable/swipe_bg"
+                        android:gravity="center"
+                        android:padding="5dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/swipe_bg"
+                            android:text="Accept Delivery"
+                            android:fontFamily="sans-serif-black"
+                            android:textColor="@color/black"
+                            android:textSize="16sp"
+                            android:paddingHorizontal="5dp"/>
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <!--<androidx.constraintlayout.motion.widget.MotionLayout
+                    xmlns:android="http://schemas.android.com/apk/res/android"
+                    xmlns:app="http://schemas.android.com/apk/res-auto"
+                    android:id="@+id/motionLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp"
+                    app:layoutDescription="@xml/accept_swipe_scene">
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/acceptCard"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        app:strokeWidth="1dp"
+                        app:strokeColor="@color/material_dynamic_neutral90"
+                        android:backgroundTint="@color/material_dynamic_neutral90"
+                        android:layout_marginHorizontal="5dp"
+                        app:cardCornerRadius="10dp">
+
+                        <LinearLayout
+                            android:id="@+id/acceptTrip"
+                            android:layout_width="wrap_content"
+                            android:layout_height="50dp"
+                            android:orientation="vertical"
+                            android:background="@drawable/swipe_bg"
+                            android:gravity="center"
+                            android:padding="5dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:background="@drawable/swipe_bg"
+                                android:text="Accept Delivery"
+                                android:fontFamily="sans-serif-black"
+                                android:textColor="@color/black"
+                                android:textSize="16sp"
+                                android:paddingHorizontal="5dp"/>
+                        </LinearLayout>
+
+                    </com.google.android.material.card.MaterialCardView>
+                </androidx.constraintlayout.motion.widget.MotionLayout-->
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

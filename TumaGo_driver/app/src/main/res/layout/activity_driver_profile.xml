@@ -1,0 +1,398 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:map="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".activities.DriverProfile"
+    android:background="@color/white">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:paddingTop="20dp">
+
+        <com.google.android.material.appbar.AppBarLayout
+            android:id="@+id/AppBarLayoutHome"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/white">
+
+            <com.google.android.material.appbar.MaterialToolbar
+                android:id="@+id/toolbarHome"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                app:subtitle="back"
+                app:subtitleTextColor="@color/black"
+                app:navigationIcon="@drawable/back"/>
+
+        </com.google.android.material.appbar.AppBarLayout>
+
+        <TextView
+            android:id="@+id/mainUsername"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Brandon Khumalo"
+            android:textSize="25sp"
+            android:fontFamily="sans-serif-black"
+            android:textColor="@color/blackish"
+            android:layout_gravity="center"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="10dp"
+            android:gravity="center">
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/star"/>
+
+            <TextView
+                android:id="@+id/mainRating"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="5.00"
+                android:textSize="17sp"
+                android:fontFamily="sans-serif-black"
+                android:textColor="@color/blackish"
+                android:layout_marginLeft="5dp"
+                android:layout_gravity="center"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Rating"
+                android:textSize="17sp"
+                android:fontFamily="sans-serif"
+                android:textColor="@color/black"
+                android:layout_marginLeft="5dp"
+                android:layout_gravity="center"/>
+
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Personal info"
+            android:textSize="22sp"
+            android:fontFamily="sans-serif-black"
+            android:textColor="@color/blackish"
+            android:layout_margin="20dp"/>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            map:cardElevation="1dp"
+            map:strokeWidth="1dp"
+            map:strokeColor="#E8E9EB"
+            android:layout_marginHorizontal="1dp"
+            android:layout_marginTop="-5dp"
+            android:backgroundTint="@color/white">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:layout_marginLeft="20dp">
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:src="@drawable/user"
+                        android:paddingTop="5dp"/>
+
+                    <TextView
+                        android:id="@+id/mainName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Brandon Khumalo"
+                        android:fontFamily="sans-serif-medium"
+                        android:textSize="17sp"
+                        android:textColor="@color/blackish"
+                        android:layout_marginLeft="10dp"/>
+
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/border"
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#E8E9EB"
+                    android:layout_marginVertical="10dp"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:layout_marginLeft="20dp">
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:src="@drawable/phone"/>
+
+                    <TextView
+                        android:id="@+id/mainPhonenumber"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="+27835345048"
+                        android:fontFamily="sans-serif-medium"
+                        android:textSize="17sp"
+                        android:textColor="@color/blackish"
+                        android:layout_marginLeft="10dp"/>
+
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#E8E9EB"
+                    android:layout_marginVertical="10dp"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:layout_marginBottom="10dp"
+                    android:layout_marginLeft="20dp">
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:src="@drawable/email"
+                        android:layout_marginLeft="7dp"/>
+
+                    <TextView
+                        android:id="@+id/mainEmail"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="brandonkhumz40@gmail.com"
+                        android:fontFamily="sans-serif-medium"
+                        android:textSize="17sp"
+                        android:textColor="@color/blackish"
+                        android:layout_marginLeft="10dp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="30dp"
+            android:layout_marginTop="-10dp"
+            android:background="#E8E9EB"/>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            map:cardElevation="1dp"
+            map:strokeWidth="1dp"
+            map:strokeColor="#E8E9EB"
+            android:layout_marginHorizontal="1dp"
+            android:layout_marginTop="-10dp"
+            android:backgroundTint="@color/white">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:layout_marginLeft="20dp"
+                    android:layout_marginVertical="10dp">
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:src="@drawable/home"
+                        android:paddingTop="5dp"/>
+
+                    <TextView
+                        android:id="@+id/mainAddress"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="3 king street, Germiston South"
+                        android:fontFamily="sans-serif-medium"
+                        android:textSize="17sp"
+                        android:textColor="@color/blackish"
+                        android:layout_marginLeft="10dp"/>
+
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#E8E9EB"
+                    android:layout_marginVertical="5dp"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginHorizontal="20dp"
+                    android:layout_marginVertical="10dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Email"
+                        android:fontFamily="sans-serif-medium"
+                        android:textSize="17sp"
+                        android:textColor="@color/blackish"
+                        android:layout_marginLeft="10dp"/>
+
+                    <TextView
+                        android:id="@+id/Email"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Verified"
+                        android:textStyle="italic"
+                        android:fontFamily="sans-serif-medium"
+                        android:textSize="17sp"
+                        android:textColor="@color/green"/>
+
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#E8E9EB"
+                    android:layout_marginVertical="5dp"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginHorizontal="20dp"
+                    android:layout_marginVertical="10dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="License"
+                        android:fontFamily="sans-serif-medium"
+                        android:textSize="17sp"
+                        android:textColor="@color/blackish"
+                        android:layout_marginLeft="10dp"/>
+
+                    <TextView
+                        android:id="@+id/license"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Not submitted"
+                        android:textStyle="italic"
+                        android:fontFamily="sans-serif-medium"
+                        android:textSize="17sp"
+                        android:textColor="@color/red"/>
+
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#E8E9EB"
+                    android:layout_marginVertical="5dp"/>
+
+                <LinearLayout
+                    android:id="@+id/resetPassword"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginHorizontal="20dp"
+                    android:layout_marginVertical="10dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Reset Password"
+                        android:fontFamily="sans-serif-medium"
+                        android:textSize="17sp"
+                        android:textColor="@color/blackish"
+                        android:layout_marginLeft="10dp"/>
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:src="@drawable/reset_password"/>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/white"
+            android:orientation="vertical"
+            android:gravity="bottom">
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/delete"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                map:cardElevation="10dp"
+                map:strokeWidth="2dp"
+                map:strokeColor="@color/dark_blue"
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginBottom="25dp"
+                android:backgroundTint="@color/white">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:layout_gravity="center">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Delete Account"
+                        android:fontFamily="sans-serif-medium"
+                        android:textSize="18sp"
+                        android:layout_marginRight="10dp"
+                        android:textColor="@color/dark_blue"/>
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:src="@drawable/delete"/>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

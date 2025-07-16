@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Tuma Go Driver</string>
+    <string name="sent">Sent to apex2.0predator@gmail.com</string>
+    <string name="emailConsent">By continuing you consent to getting emails from driverApp, including automated emails.</string>
+</resources>

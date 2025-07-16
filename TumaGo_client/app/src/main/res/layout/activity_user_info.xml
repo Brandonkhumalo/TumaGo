@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".auth.UserInfo"
+    android:background="@color/white">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/AppBarLayoutHome"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/light_blue"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbarHome"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:paddingTop="5dp"
+            app:title="Roadlink Solutions"
+            app:titleTextColor="@color/blackish"
+            app:subtitle="The road to efficiency"
+            app:subtitleTextColor="@color/white"/>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <TextView
+        android:id="@+id/dataForm"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Let's wrap up the registration"
+        android:fontFamily="sans-serif-medium"
+        android:textSize="20dp"
+        android:gravity="center"
+        android:textColor="@color/dark_blue"
+        android:layout_marginTop="10dp"
+        app:layout_constraintTop_toBottomOf="@id/AppBarLayoutHome"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginTop="5dp"
+        app:layout_constraintTop_toBottomOf="@id/dataForm">
+
+        <TextView
+            android:id="@+id/fields"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="All fields are required"
+            android:fontFamily="sans-serif-medium"
+            android:textSize="18dp"
+            android:gravity="center"
+            android:textColor="@color/red"
+            android:layout_marginTop="10dp"
+            android:visibility="gone"/>
+
+        <EditText
+            android:id="@+id/nameInput"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:hint="Name"
+            android:background="@drawable/background_input2"
+            android:padding="12dp"
+            android:textColorHint="@color/blackish"
+            android:inputType="textPersonName"
+            android:textColor="@color/blackish"
+            android:layout_marginTop="10dp"
+            android:layout_marginHorizontal="20dp"/>
+
+        <EditText
+            android:id="@+id/surnameInput"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:hint="Surname"
+            android:background="@drawable/background_input2"
+            android:padding="12dp"
+            android:textColorHint="@color/blackish"
+            android:inputType="textPersonName"
+            android:textColor="@color/blackish"
+            android:layout_marginTop="10dp"
+            android:layout_marginHorizontal="20dp"/>
+
+        <EditText
+            android:id="@+id/userId"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:hint="ID Number"
+            android:background="@drawable/background_input2"
+            android:padding="12dp"
+            android:textColorHint="@color/blackish"
+            android:inputType="textPersonName"
+            android:textColor="@color/blackish"
+            android:layout_marginTop="10dp"
+            android:layout_marginHorizontal="20dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Residential Address"
+            android:fontFamily="sans-serif-medium"
+            android:textSize="18dp"
+            android:gravity="center"
+            android:textColor="@color/blackish"
+            android:layout_marginTop="10dp"/>
+
+        <EditText
+            android:id="@+id/userStreet"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:hint="Street Address"
+            android:background="@drawable/background_input2"
+            android:padding="12dp"
+            android:textColorHint="@color/blackish"
+            android:inputType="textPersonName"
+            android:textColor="@color/blackish"
+            android:layout_marginTop="10dp"
+            android:layout_marginHorizontal="20dp"/>
+
+        <EditText
+            android:id="@+id/userAddress"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:hint="Address Line"
+            android:background="@drawable/background_input2"
+            android:padding="12dp"
+            android:textColorHint="@color/blackish"
+            android:inputType="textPersonName"
+            android:textColor="@color/blackish"
+            android:layout_marginTop="10dp"
+            android:layout_marginHorizontal="20dp"/>
+
+        <EditText
+            android:id="@+id/userProvince"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:hint="Province"
+            android:background="@drawable/background_input2"
+            android:padding="12dp"
+            android:textColorHint="@color/blackish"
+            android:inputType="textPersonName"
+            android:textColor="@color/blackish"
+            android:layout_marginTop="10dp"
+            android:layout_marginHorizontal="20dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <EditText
+                android:id="@+id/userCity"
+                android:layout_width="175dp"
+                android:layout_height="50dp"
+                android:hint="City"
+                android:background="@drawable/background_input2"
+                android:padding="12dp"
+                android:textColorHint="@color/blackish"
+                android:inputType="textPersonName"
+                android:textColor="@color/blackish"
+                android:layout_marginTop="10dp"
+                android:layout_marginHorizontal="20dp"/>
+
+            <EditText
+                android:id="@+id/userPostalCode"
+                android:layout_width="175dp"
+                android:layout_height="50dp"
+                android:hint="Postal Code"
+                android:background="@drawable/background_input2"
+                android:padding="12dp"
+                android:textColorHint="@color/blackish"
+                android:inputType="textPersonName"
+                android:textColor="@color/blackish"
+                android:layout_marginTop="10dp"
+                android:layout_marginRight="20dp"/>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:padding="10dp"
+            android:visibility="gone">
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/textSelectedFile"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:paddingTop="8dp"
+                android:text="upload ID "
+                android:textAppearance="?attr/textAppearanceBody1" />
+
+            <ImageView
+                android:id="@+id/FileUpload"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_marginLeft="10dp"
+                app:srcCompat="@drawable/upload"
+                tools:layout_editor_absoluteX="0dp"
+                tools:layout_editor_absoluteY="0dp" />
+
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/infoRegister"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:text="Finish"
+            android:textSize="18sp"
+            android:textColor="@color/white"
+            android:backgroundTint="@color/dark_blue"
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginTop="10dp"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/progressBar"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:background="#99000000"
+        app:layout_constraintTop_toBottomOf="@id/dataForm"
+        android:visibility="gone">
+
+        <ProgressBar
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:indeterminateTint="@color/light_blue"/>
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
