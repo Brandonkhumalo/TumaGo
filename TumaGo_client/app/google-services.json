@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "485609625849",
+    "project_id": "deliveryapp-80d31",
+    "storage_bucket": "deliveryapp-80d31.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:485609625849:android:312ebef407498ed112aa28",
+        "android_client_info": {
+          "package_name": "com.techmania.tumago"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCzaFtArrTvUcsIWxLDzfZ_lfb95FQnzEc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:485609625849:android:0e83dd5b04f8d66b12aa28",
+        "android_client_info": {
+          "package_name": "com.techmania.tumago_driver"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCzaFtArrTvUcsIWxLDzfZ_lfb95FQnzEc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

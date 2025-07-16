@@ -1,0 +1,537 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".auth.Transport"
+    android:background="@color/white">
+
+    <LinearLayout
+        android:id="@+id/chooseVehicle"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:layout_marginHorizontal="20dp"
+        android:paddingTop="20dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Choose your mode of transport for earning with driverApp"
+            android:textColor="@color/black"
+            android:fontFamily="sans-serif-black"
+            android:textSize="22sp"/>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/scooter"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:strokeColor="@color/grey"
+            app:strokeWidth="1dp"
+            android:elevation="5dp"
+            android:layout_marginTop="10dp"
+            android:backgroundTint="@color/white">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="25dp"
+                android:orientation="horizontal"
+                android:background="@color/dark_blue"
+                android:paddingVertical="3dp"
+                android:paddingHorizontal="10dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="DELIVERY"
+                    android:textSize="14sp"
+                    android:textColor="@color/white"
+                    android:fontFamily="sans-serif-black"/>
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/deliver"
+                    android:layout_marginLeft="5dp"/>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="25dp">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_weight="1"
+                    android:layout_marginLeft="10dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Deliver with motorbike"
+                        android:fontFamily="sans-serif-medium"
+                        android:textSize="18sp"
+                        android:textColor="@color/black"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="License: Local"
+                        android:fontFamily="sans-serif"
+                        android:textSize="15sp"
+                        android:textColor="@color/blackish"
+                        android:layout_marginTop="2dp"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Driver's License"
+                        android:fontFamily="sans-serif"
+                        android:textSize="15sp"
+                        android:textColor="@color/blackish"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Vehicle: Scooter/Motorbike"
+                        android:fontFamily="sans-serif"
+                        android:textSize="15sp"
+                        android:textColor="@color/blackish"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Age: 18+"
+                        android:fontFamily="sans-serif"
+                        android:textSize="15sp"
+                        android:textColor="@color/blackish"
+                        android:layout_marginBottom="10dp"/>
+
+                </LinearLayout>
+
+                <ImageView
+                    android:layout_width="100dp"
+                    android:layout_height="70dp"
+                    android:src="@drawable/scooter"
+                    android:layout_marginRight="10dp"
+                    android:layout_gravity="center"/>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/van"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:strokeColor="@color/grey"
+            app:strokeWidth="1dp"
+            android:elevation="5dp"
+            android:layout_marginTop="10dp"
+            android:backgroundTint="@color/white">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="25dp"
+                android:orientation="horizontal"
+                android:background="@color/dark_blue"
+                android:paddingVertical="3dp"
+                android:paddingHorizontal="10dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="DELIVERY"
+                    android:textSize="14sp"
+                    android:textColor="@color/white"
+                    android:fontFamily="sans-serif-black"/>
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/deliver"
+                    android:layout_marginLeft="5dp"/>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="25dp">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_weight="1"
+                    android:layout_marginLeft="10dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Deliver with van"
+                        android:fontFamily="sans-serif-medium"
+                        android:textSize="18sp"
+                        android:textColor="@color/black"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="License: Local/International"
+                        android:fontFamily="sans-serif"
+                        android:textSize="15sp"
+                        android:textColor="@color/blackish"
+                        android:layout_marginTop="2dp"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Driver's License"
+                        android:fontFamily="sans-serif"
+                        android:textSize="15sp"
+                        android:textColor="@color/blackish"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Vehicle: Van"
+                        android:fontFamily="sans-serif"
+                        android:textSize="15sp"
+                        android:textColor="@color/blackish"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Age: 20+"
+                        android:fontFamily="sans-serif"
+                        android:textSize="15sp"
+                        android:textColor="@color/blackish"
+                        android:layout_marginBottom="10dp"/>
+
+                </LinearLayout>
+
+                <ImageView
+                    android:layout_width="100dp"
+                    android:layout_height="70dp"
+                    android:src="@drawable/van"
+                    android:layout_marginRight="10dp"
+                    android:layout_gravity="center"/>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/truck"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:strokeColor="@color/grey"
+            app:strokeWidth="1dp"
+            android:elevation="5dp"
+            android:layout_marginTop="10dp"
+            android:backgroundTint="@color/white">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="25dp"
+                android:orientation="horizontal"
+                android:background="@color/dark_blue"
+                android:paddingVertical="3dp"
+                android:paddingHorizontal="10dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="DELIVERY"
+                    android:textSize="14sp"
+                    android:textColor="@color/white"
+                    android:fontFamily="sans-serif-black"/>
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/deliver"
+                    android:layout_marginLeft="5dp"/>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="25dp">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_weight="1"
+                    android:layout_marginLeft="10dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Deliver with truck"
+                        android:fontFamily="sans-serif-medium"
+                        android:textSize="18sp"
+                        android:textColor="@color/black"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="License: Local/International"
+                        android:fontFamily="sans-serif"
+                        android:textSize="15sp"
+                        android:textColor="@color/blackish"
+                        android:layout_marginTop="3dp"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Driver's License"
+                        android:fontFamily="sans-serif"
+                        android:textSize="15sp"
+                        android:textColor="@color/blackish"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Vehicle: Truck"
+                        android:fontFamily="sans-serif"
+                        android:textSize="15sp"
+                        android:textColor="@color/blackish"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Age: 20+"
+                        android:fontFamily="sans-serif"
+                        android:textSize="15sp"
+                        android:textColor="@color/blackish"
+                        android:layout_marginBottom="10dp"/>
+
+                </LinearLayout>
+
+                <ImageView
+                    android:layout_width="100dp"
+                    android:layout_height="70dp"
+                    android:src="@drawable/truck"
+                    android:layout_marginRight="10dp"
+                    android:layout_gravity="center"/>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <Button
+            android:id="@+id/Continue"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:backgroundTint="@color/dark_blue"
+            android:textColor="@color/white"
+            android:text="Continue"
+            android:textSize="18sp"
+            android:fontFamily="sans-serif"
+            android:layout_marginTop="10dp"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/vehicleRegistration"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:paddingHorizontal="20dp"
+        android:paddingTop="20dp"
+        android:background="#01416B"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Vehicle"
+            android:textColor="@color/black"
+            android:fontFamily="sans-serif-black"
+            android:textSize="40sp"
+            android:gravity="center"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Registration"
+            android:textColor="@color/black"
+            android:fontFamily="sans-serif-black"
+            android:textSize="40sp"
+            android:gravity="center"
+            android:layout_marginTop="-15dp"/>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:strokeWidth="2dp"
+            app:strokeColor="#C1BFBF"
+            android:background="@color/white"
+            android:layout_marginTop="10dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Vehicle"
+                    android:fontFamily="sans-serif-black"
+                    android:textSize="18sp"
+                    android:background="@drawable/background_input2"
+                    android:textColor="@color/blackish"
+                    android:padding="10dp"/>
+
+                <EditText
+                    android:id="@+id/vehicle"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:background="@drawable/background_input2"
+                    android:padding="12dp"
+                    android:hint="Toyota"
+                    android:textColorHint="@color/blackish"
+                    android:inputType="textPersonName"
+                    android:textColor="@color/blackish"/>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:strokeWidth="2dp"
+            app:strokeColor="#C1BFBF"
+            android:background="@color/white"
+            android:layout_marginVertical="5dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Model"
+                    android:fontFamily="sans-serif-black"
+                    android:textSize="18sp"
+                    android:background="@drawable/background_input2"
+                    android:textColor="@color/blackish"
+                    android:padding="10dp"/>
+
+                <EditText
+                    android:id="@+id/model"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:background="@drawable/background_input2"
+                    android:padding="12dp"
+                    android:hint="Corolla"
+                    android:textColorHint="@color/blackish"
+                    android:inputType="textPersonName"
+                    android:textColor="@color/blackish"/>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:strokeWidth="2dp"
+            app:strokeColor="#C1BFBF"
+            android:background="@color/white">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Color"
+                    android:fontFamily="sans-serif-black"
+                    android:textSize="18sp"
+                    android:background="@drawable/background_input2"
+                    android:textColor="@color/blackish"
+                    android:padding="10dp"/>
+
+                <EditText
+                    android:id="@+id/color"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:background="@drawable/background_input2"
+                    android:padding="12dp"
+                    android:hint="White"
+                    android:textColorHint="@color/blackish"
+                    android:inputType="textPersonName"
+                    android:textColor="@color/blackish"/>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:strokeWidth="2dp"
+            app:strokeColor="#C1BFBF"
+            android:background="@color/white"
+            android:layout_marginVertical="5dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Number Plate"
+                    android:fontFamily="sans-serif-black"
+                    android:textSize="18sp"
+                    android:background="@drawable/background_input2"
+                    android:textColor="@color/blackish"
+                    android:padding="10dp"/>
+
+                <EditText
+                    android:id="@+id/numberPlate"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:background="@drawable/background_input2"
+                    android:padding="12dp"
+                    android:hint="AEZ 123"
+                    android:textColorHint="@color/blackish"
+                    android:inputType="textPersonName"
+                    android:textColor="@color/blackish"/>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <Button
+            android:id="@+id/finishReg"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:backgroundTint="@color/dark_blue"
+            android:text="Finish Registration"
+            android:textSize="18sp"
+            android:textColor="@color/white"/>
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
