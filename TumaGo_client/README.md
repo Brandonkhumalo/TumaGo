@@ -33,7 +33,7 @@ This app is built using **Java (Android)** and connects to a Django-based backen
 
 ## 🔗 Backend Integration
 
-The mobile app communicates with the [TumaGo Backend](https:backendlink) which is:
+The mobile app communicates with the [TumaGo Backend]([https:backendlink](https://github.com/Brandonkhumalo/TumaGo/tree/main/TumaGo_Backend/TumaGo)) which is:
 - Built with **Django & Django REST Framework**
 - Uses **JWT Authentication**
 - Supports **WebSockets** via **Django Channels + Daphne**
