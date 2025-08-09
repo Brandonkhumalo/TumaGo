@@ -3,20 +3,18 @@ services:
     name: tumago-backend
     env: docker
     dockerfilePath: ./Dockerfile
-    branch: main                  # Git branch to auto-deploy from
-    plan: starter                 # $7/month plan
+    branch: main
+    plan: starter
     envVars:
       - key: DATABASE_URL
-        fromSecret: DATABASE_URL  # Use Render’s Secret Manager
+        value: ""  # Leave empty; set this in Render dashboard after deploy
       - key: REDIS_URL
-        fromSecret: REDIS_URL
+        value: ""  # Leave empty; set in Render dashboard
       - key: SECRET_KEY
-        fromSecret: SECRET_KEY
+        value: ""  # Leave empty; set in Render dashboard
       - key: DEBUG
         value: "False"
-    autoDeploy: true              # Enable auto-deploy on git push
-    buildCommand: ""              # Optional, leave blank if Dockerfile handles build
-    startCommand: "daphne -b 0.0.0.0 -p 8000 TumaGo.asgi:application"
+    autoDeploy: true
 
   - type: worker
     name: tumago-worker
@@ -26,12 +24,11 @@ services:
     plan: starter
     envVars:
       - key: DATABASE_URL
-        fromSecret: DATABASE_URL
+        value: ""
       - key: REDIS_URL
-        fromSecret: REDIS_URL
+        value: ""
       - key: SECRET_KEY
-        fromSecret: SECRET_KEY
+        value: ""
       - key: DEBUG
         value: "False"
     autoDeploy: true
-    startCommand: "dramatiq TumaGo_Server.views.DriverViews.deliveryMatching.tasks --processes 1 --threads 4"
