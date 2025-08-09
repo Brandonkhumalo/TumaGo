@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: tumago-backend
+    env: docker
+    dockerfilePath: ./Dockerfile
+    branch: main                  # Git branch to auto-deploy from
+    plan: starter                 # $7/month plan
+    envVars:
+      - key: DATABASE_URL
+        fromSecret: DATABASE_URL  # Use Render’s Secret Manager
+      - key: REDIS_URL
+        fromSecret: REDIS_URL
+      - key: SECRET_KEY
+        fromSecret: SECRET_KEY
+      - key: DEBUG
+        value: "False"
+    autoDeploy: true              # Enable auto-deploy on git push
+    buildCommand: ""              # Optional, leave blank if Dockerfile handles build
+    startCommand: "daphne -b 0.0.0.0 -p 8000 your_project_name.asgi:application"
+
+  - type: worker
+    name: tumago-worker
+    env: docker
+    dockerfilePath: ./Dockerfile
+    branch: main
+    plan: starter
+    envVars:
+      - key: DATABASE_URL
+        fromSecret: DATABASE_URL
+      - key: REDIS_URL
+        fromSecret: REDIS_URL
+      - key: SECRET_KEY
+        fromSecret: SECRET_KEY
+      - key: DEBUG
+        value: "False"
+    autoDeploy: true
+    startCommand: "dramatiq your_project_name.tasks --processes 1 --threads 8"
