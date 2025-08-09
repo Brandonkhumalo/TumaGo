@@ -17,20 +17,6 @@ application = ProtocolTypeRouter({
     ),
 })
 
-'''$env:DJANGO_SETTINGS_MODULE="TumaGo.settings"
-daphne TumaGo.asgi:application'''
-
-'''daphne -b 0.0.0.0 -p 8000 TumaGo.asgi:application
-dramatiq TumaGo_Server.views.DriverViews.deliveryMatching.tasks --processes 1 --threads 4
-
-$env:DJANGO_SETTINGS_MODULE = "TumaGo.settings"
-dramatiq TumaGo_Server.views.DriverViews.deliveryMatching.tasks --processes 1 --threads 4
-
-docker run -d -p 6379:6379 --name redis-server redis'''
-
-#docker stop redis-server
-#docker rm redis-server
-
 '''
     docker-compose down -v
     docker-compose up --build
