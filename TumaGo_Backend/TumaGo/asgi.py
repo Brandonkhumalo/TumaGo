@@ -16,18 +16,3 @@ application = ProtocolTypeRouter({
         )
     ),
 })
-
-'''
-    docker-compose down -v
-    docker-compose up --build
-'''
-
-'''
-    docker-compose exec web python manage.py makemigrations
-    docker-compose exec web python manage.py migrate
-'''
-
-'''
-Swagger UI: http://localhost:8000/swagger/
-ReDoc UI: http://localhost:8000/redoc/
-'''

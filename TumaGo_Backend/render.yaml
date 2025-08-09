@@ -16,7 +16,7 @@ services:
         value: "False"
     autoDeploy: true              # Enable auto-deploy on git push
     buildCommand: ""              # Optional, leave blank if Dockerfile handles build
-    startCommand: "daphne -b 0.0.0.0 -p 8000 your_project_name.asgi:application"
+    startCommand: "daphne -b 0.0.0.0 -p 8000 TumaGo.asgi:application"
 
   - type: worker
     name: tumago-worker
@@ -34,4 +34,4 @@ services:
       - key: DEBUG
         value: "False"
     autoDeploy: true
-    startCommand: "dramatiq your_project_name.tasks --processes 1 --threads 8"
+    startCommand: "dramatiq TumaGo_Server.views.DriverViews.deliveryMatching.tasks --processes 1 --threads 4"
