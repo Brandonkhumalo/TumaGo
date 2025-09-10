@@ -29,6 +29,7 @@ TumaGo/
 - MySQL (AWS RDS) for production database
 - Google Maps & Firebase Admin SDK
 - Docker + Docker Compose
+- [Backend Repo](https://github.com/Brandonkhumalo/Tuma_Go_backend)
 
 ### 📱 Android (Java) – Driver & Client Apps
 - Retrofit2 + OkHttp for API communication
