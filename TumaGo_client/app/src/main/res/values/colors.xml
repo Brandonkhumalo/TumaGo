@@ -5,6 +5,20 @@
     <color name="light_blue">#00a4e4</color>
     <color name="dark_blue">#0e74bc</color>
     <color name="blackish">#3a3a3c</color>
-    <color name="red">#FD1707</color>
+    <color name="red">#EF4444</color>
     <color name="grey">#D3D3D3</color>
+    <!-- Extended brand palette -->
+    <color name="primary">#00a4e4</color>
+    <color name="primary_dark">#0e74bc</color>
+    <color name="primary_deep">#1A3A5C</color>
+    <color name="page_bg">#EFF8FE</color>
+    <color name="card_bg">#FFFFFF</color>
+    <color name="input_bg">#FFFFFF</color>
+    <color name="input_border">#B3E0F7</color>
+    <color name="hint_text">#9BA3B2</color>
+    <color name="secondary_text">#6B7280</color>
+    <color name="success">#10B981</color>
+    <color name="error">#EF4444</color>
+    <color name="divider">#E8F4FD</color>
+    <color name="ripple_blue">#1A00a4e4</color>
 </resources>

@@ -1,9 +1,27 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
     <style name="Base.Theme.TumaGo" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <item name="colorPrimary">@color/light_blue</item>
+        <item name="colorPrimaryDark">@color/dark_blue</item>
+        <item name="colorAccent">@color/light_blue</item>
+        <item name="android:colorBackground">@color/page_bg</item>
+        <item name="android:statusBarColor">@color/light_blue</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
+        <item name="materialButtonStyle">@style/TumaGoButton</item>
+    </style>
+    <style name="Theme.TumaGo" parent="Base.Theme.TumaGo" />
+
+    <style name="TumaGoButton" parent="Widget.Material3.Button">
+        <item name="android:textColor">@color/white</item>
+        <item name="backgroundTint">@color/light_blue</item>
+        <item name="cornerRadius">16dp</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:letterSpacing">0.05</item>
     </style>
 
-    <style name="Theme.TumaGo" parent="Base.Theme.TumaGo" />
+    <style name="TumaGoToolbar" parent="Widget.MaterialComponents.Toolbar">
+        <item name="android:background">@color/white</item>
+        <item name="titleTextColor">@color/dark_blue</item>
+        <item name="subtitleTextColor">@color/secondary_text</item>
+    </style>
 </resources>

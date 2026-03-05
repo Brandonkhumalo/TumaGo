@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs grep -l \"WebSocket\\\\|websocket\")",
+      "Bash(echo \"exit: $?\")"
+    ],
+    "additionalDirectories": [
+      "d:\\Portfolio Projects\\TumaGo\\.claude",
+      "C:\\Users\\brand\\.claude\\projects\\d--Portfolio-Projects-TumaGo\\memory"
+    ]
+  }
+}

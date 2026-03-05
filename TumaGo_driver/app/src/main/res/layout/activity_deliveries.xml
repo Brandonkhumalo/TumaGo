@@ -1,150 +1,151 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".activities.GetDeliveries"
-    android:background="@color/white">
+    android:background="@color/page_bg"
+    tools:context=".activities.GetDeliveries">
 
-    <LinearLayout
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/AppBarLayoutHome"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
-        <LinearLayout
-            android:id="@+id/topLayout"
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbarHome"
             android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            app:title="My Deliveries"
+            app:titleTextColor="@color/blackish"
+            app:navigationIcon="@drawable/back"/>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!-- Hidden: re-used as a container reference -->
+    <LinearLayout
+        android:id="@+id/topLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@+id/AppBarLayoutHome"/>
+
+    <!-- Delivery list -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/DeliveryRecycleView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:padding="16dp"
+        android:clipToPadding="false"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@+id/AppBarLayoutHome"
+        app:layout_constraintBottom_toTopOf="@+id/paginationBar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <!-- Empty state -->
+    <LinearLayout
+        android:id="@+id/noParcel"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="32dp"
+        app:layout_constraintTop_toBottomOf="@+id/AppBarLayoutHome"
+        app:layout_constraintBottom_toTopOf="@+id/paginationBar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="96dp"
+            android:layout_height="96dp"
+            app:cardCornerRadius="48dp"
+            app:cardBackgroundColor="#E8F5FF"
+            app:cardElevation="0dp"
+            android:layout_marginBottom="20dp">
+
+            <ImageView
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:src="@drawable/parcel"
+                android:layout_gravity="center"
+                android:scaleType="fitCenter"/>
+
+        </androidx.cardview.widget.CardView>
+
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="20dp"
-            android:layout_marginLeft="10dp">
+            android:text="No Deliveries Yet"
+            android:textSize="22sp"
+            android:fontFamily="sans-serif-black"
+            android:textColor="@color/blackish"
+            android:layout_marginBottom="8dp"/>
 
-            <com.google.android.material.appbar.AppBarLayout
-                android:id="@+id/AppBarLayoutHome"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@color/white">
-
-                <com.google.android.material.appbar.MaterialToolbar
-                    android:id="@+id/toolbarHome"
-                    android:layout_width="match_parent"
-                    android:layout_height="?attr/actionBarSize"
-                    app:subtitle="back"
-                    app:subtitleTextColor="@color/black"
-                    app:navigationIcon="@drawable/back"/>
-
-            </com.google.android.material.appbar.AppBarLayout>
-
-        </LinearLayout>
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/DeliveryRecycleView"
-            android:layout_width="match_parent"
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:backgroundTint="@color/white"
-            android:layout_marginTop="10dp"
-            android:visibility="gone"/>
+            android:text="Your completed deliveries will appear here"
+            android:textSize="15sp"
+            android:fontFamily="sans-serif"
+            android:textColor="@color/secondary_text"
+            android:gravity="center"/>
 
-        <LinearLayout
-            android:id="@+id/noParcel"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginHorizontal="10dp">
+    </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
+    <!-- Pagination bar -->
+    <LinearLayout
+        android:id="@+id/paginationBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:padding="16dp"
+        android:background="@color/white"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:layout_gravity="center">
+        <ImageView
+            android:id="@+id/prevPage"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@drawable/arrow_left"
+            android:padding="4dp"/>
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="OOPS"
-                        android:textColor="@color/blackish"
-                        android:fontFamily="sans-serif-medium"
-                        android:textSize="65sp"/>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="sans-serif-light"
-                        android:textColor="@color/blackish"
-                        android:textSize="20sp"
-                        android:text="No Parcels Delivered"/>
-
-                </LinearLayout>
-
-                <ImageView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:src="@drawable/no_parcel"
-                    android:layout_marginLeft="10dp"/>
-
-            </LinearLayout>
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            app:cardBackgroundColor="@color/primary"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="2dp"
+            android:layout_marginHorizontal="16dp">
 
             <TextView
+                android:id="@+id/pageNumberTextView"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Deliver a parcel right now bestie 😉"
-                android:fontFamily="sans-serif-black"
-                android:textColor="@color/dark_blue"
-                android:textSize="20sp"
+                android:layout_height="match_parent"
+                android:text="1"
                 android:gravity="center"
-                android:layout_marginTop="10dp"/>
+                android:textColor="@color/white"
+                android:fontFamily="sans-serif-black"
+                android:textSize="16sp"/>
 
-        </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:layout_marginTop="15dp">
-
-            <ImageView
-                android:id="@+id/prevPage"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@drawable/arrow_left"/>
-
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                android:backgroundTint="@color/grey"
-                app:cardCornerRadius="5dp"
-                app:cardElevation="2dp"
-                app:strokeColor="@color/white"
-                app:strokeWidth="2dp"
-                android:layout_marginHorizontal="10dp">
-
-                <TextView
-                    android:id="@+id/pageNumberTextView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="1"
-                    android:layout_gravity="center"
-                    android:textColor="@color/black"
-                    android:fontFamily="sans-serif-black"
-                    android:textSize="18sp"/>
-
-            </com.google.android.material.card.MaterialCardView>
-
-            <ImageView
-                android:id="@+id/nextPage"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@drawable/arrow_right1"/>
-
-        </LinearLayout>
+        <ImageView
+            android:id="@+id/nextPage"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@drawable/arrow_right1"
+            android:padding="4dp"/>
 
     </LinearLayout>
 

@@ -1,269 +1,318 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    xmlns:map="http://schemas.android.com/apk/res-auto"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".auth.Register"
-    android:background="@color/white">
+    android:background="@color/page_bg"
+    tools:context=".auth.Register">
 
-    <LinearLayout
+    <!-- Page 1: Personal Info -->
+    <ScrollView
         android:id="@+id/personalInfo"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:layout_marginTop="15dp"
-        android:layout_marginHorizontal="5dp">
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Please fill in the form below"
-            android:fontFamily="sans-serif-black"
-            android:textSize="20sp"
-            android:textColor="@color/blackish"
-            android:gravity="center"/>
-
-        <EditText
-            android:id="@+id/name"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:hint="Full name(s)"
-            android:background="@drawable/background_input2"
-            android:padding="12dp"
-            android:textColorHint="@color/blackish"
-            android:inputType="textPersonName"
-            android:textColor="@color/blackish"
-            android:layout_marginTop="10dp"
-            android:layout_marginHorizontal="10dp"/>
-
-        <EditText
-            android:id="@+id/surname"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:hint="Surname"
-            android:background="@drawable/background_input2"
-            android:padding="12dp"
-            android:textColorHint="@color/blackish"
-            android:inputType="textPersonName"
-            android:textColor="@color/blackish"
-            android:layout_marginTop="10dp"
-            android:layout_marginHorizontal="10dp"/>
-
-        <EditText
-            android:id="@+id/phoneNumber"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:hint="(+263)00 000 0000"
-            android:background="@drawable/background_input2"
-            android:padding="12dp"
-            android:textColorHint="@color/blackish"
-            android:inputType="phone"
-            android:textColor="@color/blackish"
-            android:layout_marginTop="10dp"
-            android:layout_marginHorizontal="10dp"/>
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Residential Address"
-            android:fontFamily="sans-serif-medium"
-            android:textSize="18dp"
-            android:gravity="center"
-            android:textColor="@color/blackish"
-            android:layout_marginTop="10dp"/>
-
-        <EditText
-            android:id="@+id/userStreet"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:hint="Street Address"
-            android:background="@drawable/background_input2"
-            android:padding="12dp"
-            android:textColorHint="@color/blackish"
-            android:inputType="text"
-            android:textColor="@color/blackish"
-            android:layout_marginTop="10dp"
-            android:layout_marginHorizontal="10dp"/>
-
-        <EditText
-            android:id="@+id/userAddress"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:hint="Address Line"
-            android:background="@drawable/background_input2"
-            android:padding="12dp"
-            android:textColorHint="@color/blackish"
-            android:inputType="text"
-            android:textColor="@color/blackish"
-            android:layout_marginTop="10dp"
-            android:layout_marginHorizontal="10dp"/>
-
-        <EditText
-            android:id="@+id/userProvince"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:hint="Province"
-            android:background="@drawable/background_input2"
-            android:padding="12dp"
-            android:textColorHint="@color/blackish"
-            android:inputType="text"
-            android:textColor="@color/blackish"
-            android:layout_marginTop="10dp"
-            android:layout_marginHorizontal="10dp"/>
+        android:layout_height="match_parent">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="vertical"
+            android:padding="24dp">
 
-            <EditText
-                android:id="@+id/userCity"
-                android:layout_width="175dp"
-                android:layout_height="50dp"
-                android:hint="City"
-                android:background="@drawable/background_input2"
-                android:padding="12dp"
-                android:textColorHint="@color/blackish"
-                android:inputType="text"
-                android:textColor="@color/blackish"
-                android:layout_marginTop="10dp"
-                android:layout_marginHorizontal="10dp"/>
-
-            <EditText
-                android:id="@+id/userPostalCode"
-                android:layout_width="175dp"
-                android:layout_height="50dp"
-                android:hint="Postal Code"
-                android:background="@drawable/background_input2"
-                android:padding="12dp"
-                android:textColorHint="@color/blackish"
-                android:inputType="number"
-                android:textColor="@color/blackish"
-                android:layout_marginTop="10dp"
-                android:layout_marginHorizontal="10dp"/>
-
-        </LinearLayout>
-
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/continueBtn"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            map:cardElevation="10dp"
-            map:strokeWidth="2dp"
-            map:strokeColor="@color/dark_blue"
-            android:layout_marginHorizontal="20dp"
-            android:layout_marginBottom="25dp"
-            android:layout_marginTop="20dp"
-            android:backgroundTint="@color/white">
+            <!-- Blue header -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="120dp"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:background="@color/primary"
+                android:layout_marginBottom="24dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Continue"
-                    android:fontFamily="sans-serif-medium"
-                    android:textSize="18sp"
-                    android:layout_marginRight="10dp"
-                    android:textColor="@color/dark_blue"
-                    android:layout_gravity="center"/>
+                    android:text="Create Driver Account"
+                    android:textSize="22sp"
+                    android:fontFamily="sans-serif-black"
+                    android:textColor="@color/white"/>
 
-        </com.google.android.material.card.MaterialCardView>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Step 1 of 2 — Personal Details"
+                    android:textSize="14sp"
+                    android:fontFamily="sans-serif"
+                    android:textColor="#CCffffff"/>
 
-    </LinearLayout>
+            </LinearLayout>
 
-    <LinearLayout
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Full Name(s)"
+                android:textSize="14sp"
+                android:fontFamily="sans-serif-medium"
+                android:textColor="@color/blackish"
+                android:layout_marginBottom="6dp"/>
+
+            <EditText
+                android:id="@+id/name"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:hint="John"
+                android:background="@drawable/background_input2"
+                android:padding="14dp"
+                android:textColorHint="@color/hint_text"
+                android:inputType="textPersonName"
+                android:textColor="@color/blackish"
+                android:layout_marginBottom="16dp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Surname"
+                android:textSize="14sp"
+                android:fontFamily="sans-serif-medium"
+                android:textColor="@color/blackish"
+                android:layout_marginBottom="6dp"/>
+
+            <EditText
+                android:id="@+id/surname"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:hint="Doe"
+                android:background="@drawable/background_input2"
+                android:padding="14dp"
+                android:textColorHint="@color/hint_text"
+                android:inputType="textPersonName"
+                android:textColor="@color/blackish"
+                android:layout_marginBottom="16dp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Phone Number"
+                android:textSize="14sp"
+                android:fontFamily="sans-serif-medium"
+                android:textColor="@color/blackish"
+                android:layout_marginBottom="6dp"/>
+
+            <EditText
+                android:id="@+id/phoneNumber"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:hint="(+263) 77 000 0000"
+                android:background="@drawable/background_input2"
+                android:padding="14dp"
+                android:textColorHint="@color/hint_text"
+                android:inputType="phone"
+                android:textColor="@color/blackish"
+                android:layout_marginBottom="24dp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Residential Address"
+                android:textSize="16sp"
+                android:fontFamily="sans-serif-medium"
+                android:textColor="@color/primary"
+                android:gravity="center"
+                android:layout_marginBottom="16dp"/>
+
+            <EditText
+                android:id="@+id/userStreet"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:hint="Street Address"
+                android:background="@drawable/background_input2"
+                android:padding="14dp"
+                android:textColorHint="@color/hint_text"
+                android:inputType="text"
+                android:textColor="@color/blackish"
+                android:layout_marginBottom="12dp"/>
+
+            <EditText
+                android:id="@+id/userAddress"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:hint="Address Line 2"
+                android:background="@drawable/background_input2"
+                android:padding="14dp"
+                android:textColorHint="@color/hint_text"
+                android:inputType="text"
+                android:textColor="@color/blackish"
+                android:layout_marginBottom="12dp"/>
+
+            <EditText
+                android:id="@+id/userProvince"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:hint="Province"
+                android:background="@drawable/background_input2"
+                android:padding="14dp"
+                android:textColorHint="@color/hint_text"
+                android:inputType="text"
+                android:textColor="@color/blackish"
+                android:layout_marginBottom="12dp"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="24dp">
+
+                <EditText
+                    android:id="@+id/userCity"
+                    android:layout_width="0dp"
+                    android:layout_height="52dp"
+                    android:layout_weight="1"
+                    android:hint="City"
+                    android:background="@drawable/background_input2"
+                    android:padding="14dp"
+                    android:textColorHint="@color/hint_text"
+                    android:inputType="text"
+                    android:textColor="@color/blackish"
+                    android:layout_marginEnd="8dp"/>
+
+                <EditText
+                    android:id="@+id/userPostalCode"
+                    android:layout_width="0dp"
+                    android:layout_height="52dp"
+                    android:layout_weight="1"
+                    android:hint="Postal Code"
+                    android:background="@drawable/background_input2"
+                    android:padding="14dp"
+                    android:textColorHint="@color/hint_text"
+                    android:inputType="number"
+                    android:textColor="@color/blackish"/>
+
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/continueBtn"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:text="Continue"
+                android:textSize="16sp"
+                android:textColor="@color/white"
+                android:fontFamily="sans-serif-medium"
+                android:backgroundTint="@color/primary"
+                android:layout_marginBottom="16dp"/>
+
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- Page 2: Password -->
+    <ScrollView
         android:id="@+id/pinLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:visibility="gone">
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent">
 
-        <TextView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Enter Password"
-            android:textSize="25dp"
-            android:textColor="@color/blackish"
-            android:fontFamily="sans-serif-medium"
-            android:gravity="center"/>
+            android:orientation="vertical"
+            android:padding="24dp">
 
-        <EditText
-            android:id="@+id/password1"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:hint="Password"
-            android:background="@drawable/background_input2"
-            android:padding="12dp"
-            android:textColorHint="@color/blackish"
-            android:inputType="textPassword"
-            android:textColor="@color/blackish"
-            android:layout_marginTop="10dp"
-            android:layout_marginHorizontal="10dp"/>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="120dp"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:background="@color/primary"
+                android:layout_marginBottom="32dp">
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Confirm Password"
-            android:textSize="20dp"
-            android:textColor="@color/blackish"
-            android:fontFamily="sans-serif-medium"
-            android:gravity="center"
-            android:layout_marginTop="10dp"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Set Your Password"
+                    android:textSize="22sp"
+                    android:fontFamily="sans-serif-black"
+                    android:textColor="@color/white"/>
 
-        <EditText
-            android:id="@+id/password2"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:hint="Password"
-            android:background="@drawable/background_input2"
-            android:padding="12dp"
-            android:textColorHint="@color/blackish"
-            android:inputType="textPassword"
-            android:textColor="@color/blackish"
-            android:layout_marginTop="10dp"
-            android:layout_marginHorizontal="10dp"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Step 2 of 2 — Security"
+                    android:textSize="14sp"
+                    android:fontFamily="sans-serif"
+                    android:textColor="#CCffffff"/>
 
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/regBtn"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            map:cardElevation="10dp"
-            map:strokeWidth="2dp"
-            map:strokeColor="@color/dark_blue"
-            android:layout_marginHorizontal="20dp"
-            android:layout_marginBottom="25dp"
-            android:layout_marginTop="20dp"
-            android:backgroundTint="@color/white">
+            </LinearLayout>
 
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Confirm Registration"
+                android:text="Password"
+                android:textSize="14sp"
                 android:fontFamily="sans-serif-medium"
-                android:textSize="18sp"
-                android:layout_marginRight="10dp"
-                android:textColor="@color/dark_blue"
-                android:layout_gravity="center"/>
+                android:textColor="@color/blackish"
+                android:layout_marginBottom="6dp"/>
 
-        </com.google.android.material.card.MaterialCardView>
+            <EditText
+                android:id="@+id/password1"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:hint="Create a strong password"
+                android:background="@drawable/background_input2"
+                android:padding="14dp"
+                android:textColorHint="@color/hint_text"
+                android:inputType="textPassword"
+                android:textColor="@color/blackish"
+                android:layout_marginBottom="20dp"/>
 
-    </LinearLayout>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Confirm Password"
+                android:textSize="14sp"
+                android:fontFamily="sans-serif-medium"
+                android:textColor="@color/blackish"
+                android:layout_marginBottom="6dp"/>
 
+            <EditText
+                android:id="@+id/password2"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:hint="Repeat your password"
+                android:background="@drawable/background_input2"
+                android:padding="14dp"
+                android:textColorHint="@color/hint_text"
+                android:inputType="textPassword"
+                android:textColor="@color/blackish"
+                android:layout_marginBottom="32dp"/>
+
+            <Button
+                android:id="@+id/regBtn"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:text="Complete Registration"
+                android:textSize="16sp"
+                android:textColor="@color/white"
+                android:fontFamily="sans-serif-medium"
+                android:backgroundTint="@color/primary"/>
+
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- Loading overlay -->
     <LinearLayout
         android:id="@+id/progressBar"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="gone">
+        android:gravity="center"
+        android:background="#80FFFFFF"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent">
 
         <ProgressBar
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:indeterminateTint="@color/light_blue"
-            app:layout_constraintTop_toTopOf="parent"
-            android:layout_gravity="center"/>
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:indeterminateTint="@color/primary"/>
 
     </LinearLayout>
 
