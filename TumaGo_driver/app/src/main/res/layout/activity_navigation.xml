@@ -1,15 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
 <FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    android:layout_height="match_parent">
 
+    <!-- Main navigation layout: map + action cards -->
     <LinearLayout
         android:id="@+id/layout1"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:background="@color/white">
+        android:background="@color/page_bg">
 
         <fragment
             android:id="@+id/map"
@@ -18,79 +20,98 @@
             android:layout_height="0dp"
             android:layout_weight="1"/>
 
+        <!-- Start delivery button card -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/startTrip"
             android:layout_width="match_parent"
-            android:layout_height="65dp"
-            app:strokeColor="@color/white"
-            android:backgroundTint="@color/white"
-            android:visibility="gone">
-
-            <Button
-                android:id="@+id/Navigate"
-                android:layout_width="match_parent"
-                android:layout_height="55dp"
-                android:text="Start Delivery"
-                android:fontFamily="sans-serif-black"
-                android:textSize="18sp"
-                android:textColor="@color/black"
-                android:backgroundTint="@color/dark_blue"
-                android:layout_marginTop="5dp"
-                android:layout_marginHorizontal="10dp"/>
-
-        </com.google.android.material.card.MaterialCardView>
-
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/endTrip"
-            android:layout_width="match_parent"
-            android:layout_height="100dp"
-            app:strokeColor="@color/white"
-            android:backgroundTint="@color/white"
+            android:layout_height="wrap_content"
+            app:cardBackgroundColor="@color/white"
+            app:cardElevation="8dp"
+            app:strokeWidth="0dp"
             android:visibility="gone">
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical">
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Ready to navigate?"
+                    android:textSize="14sp"
+                    android:fontFamily="sans-serif"
+                    android:textColor="@color/secondary_text"
+                    android:gravity="center"
+                    android:layout_marginBottom="8dp"/>
+
+                <Button
+                    android:id="@+id/Navigate"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:text="Start Delivery"
+                    android:fontFamily="sans-serif-medium"
+                    android:textSize="16sp"
+                    android:textColor="@color/white"
+                    android:backgroundTint="@color/primary"/>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- End delivery card -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/endTrip"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardBackgroundColor="@color/white"
+            app:cardElevation="8dp"
+            app:strokeWidth="0dp"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="30dp"
+                    android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:layout_marginTop="5dp"
-                    android:layout_marginHorizontal="10dp">
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="12dp">
 
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:text="End Trip"
+                        android:layout_weight="1"
+                        android:text="Delivery in progress"
+                        android:textSize="16sp"
                         android:fontFamily="sans-serif-black"
-                        android:textSize="20sp"
-                        android:textColor="@color/black"
-                        android:layout_weight="1"/>
+                        android:textColor="@color/blackish"/>
 
                     <TextView
                         android:id="@+id/deliveryPrice"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="$50"
-                        android:fontFamily="sans-serif-black"
                         android:textSize="20sp"
-                        android:textColor="@color/black"/>
+                        android:fontFamily="sans-serif-black"
+                        android:textColor="@color/primary"/>
 
                 </LinearLayout>
 
                 <Button
                     android:id="@+id/End"
                     android:layout_width="match_parent"
-                    android:layout_height="55dp"
+                    android:layout_height="56dp"
                     android:text="Finish Delivery"
-                    android:fontFamily="sans-serif-black"
-                    android:textSize="18sp"
-                    android:textColor="@color/black"
-                    android:backgroundTint="@color/dark_blue"
-                    android:layout_marginTop="5dp"
-                    android:layout_marginHorizontal="10dp"/>
+                    android:fontFamily="sans-serif-medium"
+                    android:textSize="16sp"
+                    android:textColor="@color/white"
+                    android:backgroundTint="@color/success"/>
 
             </LinearLayout>
 
@@ -98,90 +119,106 @@
 
     </LinearLayout>
 
+    <!-- Rating overlay (shown after delivery ends) -->
     <LinearLayout
         android:id="@+id/layout2"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#99000000"
+        android:background="#CC000000"
         android:orientation="vertical"
-        android:layout_gravity="top|start"
         android:gravity="center"
+        android:padding="32dp"
         android:visibility="gone">
 
         <com.google.android.material.card.MaterialCardView
-            android:layout_width="350dp"
-            android:layout_height="200dp"
-            android:background="@color/white">
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardBackgroundColor="@color/white"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="16dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical">
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="24dp">
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Rate delivery"
-                    android:textColor="@color/black"
+                    android:text="Rate the sender"
                     android:textSize="20sp"
+                    android:fontFamily="sans-serif-black"
+                    android:textColor="@color/blackish"
                     android:gravity="center"
-                    android:layout_marginVertical="15dp"/>
+                    android:layout_marginBottom="4dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="How was your experience?"
+                    android:textSize="14sp"
+                    android:fontFamily="sans-serif"
+                    android:textColor="@color/secondary_text"
+                    android:gravity="center"
+                    android:layout_marginBottom="24dp"/>
 
                 <LinearLayout
                     android:id="@+id/starLayout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:layout_marginBottom="20dp"
-                    android:gravity="center">
+                    android:gravity="center"
+                    android:layout_marginBottom="24dp">
 
                     <ImageView
                         android:id="@+id/star1"
-                        android:layout_width="45dp"
-                        android:layout_height="45dp"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
                         android:src="@drawable/ic_star_outline"
-                        android:padding="5dp" />
+                        android:padding="4dp"/>
 
                     <ImageView
                         android:id="@+id/star2"
-                        android:layout_width="45dp"
-                        android:layout_height="45dp"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
                         android:src="@drawable/ic_star_outline"
-                        android:padding="5dp"
-                        android:layout_marginHorizontal="10dp"/>
+                        android:padding="4dp"
+                        android:layout_marginHorizontal="4dp"/>
 
                     <ImageView
                         android:id="@+id/star3"
-                        android:layout_width="45dp"
-                        android:layout_height="45dp"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
                         android:src="@drawable/ic_star_outline"
-                        android:padding="5dp" />
+                        android:padding="4dp"/>
 
                     <ImageView
                         android:id="@+id/star4"
-                        android:layout_width="45dp"
-                        android:layout_height="45dp"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
                         android:src="@drawable/ic_star_outline"
-                        android:padding="5dp"
-                        android:layout_marginHorizontal="10dp"/>
+                        android:padding="4dp"
+                        android:layout_marginHorizontal="4dp"/>
 
                     <ImageView
                         android:id="@+id/star5"
-                        android:layout_width="45dp"
-                        android:layout_height="45dp"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
                         android:src="@drawable/ic_star_outline"
-                        android:padding="5dp" />
+                        android:padding="4dp"/>
+
                 </LinearLayout>
 
                 <Button
                     android:id="@+id/rateButton"
                     android:layout_width="match_parent"
-                    android:layout_height="55dp"
-                    android:backgroundTint="@color/dark_blue"
-                    android:text="Rate"
+                    android:layout_height="56dp"
+                    android:text="Submit Rating"
+                    android:textSize="16sp"
                     android:textColor="@color/white"
-                    android:textSize="18sp"
-                    android:layout_marginHorizontal="10dp"/>
+                    android:fontFamily="sans-serif-medium"
+                    android:backgroundTint="@color/primary"/>
 
             </LinearLayout>
 

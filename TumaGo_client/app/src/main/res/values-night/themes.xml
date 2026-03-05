@@ -1,7 +1,20 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.TumaGo" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+    <!-- Force light theme - delivery app stays light for visibility -->
+    <style name="Base.Theme.TumaGo" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/light_blue</item>
+        <item name="colorPrimaryDark">@color/dark_blue</item>
+        <item name="colorAccent">@color/light_blue</item>
+        <item name="android:colorBackground">@color/page_bg</item>
+        <item name="android:statusBarColor">@color/light_blue</item>
+        <item name="materialButtonStyle">@style/TumaGoButton</item>
+    </style>
+    <style name="Theme.TumaGo" parent="Base.Theme.TumaGo" />
+
+    <style name="TumaGoButton" parent="Widget.Material3.Button">
+        <item name="android:textColor">@color/white</item>
+        <item name="backgroundTint">@color/light_blue</item>
+        <item name="cornerRadius">16dp</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
     </style>
 </resources>

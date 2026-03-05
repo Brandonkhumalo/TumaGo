@@ -1,74 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cardViewDesign"
+    android:layout_width="110dp"
+    android:layout_height="110dp"
+    android:layout_marginEnd="10dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="3dp"
+    app:cardBackgroundColor="@color/white">
 
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/cardViewDesign"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="70dp"
-        android:layout_marginTop="10dp"
-        app:strokeWidth="1dp"
-        app:strokeColor="@color/white"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:backgroundTint="@color/white">
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="10dp">
 
-        <LinearLayout
-            android:layout_width="match_parent"
+        <ImageView
+            android:id="@+id/transportImage"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:scaleType="fitCenter"/>
+
+        <TextView
+            android:id="@+id/transportName"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:textSize="12sp"
+            android:textColor="@color/blackish"
+            android:fontFamily="sans-serif-medium"
+            android:gravity="center"
+            android:layout_marginTop="4dp"/>
 
-            <ImageView
-                android:id="@+id/transportImage"
-                android:layout_width="100dp"
-                android:layout_height="wrap_content"
-                android:src="@drawable/scooter"
-                android:layout_marginVertical="10dp"
-                android:layout_marginLeft="25dp"
-                android:layout_marginRight="10dp"/>
+        <TextView
+            android:id="@+id/transportPrice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="11sp"
+            android:textColor="@color/light_blue"
+            android:fontFamily="sans-serif-medium"
+            android:gravity="center"/>
 
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_weight="1"
-                android:layout_margin="10dp">
+    </LinearLayout>
 
-                <TextView
-                    android:id="@+id/transportName"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Scooter"
-                    android:fontFamily="sans-serif-black"
-                    android:textSize="20sp"
-                    android:textColor="@color/blackish"/>
-
-            </LinearLayout>
-
-            <TextView
-                android:id="@+id/transportPrice"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="R500"
-                android:fontFamily="sans-serif-medium"
-                android:textSize="18sp"
-                android:textColor="@color/blackish"
-                android:layout_marginTop="10dp"
-                android:layout_marginRight="25dp"/>
-
-        </LinearLayout>
-
-    </com.google.android.material.card.MaterialCardView>
-
-    <TextView
-        android:id="@+id/border"
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#E8E9EB"
-        app:layout_constraintTop_toBottomOf="@id/cardViewDesign"/>
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.cardview.widget.CardView>

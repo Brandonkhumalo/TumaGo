@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tumago-config
+  namespace: tumago
+data:
+  REDIS_URL: "redis://redis-service:6379"
+  SEARCH_RADIUS_KM: "15"
+  ALLOWED_HOSTS: "api.tumago.com,tumago-backend-service"
+  DEBUG: "False"
+  DJANGO_LOG_LEVEL: "WARNING"
+  PGBOUNCER_POOL_MODE: "transaction"
+  PGBOUNCER_MAX_CLIENT_CONN: "1000"
+  PGBOUNCER_DEFAULT_POOL_SIZE: "25"

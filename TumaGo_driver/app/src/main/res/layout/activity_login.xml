@@ -1,98 +1,134 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".auth.Login"
-    android:background="@color/white">
+    android:background="@color/page_bg"
+    android:fillViewport="true"
+    tools:context=".auth.Login">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
 
+        <!-- Logo header -->
         <ImageView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_width="160dp"
+            android:layout_height="100dp"
             android:src="@drawable/tuma_go_logo"
-            android:layout_marginTop="-120dp"/>
+            android:scaleType="fitCenter"
+            android:layout_gravity="center"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="8dp"/>
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Enter Your Login Details"
-            android:textSize="25dp"
+            android:text="Welcome Back, Driver"
+            android:textSize="24sp"
+            android:fontFamily="sans-serif-black"
             android:textColor="@color/blackish"
             android:gravity="center"
-            android:layout_marginTop="-120dp"/>
+            android:layout_marginBottom="4dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Sign in to your driver account"
+            android:textSize="14sp"
+            android:fontFamily="sans-serif"
+            android:textColor="@color/secondary_text"
+            android:gravity="center"
+            android:layout_marginBottom="32dp"/>
+
+        <!-- Email field -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Email"
+            android:textSize="14sp"
+            android:fontFamily="sans-serif-medium"
+            android:textColor="@color/blackish"
+            android:layout_marginBottom="6dp"/>
 
         <EditText
             android:id="@+id/email"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:hint="email"
+            android:layout_height="52dp"
+            android:hint="driver@example.com"
             android:background="@drawable/background_input2"
-            android:padding="12dp"
-            android:textColorHint="@color/blackish"
+            android:padding="14dp"
+            android:textColorHint="@color/hint_text"
             android:inputType="textEmailAddress"
             android:textColor="@color/blackish"
-            android:layout_marginTop="10dp"
-            android:layout_marginHorizontal="10dp"/>
+            android:layout_marginBottom="16dp"/>
+
+        <!-- Password field -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Password"
+            android:textSize="14sp"
+            android:fontFamily="sans-serif-medium"
+            android:textColor="@color/blackish"
+            android:layout_marginBottom="6dp"/>
 
         <EditText
             android:id="@+id/password"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:hint="Password"
+            android:layout_height="52dp"
+            android:hint="Enter password"
             android:background="@drawable/background_input2"
-            android:padding="12dp"
-            android:textColorHint="@color/blackish"
+            android:padding="14dp"
+            android:textColorHint="@color/hint_text"
             android:inputType="textPassword"
             android:textColor="@color/blackish"
-            android:layout_marginTop="10dp"
-            android:layout_marginBottom="5dp"
-            android:layout_marginHorizontal="10dp"/>
-
-        <Button
-            android:id="@+id/login"
-            android:layout_width="match_parent"
-            android:layout_height="55dp"
-            android:text="Login"
-            android:textSize="18sp"
-            android:textColor="@color/white"
-            android:layout_marginHorizontal="30dp"
-            android:layout_marginVertical="10dp"
-            android:backgroundTint="@color/dark_blue"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="OR"
-            android:textColor="@color/black"
-            android:textSize="15sp"
-            android:layout_marginHorizontal="20dp"
-            android:layout_gravity="center"/>
-
-        <Button
-            android:id="@+id/register"
-            android:layout_width="match_parent"
-            android:layout_height="55dp"
-            android:text="Register"
-            android:textSize="18sp"
-            android:textColor="@color/white"
-            android:layout_marginHorizontal="30dp"
-            android:layout_marginTop="10dp"
-            android:backgroundTint="@color/dark_blue"/>
+            android:layout_marginBottom="24dp"/>
 
         <ProgressBar
             android:id="@+id/progressBar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:indeterminateTint="@color/dark_blue"
-            android:visibility="gone"/>
+            android:indeterminateTint="@color/primary"
+            android:visibility="gone"
+            android:layout_marginBottom="8dp"/>
+
+        <Button
+            android:id="@+id/login"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Sign In"
+            android:textSize="16sp"
+            android:textColor="@color/white"
+            android:fontFamily="sans-serif-medium"
+            android:backgroundTint="@color/primary"
+            android:layout_marginBottom="16dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="— OR —"
+            android:textColor="@color/hint_text"
+            android:textSize="13sp"
+            android:gravity="center"
+            android:layout_marginBottom="16dp"/>
+
+        <Button
+            android:id="@+id/register"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Create Driver Account"
+            android:textSize="16sp"
+            android:textColor="@color/primary"
+            android:fontFamily="sans-serif-medium"
+            android:backgroundTint="@color/white"
+            android:strokeColor="@color/primary"
+            android:layout_marginBottom="24dp"/>
 
     </LinearLayout>
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>
