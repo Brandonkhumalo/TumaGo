@@ -1,0 +1,183 @@
+# ---------------------------------------------------------------------------
+# Development compose — Hybrid Go + Django architecture
+# Run from: backend/
+#
+# Go:     gateway (routing), location (WebSocket GPS), matching (driver finder)
+# Python: Django (auth, CRUD, admin), Dramatiq worker
+# Infra:  Redis, PostgreSQL, PgBouncer, Prometheus, Grafana
+# ---------------------------------------------------------------------------
+
+services:
+
+  # ── Go API Gateway ──────────────────────────────────────────────────────
+  gateway:
+    build:
+      context: ./go_services/gateway
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    environment:
+      SECRET_KEY: ${SECRET_KEY:-your-secret-key}
+      DJANGO_BACKEND: web:8000
+      LOCATION_SERVICE: location:8001
+      MATCHING_SERVICE: matching:8002
+      STATIC_DIR: /static
+      LISTEN_ADDR: ":80"
+    volumes:
+      - ./django/staticfiles:/static:ro
+    depends_on:
+      - web
+      - location
+      - matching
+    restart: always
+
+  # ── Go Location Service ─────────────────────────────────────────────────
+  location:
+    build:
+      context: ./go_services/location
+      dockerfile: Dockerfile
+    expose:
+      - "8001"
+    environment:
+      SECRET_KEY: ${SECRET_KEY:-your-secret-key}
+      REDIS_URL: redis://redis:6379
+      DATABASE_URL: postgres://postgres:postgres@pgbouncer:5432/postgres?sslmode=disable
+      LISTEN_ADDR: ":8001"
+    depends_on:
+      - redis
+      - pgbouncer
+    restart: always
+
+  # ── Go Matching Service ─────────────────────────────────────────────────
+  matching:
+    build:
+      context: ./go_services/matching
+      dockerfile: Dockerfile
+    expose:
+      - "8002"
+    environment:
+      REDIS_URL: redis://redis:6379
+      DATABASE_URL: postgres://postgres:postgres@pgbouncer:5432/postgres?sslmode=disable
+      SEARCH_RADIUS_KM: "15"
+      LISTEN_ADDR: ":8002"
+    depends_on:
+      - redis
+      - pgbouncer
+    restart: always
+
+  # ── Django ASGI (Daphne) ────────────────────────────────────────────────
+  web:
+    build:
+      context: ./django
+      dockerfile: Dockerfile
+    expose:
+      - "8000"
+    env_file:
+      - ./django/TumaGo/.env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@pgbouncer:5432/postgres
+      REDIS_URL: redis://redis:6379
+      DEBUG: "False"
+      ALLOWED_HOSTS: "localhost,gateway,web"
+      GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY}
+      FIREBASE_CREDENTIALS: ${FIREBASE_CREDENTIALS}
+    depends_on:
+      pgbouncer:
+        condition: service_started
+      redis:
+        condition: service_started
+    restart: always
+
+  # ── Dramatiq background workers ────────────────────────────────────────
+  worker:
+    build:
+      context: ./django
+      dockerfile: Dockerfile
+    command: >
+      dramatiq TumaGo_Server.views.DriverViews.deliveryMatching.tasks
+      --processes 4 --threads 8
+    env_file:
+      - ./django/TumaGo/.env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@pgbouncer:5432/postgres
+      REDIS_URL: redis://redis:6379
+      DEBUG: "False"
+      GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY}
+      FIREBASE_CREDENTIALS: ${FIREBASE_CREDENTIALS}
+    depends_on:
+      - redis
+      - pgbouncer
+    restart: always
+
+  # ── Redis ───────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru --save ""
+    ports:
+      - "6379:6379"
+    restart: always
+
+  # ── PostgreSQL ──────────────────────────────────────────────────────────
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      retries: 5
+    restart: always
+
+  # ── PgBouncer ───────────────────────────────────────────────────────────
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: postgres
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: "1000"
+      DEFAULT_POOL_SIZE: "25"
+      AUTH_TYPE: plain
+    ports:
+      - "5432:5432"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: always
+
+  # ── Prometheus ──────────────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    volumes:
+      - ./infrastructure/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    restart: always
+
+  # ── Grafana ─────────────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:10.4.2
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./infrastructure/monitoring/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
+    depends_on:
+      - prometheus
+    restart: always
+
+volumes:
+  postgres_data:
+  grafana_data:

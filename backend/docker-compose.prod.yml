@@ -1,0 +1,248 @@
+# ---------------------------------------------------------------------------
+# Production compose — Hybrid Go + Django architecture
+#
+# Go services:  gateway (3x), location (3x), matching (2x)
+# Python:       Django (3x), Dramatiq worker (2x), notification_service
+# Infra:        Redis, PostgreSQL, PgBouncer, Prometheus, Grafana
+# ---------------------------------------------------------------------------
+
+x-django-env: &django-env
+  DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@pgbouncer:5432/postgres
+  REDIS_URL: redis://redis:6379
+  SECRET_KEY: ${SECRET_KEY}
+  DEBUG: "False"
+  ALLOWED_HOSTS: ${ALLOWED_HOSTS:-api.tumago.com}
+  GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY}
+  FIREBASE_CREDENTIALS: ${FIREBASE_CREDENTIALS}
+  CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-https://api.tumago.com}
+
+x-go-env: &go-env
+  REDIS_URL: redis://redis:6379
+  DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD}@pgbouncer:5432/postgres?sslmode=disable
+  SECRET_KEY: ${SECRET_KEY}
+
+services:
+
+  # ── Go API Gateway (replaces nginx for routing) ─────────────────────────
+  gateway:
+    image: ${REGISTRY:-tumago}/gateway:${VERSION:-latest}
+    build:
+      context: ./go_services/gateway
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      <<: *go-env
+      DJANGO_BACKEND: web:8000
+      LOCATION_SERVICE: location:8001
+      MATCHING_SERVICE: matching:8002
+      STATIC_DIR: /static
+      LISTEN_ADDR: ":80"
+    volumes:
+      - ./django/staticfiles:/static:ro
+    depends_on:
+      - web
+      - location
+      - matching
+    restart: always
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+
+  # ── Go Location Service — 3 replicas ────────────────────────────────────
+  location:
+    image: ${REGISTRY:-tumago}/location-service:${VERSION:-latest}
+    build:
+      context: ./go_services/location
+      dockerfile: Dockerfile
+    expose:
+      - "8001"
+    environment:
+      <<: *go-env
+      LISTEN_ADDR: ":8001"
+    depends_on:
+      - redis
+      - pgbouncer
+    restart: always
+    deploy:
+      replicas: 3
+      resources:
+        limits:
+          cpus: '1'
+          memory: 128M
+
+  # ── Go Matching Service — 2 replicas ────────────────────────────────────
+  matching:
+    image: ${REGISTRY:-tumago}/matching-service:${VERSION:-latest}
+    build:
+      context: ./go_services/matching
+      dockerfile: Dockerfile
+    expose:
+      - "8002"
+    environment:
+      <<: *go-env
+      SEARCH_RADIUS_KM: "15"
+      LISTEN_ADDR: ":8002"
+    depends_on:
+      - redis
+      - pgbouncer
+    restart: always
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '1'
+          memory: 128M
+
+  # ── Django ASGI — 3 replicas (auth, CRUD, admin) ────────────────────────
+  web:
+    image: ${REGISTRY:-tumago}/backend:${VERSION:-latest}
+    build:
+      context: ./django
+      dockerfile: Dockerfile
+    expose:
+      - "8000"
+    environment:
+      <<: *django-env
+    depends_on:
+      - pgbouncer
+      - redis
+    restart: always
+    deploy:
+      replicas: 3
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+
+  # ── Dramatiq workers — 2 replicas ───────────────────────────────────────
+  worker:
+    image: ${REGISTRY:-tumago}/backend:${VERSION:-latest}
+    command: >
+      dramatiq TumaGo_Server.views.DriverViews.deliveryMatching.tasks
+      --processes 4 --threads 8
+    environment:
+      <<: *django-env
+    depends_on:
+      - redis
+      - pgbouncer
+    restart: always
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '2'
+          memory: 512M
+
+  # ── Notification Service (Python — FCM is I/O-bound) ───────────────────
+  notification_service:
+    image: ${REGISTRY:-tumago}/notification-service:${VERSION:-latest}
+    build:
+      context: ./notification
+      dockerfile: Dockerfile
+    expose:
+      - "8003"
+    environment:
+      REDIS_URL: redis://redis:6379
+      FIREBASE_CREDENTIALS_PATH: /secrets/firebase-credentials.json
+    volumes:
+      - ${FIREBASE_CREDENTIALS_FILE}:/secrets/firebase-credentials.json:ro
+    depends_on:
+      - redis
+    restart: always
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+  # ── Redis ───────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    command: >
+      redis-server
+      --maxmemory 1gb
+      --maxmemory-policy allkeys-lru
+      --save ""
+      --requirepass ${REDIS_PASSWORD:-}
+    volumes:
+      - redis_data:/data
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1.2G
+
+  # ── PostgreSQL ──────────────────────────────────────────────────────────
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      retries: 5
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+
+  # ── PgBouncer ───────────────────────────────────────────────────────────
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_USER: postgres
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_NAME: postgres
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: "2000"
+      DEFAULT_POOL_SIZE: "25"
+      AUTH_TYPE: plain
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: always
+
+  # ── Prometheus ──────────────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    volumes:
+      - ./infrastructure/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    restart: always
+
+  # ── Grafana ─────────────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:10.4.2
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_ROOT_URL: "https://${ALLOWED_HOSTS:-api.tumago.com}/grafana"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./infrastructure/monitoring/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
+    depends_on:
+      - prometheus
+    restart: always
+
+volumes:
+  postgres_data:
+  redis_data:
+  prometheus_data:
+  grafana_data:
