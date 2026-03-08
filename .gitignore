@@ -1,1 +1,43 @@
-TumaGo_Backend/
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+venv/
+env/
+.venv/
+
+# Environment / secrets
+**/.env
+*.env
+
+# Django
+staticfiles/
+media/
+*.db
+*.sqlite3
+
+# Docker
+*.log
+*.pid
+
+# IDEs
+.vscode/
+.idea/
+
+# Android
+*.apk
+*.aab
+*.dex
+*.class
+.gradle/
+build/
+local.properties
+*.hprof
+
+# System
+.DS_Store
+Thumbs.db
+
+# Firebase secrets
+backend/django/TumaGo/delivery.json

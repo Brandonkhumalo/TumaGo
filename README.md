@@ -1,86 +1,179 @@
-# TumaGo – Fullstack Mobile Package Delivery Platform 📦🚚
+# TumaGo — Last-Mile Package Delivery Platform
 
-**TumaGo** is a fullstack mobile logistics platform that connects clients who need to send packages with nearby drivers based on vehicle type (motorbike, van, or truck). It consists of a Django backend and two Android apps — one for drivers and another for clients.
-
----
-
-## 🌍 Project Overview
-
-TumaGo enables real-time package booking, tracking, and communication between clients and drivers. It offers live location updates, secure authentication, and seamless integration with maps, messaging, and cloud-based notifications.
+TumaGo connects clients who need to send packages with nearby drivers based on vehicle type (scooter, van, or truck). The platform features real-time GPS tracking, intelligent driver matching, and push notifications across two Android apps and a hybrid Go + Django backend.
 
 ---
 
-## 🧩 Project Structure
+## Project Structure
 
+```
 TumaGo/
-├── backend/ # Django REST API (with WebSocket support)
-├── driver_app/ # Android app for delivery drivers
-└── client_app/ # Android app for clients sending packages
+├── backend/                 # All backend services
+│   ├── django/              # Django REST API (auth, CRUD, admin)
+│   ├── go_services/         # High-performance Go microservices
+│   │   ├── gateway/         # API gateway & reverse proxy
+│   │   ├── location/        # Real-time GPS WebSocket service
+│   │   └── matching/        # Driver matching engine
+│   ├── notification/        # FCM push notification service (FastAPI)
+│   ├── infrastructure/      # Kubernetes, nginx, monitoring configs
+│   ├── docker-compose.yml   # Development environment
+│   └── docker-compose.prod.yml  # Production with replicas
+├── TumaGo_client/           # Android app for senders
+└── TumaGo_driver/           # Android app for drivers
+```
 
 ---
 
-## 🔧 Technologies Used
+## Backend Architecture
 
-### 🖥️ Backend – Django
-- Django 5 + Django REST Framework
-- JWT Authentication (`djangorestframework_simplejwt`)
-- WebSockets via Django Channels + Daphne
-- Background tasks with Redis + Dramatiq
-- MySQL (AWS RDS) for production database
-- Google Maps & Firebase Admin SDK
-- Docker + Docker Compose
+```
+Mobile Apps → Go Gateway (:80) → Django (:8000)      — auth, users, deliveries, admin
+                                → Go Location (:8001) — real-time driver GPS
+                                → Go Matching (:8002) — nearest driver search
+                                → Notification (:8003) — push notifications
+```
 
-### 📱 Android (Java) – Driver & Client Apps
-- Retrofit2 + OkHttp for API communication
-- Firebase Cloud Messaging (push notifications)
-- Google Maps SDK, Places API, and Location Services
-- WebSocket (Java-WebSocket)
-- AndroidX Security for token storage
-- MPAndroidChart for visual stats (optional)
-- ConstraintLayout, AppCompat, and Jetpack libraries
+### Go Gateway Service
+The API entry point that replaces nginx for routing. Handles all incoming traffic and distributes it to the correct backend service.
+- **Per-IP rate limiting** — 60 req/min general, 10 req/min for auth and delivery endpoints
+- **JWT validation** for WebSocket connections
+- **WebSocket proxy** — upgrades and forwards driver GPS connections to the location service
+- **Internal endpoint protection** — blocks external access to `/internal/match/`
+
+### Go Location Service
+Handles real-time GPS streaming from drivers over WebSocket connections.
+- Drivers connect via `ws://host/ws/driver_location?token=<JWT>`
+- Each GPS update stores the driver's position in **Redis GEO** for instant spatial queries
+- Simultaneously upserts the driver's location in PostgreSQL (one row per driver)
+- Designed to handle **100k+ concurrent WebSocket connections** using Go goroutines (~4KB per connection vs ~1MB in Python)
+- Removes drivers from the live index on disconnect
+
+### Go Matching Service
+Finds the closest available driver when a delivery is requested.
+- **Redis GEOSEARCH** finds all drivers within a 15km radius, sorted by distance
+- **Single PostgreSQL query** filters by vehicle type and availability
+- Returns the nearest valid driver with coordinates and distance
+- Called internally by Django's Dramatiq background workers
+
+### Django Backend
+Handles all business logic, authentication, and data management.
+- Custom **JWT authentication** (HS256) — shared secret key with Go services
+- User and driver registration, login, profile management
+- Delivery creation, acceptance, cancellation, and completion
+- Driver finances and earnings tracking
+- **Dramatiq background workers** for async driver matching with Redis pub/sub
+- Django Admin panel for operations
+- Swagger/ReDoc API documentation
+
+### Notification Service (FastAPI)
+Sends Firebase Cloud Messaging (FCM) push notifications.
+- Subscribes to Redis pub/sub channels for real-time event processing
+- Also exposes a direct HTTP endpoint for Django to call
+- Stays in Python because FCM calls are I/O-bound — Go wouldn't improve performance
 
 ---
 
-## 🚀 Key Features
+## Tech Stack
 
-### ✅ Shared Functionality
-- JWT-based login and role-based access
-- Real-time location tracking with Google Maps
+| Component | Technology |
+|-----------|-----------|
+| API Gateway | Go 1.22, stdlib `net/http`, `x/time/rate` |
+| Location Service | Go 1.22, gorilla/websocket, go-redis, pgx |
+| Matching Service | Go 1.22, go-redis, pgx |
+| Backend API | Django 5.2, Django REST Framework 3.16 |
+| Notifications | FastAPI, Firebase Admin SDK |
+| Background Tasks | Dramatiq + Redis |
+| Database | PostgreSQL 15 + PgBouncer |
+| Cache / Queue / GEO | Redis 7 |
+| Android Apps | Java, Retrofit 2.9, OkHttp, Google Maps SDK |
+| Containerization | Docker, Docker Compose, Kubernetes |
+| Monitoring | Prometheus + Grafana |
+
+---
+
+## Getting Started
+
+### Prerequisites
+- **Docker** and **Docker Compose** (that's it — Go, Python, and all dependencies are built inside containers)
+
+### Run the backend
+
+```bash
+cd backend
+docker compose up -d --build
+```
+
+This starts all services: Go gateway, location, matching, Django, Dramatiq workers, Redis, PostgreSQL, PgBouncer, Prometheus, and Grafana.
+
+### Run the Android apps
+
+```bash
+# Client app
+cd TumaGo_client
+./gradlew assembleDebug
+
+# Driver app
+cd TumaGo_driver
+./gradlew assembleDebug
+```
+
+### Environment Variables
+
+Create a `.env` file at `backend/django/TumaGo/.env` with:
+
+```env
+SECRET_KEY=your-secret-key
+DATABASE_URL=postgresql://postgres:postgres@pgbouncer:5432/postgres
+REDIS_URL=redis://redis:6379
+GOOGLE_MAPS_API_KEY=your-google-maps-key
+FIREBASE_CREDENTIALS={"type":"service_account",...}
+```
+
+---
+
+## Key Features
+
+### Client App
+- Book deliveries by selecting vehicle type (scooter, van, truck)
+- Real-time price calculation based on distance
+- Live track your driver on Google Maps
+- View delivery history with status
+- Rate drivers after delivery
+
+### Driver App
+- Register with license upload and vehicle registration
+- Accept or decline delivery requests via push notification
+- Navigate to pickup and dropoff using Google Maps
+- Track earnings with daily, weekly, and monthly finance breakdowns
+- Automatic availability management
+
+### Shared
+- JWT-based authentication with encrypted token storage
+- Real-time GPS tracking over WebSocket
 - Firebase push notifications
-- WebSocket-powered chat between driver and client
-
-### 👤 Client App
-- Book deliveries by vehicle type
-- Live track drivers and packages
-- View delivery history and status
-- Communicate with driver in real-time
-
-### 🚚 Driver App
-- Register with license verification
-- Accept or reject package requests
-- Navigation using Google Maps Directions API
-- Update trip status (started, in transit, delivered)
-- Live chat with clients
+- Material Design 3 UI with TumaGo branding
 
 ---
 
-## 🙋‍♂️ Author
+## Production Deployment
 
-**Brandon Khumalo**  
-🚀 Backend & Mobile Developer  
-📫 [LinkedIn](https://www.linkedin.com/in/brandon-khumalo04) | [Email](mailto:brandonkhumz40@gmail.com)
+```bash
+cd backend
+docker compose -f docker-compose.prod.yml up -d --build
+```
 
-**Live API URL**
-[api demo](https://tumago.onrender.com/swagger/)
+Production runs with replicas: Gateway (2x), Location (3x), Matching (2x), Django (3x), Workers (2x). Kubernetes manifests are available in `backend/infrastructure/kubernetes/`.
 
 ---
 
-## 📄 License
+## Author
+
+**Brandon Khumalo**
+Backend & Mobile Developer
+[LinkedIn](https://www.linkedin.com/in/brandon-khumalo04) | [Email](mailto:brandonkhumz40@gmail.com)
+
+---
+
+## License
 
 This project is licensed under the [MIT License](LICENSE).
-
----
-
-## ⭐️ Show your support
-
-If you like this project, please give it a ⭐ and consider following me for more cool builds!

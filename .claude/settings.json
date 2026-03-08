@@ -2,7 +2,19 @@
   "permissions": {
     "allow": [
       "Bash(xargs grep -l \"WebSocket\\\\|websocket\")",
-      "Bash(echo \"exit: $?\")"
+      "Bash(echo \"exit: $?\")",
+      "Bash(docker compose up -d --build)",
+      "Bash(docker pull bitnami/pgbouncer:1)",
+      "Bash(docker pull edoburu/pgbouncer:1.22.1)",
+      "Read(//c/Users/brand/.docker/**)",
+      "Bash(go mod tidy)",
+      "Bash(mkdir -p backend)",
+      "Bash(mv go_services backend/)",
+      "Bash(mv notification_service backend/notification)",
+      "Bash(mv infrastructure backend/)",
+      "Bash(mv docker-compose.prod.yml backend/)",
+      "Bash(rm -rf backend/django/.git)",
+      "Bash(rm -f backend/django/.gitignore)"
     ],
     "additionalDirectories": [
       "d:\\Portfolio Projects\\TumaGo\\.claude",
