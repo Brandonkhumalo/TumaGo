@@ -41,3 +41,5 @@ Thumbs.db
 
 # Firebase secrets
 backend/django/TumaGo/delivery.json
+**/firebase-credentials.json
+backend/Tumago.json
