@@ -7,7 +7,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -17,6 +17,7 @@ import com.techmania.tumago_driver.Interface.ApiService;
 import com.techmania.tumago_driver.R;
 import com.techmania.tumago_driver.activities.MainActivity;
 import com.techmania.tumago_driver.helpers.ApiClient;
+import com.techmania.tumago_driver.helpers.Token;
 import com.techmania.tumago_driver.models.CreateVehicle;
 
 import okhttp3.ResponseBody;
@@ -29,7 +30,7 @@ public class Transport extends AppCompatActivity {
     MaterialCardView[] position;
     String vehicleName;
     Button continueButton, finishReg;
-    LinearLayout firstLayout, secondLayout;
+    ScrollView firstLayout, secondLayout;
 
     EditText vehicleBrand, modelName, colorName, numberPlateName;
 
