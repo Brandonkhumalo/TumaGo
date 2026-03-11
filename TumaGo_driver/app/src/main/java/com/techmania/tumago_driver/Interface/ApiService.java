@@ -61,7 +61,7 @@ public interface ApiService {
     @POST("verify_token/")
     Call<ResponseBody> verifyToken(@Header("Authorization") String authHeader);
 
-    @POST("verifyTerms/")
+    @GET("verifyTerms/")
     Call<ResponseBody> checkTerms(@Header("Authorization") String authHeader);
 
     @GET("driver/delivery_info/")

@@ -107,21 +107,20 @@ def sync_time(request):
 @permission_classes([IsAuthenticated])
 def check_terms(request):
     user = request.user
-    terms = get_object_or_404(TermsAndConditions, user=user)
+    terms = TermsAndConditions.objects.filter(user=user, terms_and_conditions=True).first()
 
-    if terms.terms_and_conditions:
+    if terms:
         return Response({"message": "Terms accepted."}, status=status.HTTP_200_OK)
-    else:
-        return Response({"message": "Terms not accepted."}, status=status.HTTP_403_FORBIDDEN)
-    
+    return Response({"message": "Terms not accepted."}, status=status.HTTP_403_FORBIDDEN)
+
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def accept_terms(request):
     user = request.user
 
-    TermsAndConditions.objects.create(
+    TermsAndConditions.objects.get_or_create(
         user=user,
-        terms_and_conditions=True
+        defaults={'terms_and_conditions': True}
     )
 
     return Response({"message": "Successfully agreed to the terms and conditions"}, status=status.HTTP_202_ACCEPTED)

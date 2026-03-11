@@ -8,15 +8,16 @@ import android.util.Log;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.security.crypto.EncryptedSharedPreferences;
 import androidx.security.crypto.MasterKey;
 
-import com.google.android.material.card.MaterialCardView;
 import com.techmania.tumago_driver.Interface.ApiService;
 import com.techmania.tumago_driver.activities.MainActivity;
 import com.techmania.tumago_driver.R;
@@ -30,9 +31,10 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class Register extends AppCompatActivity {
-    LinearLayout personalInfo, pinLayout, progressBar;
+    ScrollView personalInfo, pinLayout;
+    LinearLayout progressBar;
     EditText name, surname, number, street, address, city, code, password1, password2;
-    MaterialCardView continueBtn, regBtn;
+    Button continueBtn, regBtn;
     String password;
 
     @Override
@@ -125,19 +127,17 @@ public class Register extends AppCompatActivity {
                     public void onResponse(Call<TokenResponse> call, Response<TokenResponse> response) {
                         Intent intent;
                         if(response.isSuccessful()) {
-                            intent = new Intent(Register.this, Transport.class);
-                            startActivity(intent);
-                            finish();
-
                             String accessToken = response.body().getAccess();
                             String refreshToken = response.body().getRefresh();
                             Token.storeToken(Register.this, accessToken, refreshToken);
 
+                            intent = new Intent(Register.this, Transport.class);
+                            startActivity(intent);
+                            finish();
                         } else {
                             intent = new Intent(Register.this, MainActivity.class);
                             startActivity(intent);
                             finish();
-
                         }
                         progressBar.setVisibility(View.GONE);
                     }

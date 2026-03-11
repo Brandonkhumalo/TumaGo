@@ -6,6 +6,7 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -57,7 +58,8 @@ import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
 
-    LinearLayout menuList, UserProfile, upload, deliveries, finances;
+    FrameLayout menuList;
+    LinearLayout UserProfile, upload, deliveries, finances;
     ImageView menu, close;
     TextView mainUsername, mainRating;
     CardView logout;
@@ -129,7 +131,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         try {
             String token = Token.getAccessToken(this);
-            String wsUrl = "ws://192.168.8.147:8000/ws/driver_location/?token=" + token;
+            String wsUrl = "ws://13.246.35.254/ws/driver_location/?token=" + token;
             URI uri = new URI(wsUrl);
             webSocketClient = new WebSocketLocationClient(uri);
             webSocketClient.connect();
@@ -142,13 +144,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     protected void onStart() {
         super.onStart();
 
-        // Check once
         if (!NetworkUtils.isInternetAvailable(this)) {
             Toast.makeText(this, "No internet connection", Toast.LENGTH_LONG).show();
         }
-
-        // Start monitoring changes
-        NetworkUtils.registerNetworkCallback(this);
     }
 
     private void setupLocationRequest() {
