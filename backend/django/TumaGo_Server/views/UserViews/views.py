@@ -118,10 +118,9 @@ def check_terms(request):
 def accept_terms(request):
     user = request.user
 
-    TermsAndConditions.objects.get_or_create(
-        user=user,
-        defaults={'terms_and_conditions': True}
-    )
+    updated = TermsAndConditions.objects.filter(user=user).update(terms_and_conditions=True)
+    if updated == 0:
+        TermsAndConditions.objects.create(user=user, terms_and_conditions=True)
 
     return Response({"message": "Successfully agreed to the terms and conditions"}, status=status.HTTP_202_ACCEPTED)
 
