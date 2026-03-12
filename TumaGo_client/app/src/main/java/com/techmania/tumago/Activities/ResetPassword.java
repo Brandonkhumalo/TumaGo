@@ -5,18 +5,13 @@ import android.os.Bundle;
 import android.text.InputType;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.TextView;
+import android.widget.Toast;
 
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
-import com.google.android.material.card.MaterialCardView;
 import com.techmania.tumago.Interface.ApiService;
 import com.techmania.tumago.Model.ResetPasswordModel;
 import com.techmania.tumago.R;
@@ -30,64 +25,20 @@ import retrofit2.Response;
 
 public class ResetPassword extends AppCompatActivity {
 
-    EditText password, passwordConfirm, oldPassword;
-    MaterialCardView changePass;
-    TextView passwordChanged, passwordUnchanged;
+    EditText oldPassword, newPassword, confirmPassword;
+    Button resetPasswordBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_reset_password);
 
-        Toolbar toolbar = findViewById(R.id.toolbarHome);
-        setSupportActionBar(toolbar);
-        toolbar.setNavigationOnClickListener(v -> onBackPressed());
-
-        passwordChanged = findViewById(R.id.passwordChanged);
-        passwordUnchanged = findViewById(R.id.passwordUnchanged);
-
         oldPassword = findViewById(R.id.oldPassword);
-        password = findViewById(R.id.passwordInput);
-        passwordConfirm = findViewById(R.id.passwordConfirm);
-        changePass = findViewById(R.id.changePassword);
+        newPassword = findViewById(R.id.passwordChanged);
+        confirmPassword = findViewById(R.id.passwordUnchanged);
+        resetPasswordBtn = findViewById(R.id.resetPassword);
 
-        ImageView togglePassword = findViewById(R.id.togglePassword);
-        ImageView togglePasswordConfirm = findViewById(R.id.togglePasswordConfirm);
         ImageView toggleOldPassword = findViewById(R.id.toggleOldPassword);
-
-        togglePassword.setOnClickListener(new View.OnClickListener() {
-            boolean isPasswordVisible = false;
-
-            @Override
-            public void onClick(View v) {
-                if (isPasswordVisible) {
-                    password.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-                    togglePassword.setImageResource(R.drawable.pass); // closed eye icon
-                } else {
-                    password.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
-                    togglePassword.setImageResource(R.drawable.pass); // open eye icon
-                }
-                isPasswordVisible = !isPasswordVisible;
-                password.setSelection(password.length()); // Keep cursor at the end
-            }
-        });
-
-        togglePasswordConfirm.setOnClickListener(new View.OnClickListener() {
-            boolean isPasswordVisible = false;
-
-            @Override
-            public void onClick(View v) {
-                if (isPasswordVisible) {
-                    passwordConfirm.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-                    togglePasswordConfirm.setImageResource(R.drawable.pass); // closed eye icon
-                } else {
-                    passwordConfirm.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
-                    togglePasswordConfirm.setImageResource(R.drawable.pass); // open eye icon
-                }
-                isPasswordVisible = !isPasswordVisible;
-                passwordConfirm.setSelection(passwordConfirm.length()); // Keep cursor at the end
-            }
-        });
 
         toggleOldPassword.setOnClickListener(new View.OnClickListener() {
             boolean isPasswordVisible = false;
@@ -96,17 +47,17 @@ public class ResetPassword extends AppCompatActivity {
             public void onClick(View v) {
                 if (isPasswordVisible) {
                     oldPassword.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-                    toggleOldPassword.setImageResource(R.drawable.pass); // closed eye icon
+                    toggleOldPassword.setImageResource(R.drawable.pass);
                 } else {
                     oldPassword.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
-                    toggleOldPassword.setImageResource(R.drawable.pass); // open eye icon
+                    toggleOldPassword.setImageResource(R.drawable.pass);
                 }
                 isPasswordVisible = !isPasswordVisible;
-                oldPassword.setSelection( oldPassword.length()); // Keep cursor at the end
+                oldPassword.setSelection(oldPassword.length());
             }
         });
 
-        changePass.setOnClickListener(v -> {
+        resetPasswordBtn.setOnClickListener(v -> {
             ChangePassword();
         });
     }
@@ -116,8 +67,8 @@ public class ResetPassword extends AppCompatActivity {
         String authBearer = "Bearer " + accessToken;
 
         String old_password = oldPassword.getText().toString();
-        String new_password = password.getText().toString();
-        String confirm_password = passwordConfirm.getText().toString();
+        String new_password = newPassword.getText().toString();
+        String confirm_password = confirmPassword.getText().toString();
 
         if (!accessToken.isEmpty() && !old_password.isEmpty() && !new_password.isEmpty() && !confirm_password.isEmpty()) {
             ResetPasswordModel resetPasswordModel = new ResetPasswordModel(confirm_password, new_password, old_password);
@@ -129,23 +80,22 @@ public class ResetPassword extends AppCompatActivity {
                 @Override
                 public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                     if (response.isSuccessful()){
-                        passwordChanged.setVisibility(View.VISIBLE);
+                        Toast.makeText(ResetPassword.this, "Password changed successfully", Toast.LENGTH_SHORT).show();
+                        finish();
                     } else {
-                        passwordUnchanged.setVisibility(View.VISIBLE);
+                        Toast.makeText(ResetPassword.this, "Failed to change password", Toast.LENGTH_SHORT).show();
                         Log.d("PASSWORD NOT CHANGED", response.message());
                     }
                 }
 
                 @Override
                 public void onFailure(Call<ResponseBody> call, Throwable t) {
-
+                    Toast.makeText(ResetPassword.this, "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
                 }
             });
 
         } else {
-            Intent intent = new Intent(ResetPassword.this, MainActivity.class);
-            startActivity(intent);
-            finish();
+            Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
         }
     }
 }

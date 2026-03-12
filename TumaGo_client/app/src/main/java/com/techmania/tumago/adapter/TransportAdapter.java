@@ -48,6 +48,7 @@ public class TransportAdapter extends RecyclerView.Adapter<TransportAdapter.card
             public void onClick(View v) {
                 Intent intent = new Intent(context, ConfirmDelivery.class);
                 intent.putExtra("transportName", transportmodel.getTransportName());
+                intent.putExtra("transportImage", transportmodel.getImageName());
                 intent.putExtra("price", transportmodel.getPrice());
                 context.startActivity(intent);
             }

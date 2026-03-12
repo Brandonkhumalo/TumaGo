@@ -150,7 +150,7 @@ services:
       REDIS_URL: redis://redis:6379
       FIREBASE_CREDENTIALS_PATH: /secrets/firebase-credentials.json
     volumes:
-      - ${FIREBASE_CREDENTIALS_FILE}:/secrets/firebase-credentials.json:ro
+      - ${FIREBASE_CREDENTIALS_FILE:-./notification/firebase-credentials.json}:/secrets/firebase-credentials.json:ro
     depends_on:
       - redis
     restart: always

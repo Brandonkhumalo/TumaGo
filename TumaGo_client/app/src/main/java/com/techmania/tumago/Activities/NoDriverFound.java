@@ -6,20 +6,20 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.google.android.material.card.MaterialCardView;
+import android.widget.Button;
 import com.techmania.tumago.R;
 import com.techmania.tumago.helper.NetworkUtils;
 
 public class NoDriverFound extends AppCompatActivity {
 
-    MaterialCardView goBack;
+    Button goBack;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_no_driver_found);
 
-        goBack = findViewById(R.id.goback);
+        goBack = findViewById(R.id.goHome);
 
         goBack.setOnClickListener(v -> {
             Intent intent = new Intent(this, MainActivity.class);

@@ -113,7 +113,7 @@ public class Finances extends AppCompatActivity {
 
     public void getFinances(){
         String accessToken = Token.getAccessToken(this);
-        if (accessToken != null & !accessToken.isEmpty()){
+        if (accessToken != null && !accessToken.isEmpty()){
             String authHeader = "Bearer " + accessToken;
 
             ApiService apiService = ApiClient.getClient().create(ApiService.class);

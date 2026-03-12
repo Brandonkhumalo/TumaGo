@@ -16,7 +16,7 @@ public class ApiClient {
     // Development:  http://10.0.2.2:8000/   (emulator → localhost)
     // Local device: http://192.168.x.x:8000/
     // Production:   https://api.tumago.com/
-    private static final String BASE_URL = "http://192.168.8.147:8000/";
+    private static final String BASE_URL = "http://13.246.35.254/";
 
     private static final int MAX_RETRIES       = 3;
     private static final int CONNECT_TIMEOUT_S = 15;

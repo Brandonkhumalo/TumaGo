@@ -20,7 +20,7 @@
     </style>
 
     <style name="TumaGoToolbar" parent="Widget.MaterialComponents.Toolbar">
-        <item name="android:background">@color/white</item>
+        <item name="android:background">@color/card_bg</item>
         <item name="titleTextColor">@color/dark_blue</item>
         <item name="subtitleTextColor">@color/secondary_text</item>
     </style>

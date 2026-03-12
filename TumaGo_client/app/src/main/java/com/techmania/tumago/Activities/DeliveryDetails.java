@@ -29,12 +29,14 @@ public class DeliveryDetails extends AppCompatActivity {
     String vehicle_color, vehicle, vehicle_model;
     MaterialCardView cancelDelivery, goHome;
     LinearLayout layout1, layout2;
-    String delivery_id = Token.getDelivery_id(this);
+    String delivery_id;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_delivery_details);
+
+        delivery_id = Token.getDelivery_id(this);
 
         layout1 = findViewById(R.id.Layout1);
         layout2 = findViewById(R.id.Layout2);

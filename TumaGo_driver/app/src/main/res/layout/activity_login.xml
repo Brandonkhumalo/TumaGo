@@ -6,6 +6,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
     android:background="@color/page_bg"
     android:fillViewport="true"
     tools:context=".auth.Login">
@@ -126,7 +127,7 @@
             android:textSize="16sp"
             android:textColor="@color/primary"
             android:fontFamily="sans-serif-medium"
-            android:backgroundTint="@color/white"
+            android:backgroundTint="@color/card_bg"
             android:strokeColor="@color/primary"
             android:layout_marginBottom="24dp"/>
 

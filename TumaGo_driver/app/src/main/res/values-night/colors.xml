@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark mode overrides — brand colors (primary, primary_dark, etc.) stay unchanged -->
+    <color name="page_bg">#121212</color>
+    <color name="card_bg">#1E1E1E</color>
+    <color name="input_bg">#2A2A2A</color>
+    <color name="input_border">#1A5276</color>
+    <color name="blackish">#E0E0E0</color>
+    <color name="hint_text">#707070</color>
+    <color name="secondary_text">#9E9E9E</color>
+    <color name="divider">#2C2C2C</color>
+    <color name="grey">#424242</color>
+    <color name="ripple_blue">#2600a4e4</color>
+</resources>

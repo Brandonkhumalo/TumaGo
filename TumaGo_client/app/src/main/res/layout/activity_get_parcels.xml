@@ -5,6 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
     android:orientation="vertical"
     android:background="@color/page_bg"
     tools:context=".Activities.GetParcels">
@@ -14,7 +15,7 @@
         android:id="@+id/AppBarLayoutHome"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/white"
+        android:background="@color/card_bg"
         app:elevation="2dp">
 
         <com.google.android.material.appbar.MaterialToolbar
@@ -86,8 +87,53 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/DeliveryRecycleView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:padding="16dp"
         android:clipToPadding="false"/>
+
+    <!-- Pagination controls -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:background="@color/card_bg"
+        android:elevation="4dp"
+        android:paddingHorizontal="16dp">
+
+        <ImageView
+            android:id="@+id/prevPage"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@drawable/back"
+            android:padding="8dp"
+            android:scaleType="fitCenter"
+            android:tint="@color/dark_blue"
+            android:contentDescription="Previous page"/>
+
+        <TextView
+            android:id="@+id/pageNumberTextView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="1"
+            android:textSize="15sp"
+            android:textColor="@color/dark_blue"
+            android:fontFamily="sans-serif-medium"
+            android:gravity="center"/>
+
+        <ImageView
+            android:id="@+id/nextPage"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@drawable/back"
+            android:rotation="180"
+            android:padding="8dp"
+            android:scaleType="fitCenter"
+            android:tint="@color/dark_blue"
+            android:contentDescription="Next page"/>
+
+    </LinearLayout>
 
 </LinearLayout>
