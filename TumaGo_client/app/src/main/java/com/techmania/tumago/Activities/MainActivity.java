@@ -92,7 +92,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private final String API_KEY = "AIzaSyAVw3B6eS91Vw5aBew8cCoTwhu2zy3atiI";
 
     RecyclerView mainRecycler;
-    CardView scooter, logout;
+    CardView scooter;
+    LinearLayout logout;
     TransportAdapter transportAdapter;
     ArrayList<TransportModel> arrayList;
     LinearLayout menuList, UserProfile, parcels;
@@ -105,6 +106,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     double TruckPrice;
 
     SendFCMtoken sendFCMtoken = new SendFCMtoken();
+    private static boolean userDataFetched = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -196,8 +198,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             Toast.makeText(this, "No internet connection", Toast.LENGTH_LONG).show();
         }
 
-        // Start monitoring changes
-        NetworkUtils.registerNetworkCallback(this);
     }
 
     private void requestLocationPermission() {
@@ -355,37 +355,50 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         if (accessToken == null || accessToken.isEmpty()) {
             Toast.makeText(this, "Please Log in", Toast.LENGTH_SHORT).show();
-            //Navigate to login screen
             Intent intent = new Intent(MainActivity.this, Login.class);
             startActivity(intent);
             finish();
-        } else {
-            GetUserData.GetData(MainActivity.this, accessToken, new UserCallback() {
-                @Override
-                public void onUserDataReceived(String name, String surname, String phoneNumber
-                        ,String email, double rating, String street, String addressLine, String province
-                        ,String city, String postalCode, String role) {
-                    // user the userData here
-                    mainUsername.setText(name);
-                    mainRating.setText(String.valueOf(rating));
-
-                    FirebaseMessaging.getInstance().getToken()
-                            .addOnCompleteListener(task -> {
-                                if (task.isSuccessful()) {
-                                    String token = task.getResult();
-                                    sendFCMtoken.sendFcmTokenToBackend(token, accessToken);
-                                } else {
-                                    Log.w("FCM", "Fetching FCM registration token failed", task.getException());
-                                }
-                            });
-                }
-
-                @Override
-                public void onFailure(Throwable t) {
-                    Log.e("API", "Error: " + t.getMessage());
-                }
-            });
+            return;
         }
+
+        SharedPreferences cache = getSharedPreferences("app_cache", MODE_PRIVATE);
+        String cachedName = cache.getString("user_name", null);
+
+        if (userDataFetched && cachedName != null) {
+            mainUsername.setText(cachedName);
+            mainRating.setText(cache.getString("user_rating", "0.0"));
+            return;
+        }
+
+        userDataFetched = true;
+        GetUserData.GetData(MainActivity.this, accessToken, new UserCallback() {
+            @Override
+            public void onUserDataReceived(String name, String surname, String phoneNumber
+                    ,String email, double rating, String street, String addressLine, String province
+                    ,String city, String postalCode, String role) {
+                mainUsername.setText(name);
+                mainRating.setText(String.valueOf(rating));
+                cache.edit()
+                        .putString("user_name", name)
+                        .putString("user_rating", String.valueOf(rating))
+                        .apply();
+
+                FirebaseMessaging.getInstance().getToken()
+                        .addOnCompleteListener(task -> {
+                            if (task.isSuccessful()) {
+                                String token = task.getResult();
+                                sendFCMtoken.sendFcmTokenToBackend(token, accessToken);
+                            } else {
+                                Log.w("FCM", "Fetching FCM registration token failed", task.getException());
+                            }
+                        });
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                Log.e("API", "Error: " + t.getMessage());
+            }
+        });
     }
 
     public void GetTripExpense(double distance2) {
@@ -423,34 +436,41 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void checkUserTerms(){
         String accessToken = Token.getAccessToken(this);
 
-        if (accessToken != null && !accessToken.isEmpty()) {
-            String authHeader = "Bearer " + accessToken;
-
-            ApiService apiService = ApiClient.getClient().create(ApiService.class);
-            Call<ResponseBody> call = apiService.checkTerms(authHeader);
-            call.enqueue(new Callback<ResponseBody>() {
-                @Override
-                public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-                    if (response.isSuccessful()) {
-                        getUserData(accessToken);
-                    } else {
-                        Intent terms = new Intent(MainActivity.this, TermsAgreement.class);
-                        startActivity(terms);
-                        finish();
-                    }
-                }
-
-                @Override
-                public void onFailure(Call<ResponseBody> call, Throwable t) {
-                    Log.d("Failed", t.getMessage());
-                }
-            });
-        } else {
+        if (accessToken == null || accessToken.isEmpty()) {
             Intent i = new Intent(MainActivity.this, Login.class);
             startActivity(i);
             finish();
-            Log.d("Failed", "Token is null or empty");
+            return;
         }
+
+        SharedPreferences cache = getSharedPreferences("app_cache", MODE_PRIVATE);
+        if (cache.getBoolean("terms_accepted", false)) {
+            getUserData(accessToken);
+            return;
+        }
+
+        String authHeader = "Bearer " + accessToken;
+        ApiService apiService = ApiClient.getClient().create(ApiService.class);
+        Call<ResponseBody> call = apiService.checkTerms(authHeader);
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                if (response.isSuccessful()) {
+                    cache.edit().putBoolean("terms_accepted", true).apply();
+                    getUserData(accessToken);
+                } else {
+                    Intent terms = new Intent(MainActivity.this, TermsAgreement.class);
+                    terms.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(terms);
+                    finish();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                Log.d("Failed", t.getMessage());
+            }
+        });
     }
 
     public void logOut(){
