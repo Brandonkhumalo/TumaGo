@@ -51,7 +51,9 @@ func main() {
 	}
 
 	// WebSocket — location service (pass through, no rate limit).
+	// Register both with and without trailing slash — Android client sends trailing slash.
 	mux.Handle("/ws/driver_location", locationProxy)
+	mux.Handle("/ws/driver_location/", locationProxy)
 
 	// Internal matching endpoint — block external access.
 	mux.Handle("/internal/match/", internalOnly(matchingProxy))
