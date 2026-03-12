@@ -59,6 +59,7 @@ func main() {
 	})
 
 	mux.HandleFunc("/ws/driver_location", handleDriverWS(rdb))
+	mux.HandleFunc("/ws/driver_location/", handleDriverWS(rdb))
 
 	// ---------- server ----------
 	srv := &http.Server{
