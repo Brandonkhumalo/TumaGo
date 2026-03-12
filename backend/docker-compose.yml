@@ -109,6 +109,22 @@ services:
       - pgbouncer
     restart: always
 
+  # ── Notification Service (FCM push) ──────────────────────────────────
+  notification:
+    build:
+      context: ./notification
+      dockerfile: Dockerfile
+    expose:
+      - "8003"
+    environment:
+      REDIS_URL: redis://redis:6379
+      FIREBASE_CREDENTIALS_PATH: /secrets/firebase-credentials.json
+    volumes:
+      - ${FIREBASE_CREDENTIALS_FILE:-./notification/firebase-credentials.json}:/secrets/firebase-credentials.json:ro
+    depends_on:
+      - redis
+    restart: always
+
   # ── Redis ───────────────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine

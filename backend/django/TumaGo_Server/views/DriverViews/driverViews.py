@@ -138,7 +138,7 @@ def RequestDelivery(request):
 
         # Launch background countdown task with trip ID
         try:
-            retry_trip_matching.send(str(trip.id), str(user_id), delivery_data_clean, countdown_seconds=10)
+            retry_trip_matching.send(str(trip.id), str(user_id), delivery_data_clean)
         except Exception as e:
             logger.error(f"Failed to start background task: {e}")
 
