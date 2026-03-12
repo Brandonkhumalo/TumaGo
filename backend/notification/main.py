@@ -57,20 +57,33 @@ def init_firebase():
     logger.info("Firebase initialised")
 
 
-async def consume_redis_events(redis_client: aioredis.Redis):
-    """Background task: subscribe to Redis pub/sub and dispatch FCM on each message."""
-    pubsub = redis_client.pubsub()
-    await pubsub.subscribe(*NOTIFY_CHANNELS)
-    logger.info(f"Subscribed to Redis channels: {NOTIFY_CHANNELS}")
-
-    async for message in pubsub.listen():
-        if message["type"] != "message":
-            continue
+async def consume_redis_events(redis_url: str):
+    """Background task: subscribe to Redis pub/sub and dispatch FCM on each message.
+    Reconnects automatically if the connection drops."""
+    while True:
         try:
-            payload = json.loads(message["data"])
-            await asyncio.get_event_loop().run_in_executor(None, _send_fcm, payload)
+            redis_client = await aioredis.from_url(redis_url, decode_responses=True)
+            pubsub = redis_client.pubsub()
+            await pubsub.subscribe(*NOTIFY_CHANNELS)
+            logger.info(f"Subscribed to Redis channels: {NOTIFY_CHANNELS}")
+
+            async for message in pubsub.listen():
+                if message["type"] != "message":
+                    continue
+                try:
+                    payload = json.loads(message["data"])
+                    loop = asyncio.get_running_loop()
+                    await loop.run_in_executor(None, _send_fcm, payload)
+                except Exception as e:
+                    logger.error(f"Event processing error: {e}")
+
+            # If listen() ends, the connection dropped — reconnect
+            logger.warning("Redis pub/sub connection ended, reconnecting...")
+        except asyncio.CancelledError:
+            raise
         except Exception as e:
-            logger.error(f"Event processing error: {e}")
+            logger.error(f"Redis consumer error: {e}, reconnecting in 3s...")
+            await asyncio.sleep(3)
 
 
 @asynccontextmanager
@@ -79,11 +92,15 @@ async def lifespan(app: FastAPI):
     redis_client = await aioredis.from_url(REDIS_URL, decode_responses=True)
     app.state.redis = redis_client
 
-    # Start background pub/sub consumer as a task
-    task = asyncio.create_task(consume_redis_events(redis_client))
+    # Start background pub/sub consumer as a task (manages its own connection for reconnect)
+    task = asyncio.create_task(consume_redis_events(REDIS_URL))
     logger.info("Notification service started")
     yield
     task.cancel()
+    try:
+        await task
+    except asyncio.CancelledError:
+        pass
     await redis_client.aclose()
     logger.info("Notification service stopped")
 
@@ -107,8 +124,7 @@ async def health():
 @app.post("/send")
 async def send_notification(payload: NotificationPayload):
     """Direct HTTP endpoint — called by Django when pub/sub is unavailable."""
-    import asyncio
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     success = await loop.run_in_executor(None, _send_fcm, payload.model_dump())
     return {"success": success}
 
@@ -139,4 +155,4 @@ def _send_fcm(payload: dict) -> bool:
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8003, workers=2, log_level="info")
+    uvicorn.run("main:app", host="0.0.0.0", port=8003, workers=1, log_level="info")
