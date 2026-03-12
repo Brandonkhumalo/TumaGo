@@ -317,33 +317,40 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void checkUserTerms(){
         String accessToken = Token.getAccessToken(this);
 
-        if (accessToken != null && !accessToken.isEmpty()) {
-            String authHeader = "Bearer " + accessToken;
-
-            ApiService apiService = ApiClient.getClient().create(ApiService.class);
-            Call<ResponseBody> call = apiService.checkTerms(authHeader);
-            call.enqueue(new Callback<ResponseBody>() {
-                @Override
-                public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-                    if (response.isSuccessful()) {
-                        getDriverData(accessToken);
-                    } else {
-                        Intent terms = new Intent(MainActivity.this, TermsAgreement.class);
-                        startActivity(terms);
-                        finish();
-                    }
-                }
-
-                @Override
-                public void onFailure(Call<ResponseBody> call, Throwable t) {
-                    Log.d("Failed", t.getMessage());
-                }
-            });
-        } else {
+        if (accessToken == null || accessToken.isEmpty()) {
             Intent i = new Intent(MainActivity.this, Login.class);
             startActivity(i);
             finish();
-            Log.d("Failed", "Token is null or empty");
+            return;
         }
+
+        SharedPreferences cache = getSharedPreferences("app_cache", MODE_PRIVATE);
+        if (cache.getBoolean("terms_accepted", false)) {
+            getDriverData(accessToken);
+            return;
+        }
+
+        String authHeader = "Bearer " + accessToken;
+        ApiService apiService = ApiClient.getClient().create(ApiService.class);
+        Call<ResponseBody> call = apiService.checkTerms(authHeader);
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                if (response.isSuccessful()) {
+                    cache.edit().putBoolean("terms_accepted", true).apply();
+                    getDriverData(accessToken);
+                } else {
+                    Intent terms = new Intent(MainActivity.this, TermsAgreement.class);
+                    terms.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(terms);
+                    finish();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                Log.d("Failed", t.getMessage());
+            }
+        });
     }
 }

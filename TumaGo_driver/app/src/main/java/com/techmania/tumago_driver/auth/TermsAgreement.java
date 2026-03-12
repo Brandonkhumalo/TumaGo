@@ -43,7 +43,10 @@ public class TermsAgreement extends AppCompatActivity {
                 @Override
                 public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                     if (response.isSuccessful()){
+                        getSharedPreferences("app_cache", MODE_PRIVATE)
+                                .edit().putBoolean("terms_accepted", true).apply();
                         Intent i = new Intent(TermsAgreement.this, MainActivity.class);
+                        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                         startActivity(i);
                         finish();
                     } else {
