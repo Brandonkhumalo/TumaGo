@@ -3,7 +3,8 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true">
 
     <!-- Map fills the entire screen -->
     <fragment
@@ -18,10 +19,9 @@
         android:layout_height="48dp"
         android:layout_gravity="top|start"
         android:layout_margin="16dp"
-        android:layout_marginTop="44dp"
         app:cardCornerRadius="24dp"
         app:cardElevation="6dp"
-        app:cardBackgroundColor="#FFFFFF">
+        app:cardBackgroundColor="@color/card_bg">
 
         <ImageView
             android:id="@+id/menuOption"
@@ -46,8 +46,9 @@
             android:layout_width="300dp"
             android:layout_height="match_parent"
             android:orientation="vertical"
-            android:background="@color/white"
-            android:layout_gravity="start">
+            android:background="@color/card_bg"
+            android:layout_gravity="start"
+            android:fitsSystemWindows="true">
 
             <!-- Header: close + user info -->
             <LinearLayout
@@ -55,8 +56,7 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:background="@color/primary"
-                android:padding="20dp"
-                android:paddingTop="44dp">
+                android:padding="20dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -292,6 +292,36 @@
 
                 </LinearLayout>
 
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@color/divider"
+                    android:layout_marginHorizontal="20dp"/>
+
+                <LinearLayout
+                    android:id="@+id/goToSettings"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="20dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_settings"
+                        android:layout_marginEnd="16dp"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Settings"
+                        android:textSize="16sp"
+                        android:fontFamily="sans-serif-medium"
+                        android:textColor="@color/blackish"/>
+
+                </LinearLayout>
+
             </LinearLayout>
 
             <!-- Logout button at bottom -->
@@ -299,7 +329,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="16dp"
-                android:background="@color/white"
+                android:background="@color/card_bg"
                 android:elevation="4dp">
 
                 <com.google.android.material.card.MaterialCardView
@@ -308,7 +338,7 @@
                     android:layout_height="52dp"
                     app:strokeColor="@color/primary"
                     app:strokeWidth="1.5dp"
-                    app:cardBackgroundColor="@color/white"
+                    app:cardBackgroundColor="@color/card_bg"
                     app:cardCornerRadius="12dp">
 
                     <LinearLayout

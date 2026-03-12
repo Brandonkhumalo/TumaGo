@@ -35,7 +35,7 @@
             android:exported="false" />
 
         <service
-            android:name=".helper.NoDriverFoundHelper"
+            android:name=".helper.ClientMessagingService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
@@ -66,9 +66,6 @@
             android:name=".auth.Login"
             android:exported="false" />
         <activity
-            android:name=".auth.EmailVerification"
-            android:exported="false" />
-        <activity
             android:name=".auth.Splash_screen"
             android:exported="true">
             <intent-filter>
@@ -77,6 +74,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".Activities.AppSettings"
+            android:exported="false" />
         <activity
             android:name=".Activities.MainActivity"
             android:exported="true" />

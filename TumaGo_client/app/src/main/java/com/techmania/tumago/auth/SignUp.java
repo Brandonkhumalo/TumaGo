@@ -1,30 +1,19 @@
 package com.techmania.tumago.auth;
 
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.InputType;
-import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import javax.mail.PasswordAuthentication;
-import javax.mail.Session;
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.Transport;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
 
 import androidx.appcompat.app.AppCompatActivity;
 import com.techmania.tumago.Interface.ApiService;
@@ -34,24 +23,24 @@ import com.techmania.tumago.R;
 import com.techmania.tumago.helper.ApiClient;
 import com.techmania.tumago.helper.Token;
 
-import java.util.Properties;
-import java.util.Random;
-
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 public class SignUp extends AppCompatActivity {
     TextView signin;
-    LinearLayout btnLayout;
+    Button btnLayout, nextPage, prevPage;
     EditText email, password;
-    CheckBox checked;
     ProgressBar progressBar;
     private Spinner spinnerCountryCode;
     private EditText phoneNumberInput;
     String countryCode;
-    int VerificationCode;
     private final String DEFAULT_COUNTRY = "🇿🇼 Zimbabwe";
+
+    // Page containers
+    LinearLayout infoRegister, dataForm;
+    TextView pageNumberTextView;
+    int currentPage = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,15 +49,21 @@ public class SignUp extends AppCompatActivity {
 
         signin = findViewById(R.id.signin);
         btnLayout = findViewById(R.id.regBtn);
+        nextPage = findViewById(R.id.nextPage);
+        prevPage = findViewById(R.id.prevPage);
         email = findViewById(R.id.emailInput);
         password = findViewById(R.id.passwordInput);
-        checked = findViewById(R.id.remember);
         progressBar = findViewById(R.id.progressSign);
         spinnerCountryCode = findViewById(R.id.spinnerCountryCode);
         phoneNumberInput = findViewById(R.id.phoneNumberInput);
+        infoRegister = findViewById(R.id.infoRegister);
+        dataForm = findViewById(R.id.dataForm);
+        pageNumberTextView = findViewById(R.id.pageNumberTextView);
 
         EditText passwordInput = findViewById(R.id.passwordInput);
         ImageView togglePassword = findViewById(R.id.togglePassword);
+        EditText passwordConfirm = findViewById(R.id.passwordConfirm);
+        ImageView togglePasswordConfirm = findViewById(R.id.togglePasswordConfirm);
 
         togglePassword.setOnClickListener(new View.OnClickListener() {
             boolean isPasswordVisible = false;
@@ -77,27 +72,38 @@ public class SignUp extends AppCompatActivity {
             public void onClick(View v) {
                 if (isPasswordVisible) {
                     passwordInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-                    togglePassword.setImageResource(R.drawable.pass); // closed eye icon
                 } else {
                     passwordInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
-                    togglePassword.setImageResource(R.drawable.pass); // open eye icon
                 }
                 isPasswordVisible = !isPasswordVisible;
-                passwordInput.setSelection(passwordInput.length()); // Keep cursor at the end
+                passwordInput.setSelection(passwordInput.length());
+            }
+        });
+
+        togglePasswordConfirm.setOnClickListener(new View.OnClickListener() {
+            boolean isPasswordVisible = false;
+
+            @Override
+            public void onClick(View v) {
+                if (isPasswordVisible) {
+                    passwordConfirm.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                } else {
+                    passwordConfirm.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+                }
+                isPasswordVisible = !isPasswordVisible;
+                passwordConfirm.setSelection(passwordConfirm.length());
             }
         });
 
         //PHONE NUMBER
-        // Spinner Adapter
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item
                 ,CountryCodes.getCountryNames());
         spinnerCountryCode.setAdapter(adapter);
 
         int defaultPosition = CountryCodes.getCountryNames().indexOf(DEFAULT_COUNTRY);
         spinnerCountryCode.setSelection(defaultPosition);
-        phoneNumberInput.setText(CountryCodes.getCode(DEFAULT_COUNTRY) + " "); // Pre-fill South Africa's code
-        phoneNumberInput.setSelection(phoneNumberInput.getText().length()); // Move cursor to end
-
+        phoneNumberInput.setText(CountryCodes.getCode(DEFAULT_COUNTRY) + " ");
+        phoneNumberInput.setSelection(phoneNumberInput.getText().length());
 
         // Handle Country Selection
         spinnerCountryCode.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -108,11 +114,42 @@ public class SignUp extends AppCompatActivity {
 
                 if (countryCode != null) {
                     phoneNumberInput.setText(countryCode + " ");
-                    phoneNumberInput.setSelection(phoneNumberInput.getText().length()); // Move cursor to end
+                    phoneNumberInput.setSelection(phoneNumberInput.getText().length());
                 }
             }
             @Override
             public void onNothingSelected(AdapterView<?> parent) {}
+        });
+
+        // Page navigation
+        nextPage.setOnClickListener(v -> {
+            if (currentPage == 1) {
+                // Validate page 1 fields
+                if (getRawPhoneNumber().isEmpty()) {
+                    Toast.makeText(this, "Please enter your phone number", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                // Move to page 2
+                currentPage = 2;
+                infoRegister.setVisibility(View.GONE);
+                dataForm.setVisibility(View.VISIBLE);
+                prevPage.setVisibility(View.VISIBLE);
+                nextPage.setVisibility(View.GONE);
+                btnLayout.setVisibility(View.VISIBLE);
+                pageNumberTextView.setText("Step 2 of 2");
+            }
+        });
+
+        prevPage.setOnClickListener(v -> {
+            if (currentPage == 2) {
+                currentPage = 1;
+                dataForm.setVisibility(View.GONE);
+                infoRegister.setVisibility(View.VISIBLE);
+                prevPage.setVisibility(View.GONE);
+                nextPage.setVisibility(View.VISIBLE);
+                btnLayout.setVisibility(View.GONE);
+                pageNumberTextView.setText("Step 1 of 2");
+            }
         });
 
         btnLayout.setOnClickListener(new View.OnClickListener() {
@@ -127,19 +164,6 @@ public class SignUp extends AppCompatActivity {
             public void onClick(View v) {
                 Intent i = new Intent(SignUp.this, Login.class);
                 startActivity(i);
-            }
-        });
-
-        checked.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    // Checkbox is checked
-                    checked.setChecked(true);
-                } else {
-                    // Checkbox is unchecked
-                    checked.setChecked(false);
-                }
             }
         });
 
@@ -165,17 +189,10 @@ public class SignUp extends AppCompatActivity {
                         String accessToken = response.body().getAccess();
                         String refreshToken = response.body().getRefresh();
 
-                        if(checked.isChecked()){
-                            Token.storeToken(SignUp.this, accessToken, refreshToken);
-                        }
-
-                        String text = "Account Verification Email";
-                        generateCode();
-                        sendEmail(email, text, VerificationCode);
+                        Token.storeToken(SignUp.this, accessToken, refreshToken);
 
                         progressBar.setVisibility(View.GONE);
-                        Intent i = new Intent(SignUp.this, EmailVerification.class);
-                        i.putExtra("email", email);
+                        Intent i = new Intent(SignUp.this, UserInfo.class);
                         startActivity(i);
                         finish();
                     } else {
@@ -186,6 +203,7 @@ public class SignUp extends AppCompatActivity {
 
                 @Override
                 public void onFailure(Call<TokenResponse> call, Throwable t) {
+                    progressBar.setVisibility(View.GONE);
                     Toast.makeText(SignUp.this, "Failure: " + t.getMessage(), Toast.LENGTH_LONG).show();
                 }
             });
@@ -210,79 +228,4 @@ public class SignUp extends AppCompatActivity {
     public String getFullPhoneNumber() {
         return countryCode + getRawPhoneNumber();
     }
-
-    public void generateCode(){
-        Random rand = new Random();
-        // Generate a 4-digit random number (between 1000 and 9999)
-        int randomNumber = rand.nextInt(90000) + 9000; // Range: 1000 to 9999
-        VerificationCode = randomNumber;
-    }
-
-    public void sendEmail(final String to, final String subject, final int body) {
-        new SendEmailTask(to, subject, body).execute();
-    }
-
-    private class SendEmailTask extends AsyncTask<Void, Void, Boolean> {
-        private final String to, subject;
-        private final int body;
-        private static final String FROM_EMAIL = "apex2.0predator@gmail.com";  // Sender email
-        private static final String PASSWORD = "hrobguwmsqgjkswf";  // Use App Password from Google
-
-        public SendEmailTask(String to, String subject, int body) {
-            this.to = to;
-            this.subject = subject;
-            this.body = body;
-        }
-
-        @Override
-        protected Boolean doInBackground(Void... voids) {
-            try {
-                Properties properties = new Properties();
-                properties.put("mail.smtp.host", "smtp.gmail.com");
-                properties.put("mail.smtp.port", "587");
-                properties.put("mail.smtp.auth", "true");
-                properties.put("mail.smtp.starttls.enable", "true");
-
-                Session session = Session.getInstance(properties, new javax.mail.Authenticator() {
-                    @Override
-                    protected PasswordAuthentication getPasswordAuthentication() {
-                        return new PasswordAuthentication(FROM_EMAIL, PASSWORD);
-                    }
-                });
-
-                Message message = new MimeMessage(session);
-                message.setFrom(new InternetAddress(FROM_EMAIL));
-                message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
-                message.setSubject(subject);
-                message.setText(String.valueOf(body)); // Convert int to string
-
-                Transport.send(message);
-                return true;
-            } catch (MessagingException e) {
-                Log.e("SendEmail", "Failed to send email", e);
-                return false;
-            }
-        }
-
-        @Override
-        protected void onPostExecute(Boolean success) {
-            progressBar.setVisibility(View.VISIBLE);
-            if (success) {
-                progressBar.setVisibility(View.GONE);
-                Intent i = new Intent();
-                i.putExtra("VerificationCode", VerificationCode);
-            } else {
-                Log.e("SendEmail", "Failed to send email!");
-                progressBar.setVisibility(View.GONE);
-            }
-        }
-    }
 }
-
-
-
-
-
-
-
-

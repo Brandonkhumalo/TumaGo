@@ -20,6 +20,7 @@ import com.techmania.tumago_driver.Interface.ApiService;
 import com.techmania.tumago_driver.R;
 import com.techmania.tumago_driver.activities.MainActivity;
 import com.techmania.tumago_driver.helpers.ApiClient;
+import com.techmania.tumago_driver.helpers.ThemeHelper;
 
 import okhttp3.ResponseBody;
 import retrofit2.Call;
@@ -35,6 +36,7 @@ public class splash_screen extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        ThemeHelper.applyTheme(this);
         setContentView(R.layout.activity_splash_screen);
 
         imageSplash = findViewById(R.id.imageSplash);

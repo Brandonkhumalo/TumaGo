@@ -2,6 +2,7 @@ package com.techmania.tumago_driver.activities;
 
 import android.Manifest;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
@@ -59,7 +60,7 @@ import retrofit2.Response;
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     FrameLayout menuList;
-    LinearLayout UserProfile, upload, deliveries, finances;
+    LinearLayout UserProfile, upload, deliveries, finances, settings;
     ImageView menu, close;
     TextView mainUsername, mainRating;
     CardView logout;
@@ -75,6 +76,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private WebSocketLocationClient webSocketClient;
     SendFCMtoken sendFCMtoken = new SendFCMtoken();
+    private static boolean userDataFetched = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,6 +101,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         upload = findViewById(R.id.upload);
         deliveries = findViewById(R.id.deliveries);
         finances = findViewById(R.id.finances);
+        settings = findViewById(R.id.goToSettings);
 
         checkUserTerms();
 
@@ -116,6 +119,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         upload.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, UploadLicenseActivity.class)));
         deliveries.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, GetDeliveries.class)));
         finances.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, Finances.class)));
+        settings.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, AppSettings.class)));
 
         logout.setOnClickListener(v -> logOut());
 
@@ -272,42 +276,59 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (accessToken == null || accessToken.isEmpty()) {
             startActivity(new Intent(MainActivity.this, Login.class));
             finish();
-        } else {
-            GetDriverData.GetData(MainActivity.this, accessToken, new DriverCallback() {
-                @Override
-                public void onDriverDataReceived(String name, String surname, String phoneNumber, String email,
-                                                 double rating, String street, String addressLine, String province,
-                                                 String city, String postalCode, String role, Boolean verified, Boolean license) {
-                    mainUsername.setText(name);
-                    mainRating.setText(String.valueOf(rating));
-
-                    if (license == null || Boolean.FALSE.equals(license)){
-                        Intent intent = new Intent(MainActivity.this, UploadLicenseActivity.class);
-                        startActivity(intent);
-                    }
-
-                    FirebaseMessaging.getInstance().getToken()
-                            .addOnCompleteListener(task -> {
-                                if (task.isSuccessful()) {
-                                    String token = task.getResult();
-                                    sendFCMtoken.sendFcmTokenToBackend(token, accessToken);
-                                } else {
-                                    Log.w("FCM", "Fetching FCM registration token failed", task.getException());
-                                }
-                            });
-                }
-
-                @Override
-                public void onFailure(Throwable t) {
-                    Log.e("API", "Error: " + t.getMessage());
-                }
-            });
+            return;
         }
+
+        if (userDataFetched) {
+            SharedPreferences cache = getSharedPreferences("app_cache", MODE_PRIVATE);
+            String cachedName = cache.getString("driver_name", null);
+            if (cachedName != null) {
+                mainUsername.setText(cachedName);
+                mainRating.setText(cache.getString("driver_rating", ""));
+                return;
+            }
+        }
+
+        GetDriverData.GetData(MainActivity.this, accessToken, new DriverCallback() {
+            @Override
+            public void onDriverDataReceived(String name, String surname, String phoneNumber, String email,
+                                             double rating, String street, String addressLine, String province,
+                                             String city, String postalCode, String role, Boolean verified, Boolean license) {
+                userDataFetched = true;
+                getSharedPreferences("app_cache", MODE_PRIVATE).edit()
+                        .putString("driver_name", name)
+                        .putString("driver_rating", String.valueOf(rating))
+                        .apply();
+                mainUsername.setText(name);
+                mainRating.setText(String.valueOf(rating));
+
+                if (license == null || Boolean.FALSE.equals(license)){
+                    Intent intent = new Intent(MainActivity.this, UploadLicenseActivity.class);
+                    startActivity(intent);
+                }
+
+                FirebaseMessaging.getInstance().getToken()
+                        .addOnCompleteListener(task -> {
+                            if (task.isSuccessful()) {
+                                String token = task.getResult();
+                                sendFCMtoken.sendFcmTokenToBackend(token, accessToken);
+                            } else {
+                                Log.w("FCM", "Fetching FCM registration token failed", task.getException());
+                            }
+                        });
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                Log.e("API", "Error: " + t.getMessage());
+            }
+        });
     }
 
     public void logOut() {
         String accessToken = Token.getAccessToken(this);
         if (accessToken != null && !accessToken.isEmpty()) {
+            userDataFetched = false;
             LogOutUser.LogOut(this, accessToken);
         } else {
             Log.d("AccessToken", "No accessToken");

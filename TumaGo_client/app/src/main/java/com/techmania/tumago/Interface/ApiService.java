@@ -31,7 +31,7 @@ public interface ApiService {
     @POST("accept/terms/")
     Call<ResponseBody> acceptTerms(@Header("Authorization") String authHeader);
 
-    @POST("verifyTerms/")
+    @GET("verifyTerms/")
     Call<ResponseBody> checkTerms(@Header("Authorization") String authHeader);
 
     @POST("logout/")

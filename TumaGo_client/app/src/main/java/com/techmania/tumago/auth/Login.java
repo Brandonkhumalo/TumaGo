@@ -9,7 +9,7 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
+import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -31,7 +31,7 @@ import retrofit2.Response;
 public class Login extends AppCompatActivity {
     TextView signup;
     EditText userName, pass;
-    LinearLayout loginBtn;
+    Button loginBtn;
     CheckBox checked;
     ProgressBar progressBar;
 
@@ -127,13 +127,20 @@ public class Login extends AppCompatActivity {
                         progressBar.setVisibility(View.GONE);
                     } else {
                         progressBar.setVisibility(View.GONE);
-                        Toast.makeText(Login.this, "Login failed, try again later", Toast.LENGTH_SHORT).show();
+                        String msg;
+                        if (response.code() == 400 || response.code() == 401) {
+                            msg = "Incorrect email or password";
+                        } else {
+                            msg = "Login failed, please try again";
+                        }
+                        Toast.makeText(Login.this, msg, Toast.LENGTH_SHORT).show();
                     }
                 }
 
                 @Override
                 public void onFailure(Call<TokenResponse> call, Throwable t) {
-                    Toast.makeText(Login.this, "Failure: " + t.getMessage(), Toast.LENGTH_LONG).show();
+                    progressBar.setVisibility(View.GONE);
+                    Toast.makeText(Login.this, "No connection, check your internet", Toast.LENGTH_LONG).show();
                     Log.d("Failure", t.getMessage());
                 }
             });

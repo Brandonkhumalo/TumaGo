@@ -51,7 +51,7 @@ public class UploadLicenseActivity extends AppCompatActivity {
         uploadButton = findViewById(R.id.uploadButton);
         cancelButton = findViewById(R.id.cancelButton);
 
-        apiService = ApiClient2.getClient("http://192.168.8.147:8000/").create(ApiService.class);
+        apiService = ApiClient2.getClient("http://13.246.35.254/").create(ApiService.class);
 
         selectButton.setOnClickListener(v -> openImagePicker());
 
@@ -64,7 +64,9 @@ public class UploadLicenseActivity extends AppCompatActivity {
         });
 
         cancelButton.setOnClickListener(v -> {
-            startActivity(new Intent(UploadLicenseActivity.this, MainActivity.class));
+            Intent i = new Intent(UploadLicenseActivity.this, MainActivity.class);
+            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(i);
             finish();
         });
     }
@@ -91,22 +93,7 @@ public class UploadLicenseActivity extends AppCompatActivity {
 
     private boolean isImageFile(Uri uri) {
         String type = getContentResolver().getType(uri);
-        if (type == null || !type.startsWith("image/")) {
-            return false;
-        }
-
-        String[] validExtensions = {"jpg", "jpeg", "png", "webp"};
-        String path = uri.getPath();
-        if (path != null) {
-            String lowerPath = path.toLowerCase();
-            for (String ext : validExtensions) {
-                if (lowerPath.endsWith("." + ext)) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
+        return type != null && type.startsWith("image/");
     }
 
     private void uploadImage(Uri imageUri) {
@@ -127,7 +114,9 @@ public class UploadLicenseActivity extends AppCompatActivity {
                 public void onResponse(Call<Void> call, Response<Void> response) {
                     if (response.isSuccessful()) {
                         Toast.makeText(UploadLicenseActivity.this, "Upload successful", Toast.LENGTH_SHORT).show();
-                        startActivity(new Intent(UploadLicenseActivity.this, MainActivity.class));
+                        Intent i = new Intent(UploadLicenseActivity.this, MainActivity.class);
+                        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                        startActivity(i);
                         finish();
                     } else {
                         Toast.makeText(UploadLicenseActivity.this, "Upload failed: " + response.message(), Toast.LENGTH_SHORT).show();

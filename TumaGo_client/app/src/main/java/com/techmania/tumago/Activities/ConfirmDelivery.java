@@ -7,7 +7,11 @@ import android.location.Geocoder;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -15,7 +19,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.material.card.MaterialCardView;
 import com.techmania.tumago.Interface.ApiService;
 import com.techmania.tumago.Model.DeliveryRequest;
 import com.techmania.tumago.R;
@@ -35,8 +38,9 @@ import retrofit2.Response;
 
 public class ConfirmDelivery extends AppCompatActivity {
     TextView fare, vehicle, pickup, dropoff;
-    MaterialCardView confirmDelivery;
-    LinearLayout look_for_driver;
+    LinearLayout confirmDelivery;
+    ProgressBar look_for_driver;
+    Spinner paymentSpinner;
     private LatLng originLatLng;
     private LatLng destLatLng;
 
@@ -64,8 +68,26 @@ public class ConfirmDelivery extends AppCompatActivity {
         Intent intent = getIntent();
         fareValue = intent.getDoubleExtra("price", 0);
         vehicleValue = intent.getStringExtra("transportName");
+        String vehicleImageName = intent.getStringExtra("transportImage");
         fare.setText("$" + fareValue);
         vehicle.setText(vehicleValue);
+
+        // Set vehicle image
+        if (vehicleImageName != null) {
+            ImageView vehicleImage = findViewById(R.id.vehicleImage);
+            int resId = getResources().getIdentifier(vehicleImageName, "drawable", getPackageName());
+            if (resId != 0) {
+                vehicleImage.setImageResource(resId);
+            }
+        }
+
+        // Set up payment spinner
+        paymentSpinner = findViewById(R.id.payment);
+        String[] paymentOptions = {"Cash", "Card"};
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item, paymentOptions);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        paymentSpinner.setAdapter(adapter);
 
         SharedPreferences prefs = getSharedPreferences("MyPrefs", MODE_PRIVATE);
 
@@ -80,7 +102,7 @@ public class ConfirmDelivery extends AppCompatActivity {
         getAddressFromLatLng(originLatLng, true);
         getAddressFromLatLng(destLatLng, false);
 
-        confirmDelivery.setOnClickListener(view -> {
+        findViewById(R.id.lookForTrip).setOnClickListener(view -> {
             LookForDriver();
         });
 
@@ -130,7 +152,7 @@ public class ConfirmDelivery extends AppCompatActivity {
         String authHeader = "Bearer " + accessToken;
 
         if (accessToken != null && !accessToken.isEmpty()){
-            String payment_method = "cash";
+            String payment_method = paymentSpinner.getSelectedItem().toString().toLowerCase();
 
             DeliveryRequest request = new DeliveryRequest(originLatLng, destLatLng, vehicleValue, fareValue, payment_method);
 

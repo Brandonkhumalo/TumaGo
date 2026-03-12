@@ -356,6 +356,11 @@ public class Navigation extends FragmentActivity implements OnMapReadyCallback {
             BigDecimal delivery_cost = getCost(this);
             String delivery_id = getDelivery_id(this);
 
+            if (delivery_id == null || delivery_cost == null) {
+                Toast.makeText(this, "Missing delivery info", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
             EndTrip endTrip = new EndTrip(delivery_id, selectedRating, delivery_cost);
 
             ApiService apiService = ApiClient.getClient().create(ApiService.class);

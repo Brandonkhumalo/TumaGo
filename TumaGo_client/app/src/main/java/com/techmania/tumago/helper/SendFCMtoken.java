@@ -14,7 +14,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class SendFCMtoken {
     public void sendFcmTokenToBackend(String fcmToken, String jwtToken) {
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://192.168.8.147:8000/")
+                .baseUrl("http://13.246.35.254/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 

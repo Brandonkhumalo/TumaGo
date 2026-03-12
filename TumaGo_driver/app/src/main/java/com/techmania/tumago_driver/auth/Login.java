@@ -9,6 +9,7 @@ import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -110,6 +111,13 @@ public class Login extends AppCompatActivity {
                     } else {
                         progressBar.setVisibility(View.GONE);
                         login.setEnabled(true);
+                        String msg;
+                        if (response.code() == 400 || response.code() == 401) {
+                            msg = "Incorrect email or password";
+                        } else {
+                            msg = "Login failed, please try again";
+                        }
+                        Toast.makeText(Login.this, msg, Toast.LENGTH_SHORT).show();
                         shakePinBoxes();
                     }
                 }
@@ -119,6 +127,7 @@ public class Login extends AppCompatActivity {
                     Log.e("Login Error", t.getMessage());
                     progressBar.setVisibility(View.GONE);
                     login.setEnabled(true);
+                    Toast.makeText(Login.this, "No connection, check your internet", Toast.LENGTH_LONG).show();
                 }
             });
         } else {

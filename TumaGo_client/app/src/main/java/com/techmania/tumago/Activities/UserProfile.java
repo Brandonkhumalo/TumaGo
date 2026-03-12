@@ -10,7 +10,7 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
-import com.google.android.material.card.MaterialCardView;
+import android.widget.Button;
 import com.techmania.tumago.Interface.ApiService;
 import com.techmania.tumago.Interface.UserCallback;
 import com.techmania.tumago.R;
@@ -25,7 +25,7 @@ import retrofit2.Response;
 
 public class UserProfile extends AppCompatActivity {
     TextView mainUsername, mainRating, mainName, mainPhonenumber, mainEmail, mainAddress;
-    MaterialCardView delete;
+    Button delete;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,7 +53,7 @@ public class UserProfile extends AppCompatActivity {
             }
         });
 
-        LinearLayout resetPassword = findViewById(R.id.resetPassword);
+        LinearLayout resetPassword = findViewById(R.id.changePassword);
         resetPassword.setOnClickListener(v -> {
             Intent i = new Intent(UserProfile.this, ResetPassword.class);
             startActivity(i);

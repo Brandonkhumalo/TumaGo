@@ -103,7 +103,7 @@ public class DeliveryAdapter extends RecyclerView.Adapter<DeliveryAdapter.cardvi
             destination = itemView.findViewById(R.id.destination);
             date = itemView.findViewById(R.id.date);
             delivery_id = itemView.findViewById(R.id.deliveryId);
-            fare = itemView.findViewById(R.id.price);
+            fare = itemView.findViewById(R.id.fare);
         }
     }
 }

@@ -96,7 +96,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     LinearLayout logout;
     TransportAdapter transportAdapter;
     ArrayList<TransportModel> arrayList;
-    LinearLayout menuList, UserProfile, parcels;
+    LinearLayout menuList, goToProfile, parcels, settings;
 
     ImageView menu, close;
     TextView mainUsername, mainRating;
@@ -125,12 +125,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         close = findViewById(R.id.close);
         mainUsername = findViewById(R.id.mainUsername);
         mainRating = findViewById(R.id.mainRating);
-        UserProfile = findViewById(R.id.goToProfile);
+        goToProfile = findViewById(R.id.goToProfile);
         logout = findViewById(R.id.logOut);
         parcels = findViewById(R.id.parcel);
+        settings = findViewById(R.id.goToSettings);
 
         mainRecycler = findViewById(R.id.mainRecycler);
-        mainRecycler.setLayoutManager(new LinearLayoutManager(this));
+        mainRecycler.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
 
         checkUserTerms();
 
@@ -155,6 +156,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             startActivity(intent);
         });
 
+        settings.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, AppSettings.class)));
+
         if (!Places.isInitialized()) {
             Places.initialize(getApplicationContext(), API_KEY);
         }
@@ -173,7 +176,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
-        UserProfile.setOnClickListener(new View.OnClickListener() {
+        goToProfile.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(MainActivity.this, UserProfile.class);
@@ -270,12 +273,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 saveLatLngToSharedPreferences();
 
                 scooter.setVisibility(View.VISIBLE);
-
-                destInput.setVisibility(View.GONE);
-                originInput.setOnClickListener(v -> {
-                    destInput.setVisibility(View.VISIBLE);
-                    scooter.setVisibility(View.GONE);
-                });
             }
 
             // Move camera after small delay to avoid race

@@ -72,7 +72,7 @@ docker compose version
 
 ```bash
 # Clone the repo
-git clone https://github.com/YOUR_USERNAME/TumaGo.git
+git clone https://github.com/Brandonkhumalo/TumaGo
 cd TumaGo/backend
 
 # Create .env from template

@@ -6,6 +6,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
     android:background="@color/page_bg"
     tools:context=".activities.DeliveryDetails">
 
@@ -23,7 +24,7 @@
         android:id="@+id/tripDetailsCard"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:cardBackgroundColor="@color/white"
+        app:cardBackgroundColor="@color/card_bg"
         app:cardCornerRadius="20dp"
         app:cardElevation="12dp"
         app:strokeWidth="0dp"

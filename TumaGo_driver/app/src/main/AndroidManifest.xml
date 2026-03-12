@@ -50,7 +50,7 @@
             android:exported="false" />
 
         <service
-            android:name=".helpers.ClientFoundHelper"
+            android:name=".helpers.DriverMessagingService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
@@ -70,13 +70,13 @@
             android:name=".auth.Transport"
             android:exported="false" />
         <activity
-            android:name=".auth.verification"
-            android:exported="false" />
-        <activity
             android:name=".auth.Login"
             android:exported="false" />
         <activity
             android:name=".auth.Register"
+            android:exported="false" />
+        <activity
+            android:name=".activities.AppSettings"
             android:exported="false" />
         <activity
             android:name=".activities.MainActivity"

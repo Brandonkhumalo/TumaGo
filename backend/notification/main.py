@@ -46,12 +46,19 @@ def init_firebase():
     global _firebase_initialised
     if _firebase_initialised:
         return
+
+    # Option 1: JSON file path (used by prod compose with volume mount)
     firebase_creds_path = os.environ.get("FIREBASE_CREDENTIALS_PATH", "")
-    if firebase_creds_path and os.path.exists(firebase_creds_path):
+    if firebase_creds_path and os.path.isfile(firebase_creds_path):
         cred = credentials.Certificate(firebase_creds_path)
+    # Option 2: JSON string in env var (used by t3small compose)
+    elif os.environ.get("FIREBASE_CREDENTIALS", "").startswith("{"):
+        cred_dict = json.loads(os.environ["FIREBASE_CREDENTIALS"])
+        cred = credentials.Certificate(cred_dict)
     else:
         # Fallback: Application Default Credentials (GCP / Cloud Run)
         cred = credentials.ApplicationDefault()
+
     firebase_admin.initialize_app(cred)
     _firebase_initialised = True
     logger.info("Firebase initialised")
