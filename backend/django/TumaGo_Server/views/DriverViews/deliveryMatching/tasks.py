@@ -13,6 +13,7 @@ import django
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "TumaGo.settings")
 django.setup()
 
+import time
 from decimal import Decimal
 import redis
 import dramatiq
@@ -44,13 +45,12 @@ def _wait_for_acceptance(trip_id: str, timeout: int) -> bool:
     pubsub.subscribe(channel)
 
     try:
-        # pubsub.listen() yields messages; get_message(timeout=...) is non-blocking poll
-        for message in pubsub.listen():
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            message = pubsub.get_message(timeout=1)
             if message and message['type'] == 'message':
                 if message['data'] == 'accepted':
                     return True
-            # Check once immediately then let listen() handle the rest
-        # Should not reach here — but treat as timeout
         return False
     finally:
         try:
@@ -108,9 +108,15 @@ def retry_trip_matching(trip_id: str, user_id: str, delivery_data: dict):
     requester_data = UserSerializer(user).data
 
     logger.info(f"Running TripData matching for trip {trip_id}")
-    TripData(requester_data, delivery_data, trip_id)
+    result = TripData(requester_data, delivery_data, trip_id)
 
-    # Wait for driver acceptance via Redis pub/sub (no sleep, no DB polling)
+    if result is None:
+        # No drivers available — no point waiting or retrying
+        logger.info(f"No drivers found for trip {trip_id} — notifying user")
+        no_driver_found(user)
+        return
+
+    # A driver was found and notified — wait for acceptance via Redis pub/sub
     accepted = _wait_for_acceptance(trip_id, WAIT_TIMEOUT_SECONDS)
 
     if accepted:
