@@ -18,6 +18,7 @@ import redis
 import dramatiq
 from dramatiq.errors import Retry
 from django.conf import settings
+from django.db import close_old_connections
 from ....models import TripRequest, CustomUser
 from ....serializers.userSerializer.authserializers import UserSerializer
 
@@ -81,6 +82,11 @@ def retry_trip_matching(trip_id: str, user_id: str, delivery_data: dict):
     """
     from ..deliveryMatching.delivery import TripData, no_driver_found
 
+    # Dramatiq workers are long-lived and don't go through Django's
+    # request/response cycle, so stale DB connections are never cleaned up.
+    # Close them before any DB access to avoid "connection already closed".
+    close_old_connections()
+
     try:
         trip = TripRequest.objects.get(id=trip_id)
     except TripRequest.DoesNotExist:
@@ -110,6 +116,9 @@ def retry_trip_matching(trip_id: str, user_id: str, delivery_data: dict):
     if accepted:
         logger.info(f"Trip {trip_id} accepted during wait — task complete")
         return
+
+    # Connection may have gone stale during the pub/sub wait
+    close_old_connections()
 
     # Not accepted — check DB one final time before re-queueing
     trip.refresh_from_db()
