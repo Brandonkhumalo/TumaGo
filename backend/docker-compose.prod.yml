@@ -169,7 +169,6 @@ services:
       --maxmemory 1gb
       --maxmemory-policy allkeys-lru
       --save ""
-      --requirepass ${REDIS_PASSWORD:-}
     volumes:
       - redis_data:/data
     restart: always
