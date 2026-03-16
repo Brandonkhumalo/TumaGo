@@ -23,6 +23,7 @@ import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import com.techmania.tumago_driver.BuildConfig;
 import com.techmania.tumago_driver.Interface.ApiService;
 import com.techmania.tumago_driver.R;
 import com.techmania.tumago_driver.activities.MainActivity;
@@ -84,9 +85,13 @@ public class DriverHeartbeatService extends Service {
                 Log.w(TAG, "No access token — cannot connect WebSocket");
                 return;
             }
-            String wsUrl = "ws://13.246.35.254/ws/driver_location/?token=" + token;
+            // Build WS URL from BASE_URL (strip http/https, use ws/wss)
+            String baseUrl = BuildConfig.BASE_URL;
+            String wsScheme = baseUrl.startsWith("https") ? "wss" : "ws";
+            String host = baseUrl.replaceFirst("https?://", "").replaceFirst("/$", "");
+            String wsUrl = wsScheme + "://" + host + "/ws/driver_location/";
             URI uri = new URI(wsUrl);
-            webSocketClient = new WebSocketLocationClient(uri);
+            webSocketClient = new WebSocketLocationClient(uri, token);
             webSocketClient.connect();
         } catch (Exception e) {
             Log.e(TAG, "WebSocket connection failed", e);

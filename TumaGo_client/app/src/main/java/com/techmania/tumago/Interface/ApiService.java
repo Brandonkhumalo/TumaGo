@@ -5,6 +5,9 @@ import com.techmania.tumago.Model.DeliveryRequest;
 import com.techmania.tumago.Model.Expense;
 import com.techmania.tumago.Model.FcmTokenRequest;
 import com.techmania.tumago.Model.LoginUser;
+import com.techmania.tumago.Model.PaymentRequest;
+import com.techmania.tumago.Model.PaymentResponse;
+import com.techmania.tumago.Model.PaymentStatusResponse;
 import com.techmania.tumago.Model.RateTrip;
 import com.techmania.tumago.Model.ResetPasswordModel;
 import com.techmania.tumago.Model.TokenResponse;
@@ -86,5 +89,19 @@ public interface ApiService {
     Call<ResponseBody> trackDelivery(
             @Query("delivery_id") String deliveryId,
             @Header("Authorization") String authToken
+    );
+
+    // --- Payments (Paynow) ---
+
+    @POST("api/v1/payment/initiate/")
+    Call<PaymentResponse> initiatePayment(
+            @Header("Authorization") String authHeader,
+            @Body PaymentRequest request
+    );
+
+    @GET("api/v1/payment/status/")
+    Call<PaymentStatusResponse> checkPaymentStatus(
+            @Header("Authorization") String authHeader,
+            @Query("payment_id") String paymentId
     );
 }

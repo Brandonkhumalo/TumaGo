@@ -28,16 +28,22 @@ import redis.asyncio as aioredis
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel
 
 import firebase_admin
 from firebase_admin import credentials, messaging
+from prometheus_client import Counter
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 REDIS_URL = os.environ.get("REDIS_URL", "redis://redis:6379")
 NOTIFY_CHANNELS = ["tumago:notify:driver", "tumago:notify:client"]
+
+# Prometheus counters for FCM push notifications.
+fcm_sent_total = Counter("notification_fcm_sent_total", "Total FCM messages sent successfully.")
+fcm_failed_total = Counter("notification_fcm_failed_total", "Total FCM messages that failed.")
 
 _firebase_initialised = False
 
@@ -113,7 +119,14 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="TumaGo Notification Service", lifespan=lifespan)
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["POST", "GET"])
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[os.getenv("CORS_ORIGINS", "http://localhost:8000").strip()],
+    allow_methods=["POST", "GET"],
+)
+
+# Prometheus metrics — exposes /metrics endpoint, scraped every 15s.
+Instrumentator().instrument(app).expose(app)
 
 
 class NotificationPayload(BaseModel):
@@ -155,9 +168,11 @@ def _send_fcm(payload: dict) -> bool:
     try:
         response = messaging.send(message)
         logger.info(f"FCM sent: {response}")
+        fcm_sent_total.inc()
         return True
     except Exception as e:
         logger.error(f"FCM error: {e}")
+        fcm_failed_total.inc()
         return False
 
 

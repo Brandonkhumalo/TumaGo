@@ -79,6 +79,11 @@ type gpsMessage struct {
 	Longitude float64 `json:"longitude"`
 }
 
+// authMessage is sent by the client as the first message after connecting.
+type authMessage struct {
+	Token string `json:"token"`
+}
+
 // handleDriverWS is the HTTP handler mounted at /ws/driver_location.
 func handleDriverWS(rdb *redis.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -89,15 +94,7 @@ func handleDriverWS(rdb *redis.Client) http.HandlerFunc {
 			return
 		}
 
-		token := r.URL.Query().Get("token")
-		driverID, err := validateToken(token)
-		if err != nil {
-			log.Printf("auth failed: %v", err)
-			// Reject before upgrade — send 403.
-			http.Error(w, "authentication failed", http.StatusForbidden)
-			return
-		}
-
+		// Upgrade first, then authenticate via the first message.
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			log.Printf("ws upgrade error: %v", err)
@@ -105,10 +102,39 @@ func handleDriverWS(rdb *redis.Client) http.HandlerFunc {
 		}
 		defer conn.Close()
 
+		// Client must send {"token":"<jwt>"} within 10 seconds.
+		_ = conn.SetReadDeadline(time.Now().Add(10 * time.Second))
+		_, raw, err := conn.ReadMessage()
+		if err != nil {
+			log.Printf("auth read timeout or error: %v", err)
+			conn.WriteMessage(websocket.CloseMessage,
+				websocket.FormatCloseMessage(websocket.ClosePolicyViolation, "auth timeout"))
+			return
+		}
+
+		var auth authMessage
+		if err := json.Unmarshal(raw, &auth); err != nil || auth.Token == "" {
+			conn.WriteMessage(websocket.CloseMessage,
+				websocket.FormatCloseMessage(websocket.ClosePolicyViolation, "invalid auth"))
+			return
+		}
+
+		driverID, err := validateToken(auth.Token)
+		if err != nil {
+			log.Printf("auth failed: %v", err)
+			wsAuthFailures.Inc()
+			conn.WriteMessage(websocket.CloseMessage,
+				websocket.FormatCloseMessage(websocket.ClosePolicyViolation, "authentication failed"))
+			return
+		}
+
 		log.Printf("driver %s connected", driverID)
+		wsConnectionsTotal.Inc()
+		wsConnectionsActive.Inc()
 
 		// Ensure cleanup on disconnect.
 		defer func() {
+			wsConnectionsActive.Dec()
 			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 			defer cancel()
 			rdb.ZRem(ctx, driverGeoKey, driverID)
@@ -163,6 +189,8 @@ func handleDriverWS(rdb *redis.Client) http.HandlerFunc {
 				continue
 			}
 
+			wsMessagesReceived.Inc()
+
 			ctx := context.Background()
 
 			// 1. Update Redis GEO set.
@@ -171,10 +199,12 @@ func handleDriverWS(rdb *redis.Client) http.HandlerFunc {
 				Longitude: msg.Longitude,
 				Latitude:  msg.Latitude,
 			})
+			redisGeoUpdates.Inc()
 
 			// 2. Upsert DB row (runs synchronously in the goroutine —
 			//    pgx pool handles concurrency).
 			upsertDriverLocation(ctx, driverID, msg.Latitude, msg.Longitude)
+			dbUpserts.Inc()
 		}
 	}
 }

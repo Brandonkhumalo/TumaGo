@@ -11,10 +11,13 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from ...serializers.driverSerializer.authSerializers import UserSerializer
 from ...serializers.driverSerializer.rideSerializers import DeliverySerializer
-from ...models import DriverFinances, DriverVehicle, TripRequest, Delivery, CustomUser
+from ...models import DriverFinances, DriverVehicle, TripRequest, Delivery, CustomUser, Payment, DriverBalance
 from .deliveryMatching.delivery import driver_found
 import googlemaps
+import logging
 from django.conf import settings
+
+logger = logging.getLogger(__name__)
 from TumaGo.firebase_init import initialize_firebase
 from calendar import monthrange
 from datetime import date, timedelta
@@ -51,7 +54,7 @@ def get_driver_data(request):
             # Keep the first one, delete the rest
             first_vehicle = driver_vehicles.first()
             driver_vehicles.exclude(id=first_vehicle.id).delete()
-            print("deleted")
+            logger.info("Deleted duplicate driver vehicles")
         
         return Response(driver_data.data, status=status.HTTP_200_OK)
     else:
@@ -149,7 +152,7 @@ def RequestDelivery(request):
 @permission_classes([IsAuthenticated])
 def AcceptTrip(request):
 
-    print("Trip Accepted")
+    logger.info("Trip %s accepted", trip_id)
 
     trip_id = request.data.get("trip_id")
     driver_id = request.user.id
@@ -188,10 +191,10 @@ def AcceptTrip(request):
             payment_method=payment_method
         )
 
-        # ✅ Get driver's vehicle
-        driver_vehicle = DriverVehicle.objects.filter(driver=driver).first()
+        # ✅ Get driver's vehicle (use driver already fetched — avoids N+1)
+        driver_vehicle = DriverVehicle.objects.select_related('driver').filter(driver=driver).first()
         if not driver_vehicle:
-            print('error Driver vehicle not found')
+            logger.warning("Driver vehicle not found for driver %s", driver.id)
             return Response({'error': 'Driver vehicle not found'}, status=status.HTTP_404_NOT_FOUND)
 
         # ✅ Build delivery payload (driver details + vehicle + trip info)
@@ -215,7 +218,7 @@ def AcceptTrip(request):
         }
 
         driver_found(client, deliveryData, str(delivery.delivery_id))
-        print("sent to client")
+        logger.info("Delivery details sent to client")
 
         # Ensure the user is a driver before updating availability
         if Driver.role == CustomUser.DRIVER:
@@ -228,7 +231,7 @@ def AcceptTrip(request):
             return Response({'error': 'User is not a driver'}, status=status.HTTP_400_BAD_REQUEST)
 
     except TripRequest.DoesNotExist:
-        print("Trip not found.")
+        logger.warning("Trip %s not found", trip_id)
         return Response({"error": "Trip not found"}, status=status.HTTP_404_NOT_FOUND)
 
     except Exception:
@@ -278,22 +281,38 @@ def end_trip(request):
 
         earnings = Decimal(delivery_cost)
         if driver_vehicle and driver_vehicle.lower() == "scooter":
-            charges = 0.20
+            charges = Decimal("0.20")
         elif driver_vehicle and driver_vehicle.lower() == "van":
-            charges = 0.30
+            charges = Decimal("0.30")
         elif driver_vehicle and driver_vehicle.lower() == "truck":
-            charges = 0.50
+            charges = Decimal("0.50")
         else:
-            charges = 0.10
+            charges = Decimal("0.10")
 
-        finances = DriverFinances( earnings, charges, driver=driver)
+        finances = DriverFinances(earnings=earnings, charges=charges, driver=driver)
         finances.save()
+
+        # If this delivery was paid online (card/ecocash/onemoney),
+        # the money went to the platform — track what we owe the driver.
+        payment_method = delivery.payment_method.lower()
+        if payment_method in ('card', 'ecocash', 'onemoney'):
+            driver_earnings = earnings - charges
+            balance, _ = DriverBalance.objects.get_or_create(driver=driver)
+            balance.owed_amount += driver_earnings
+            balance.save()
+
+            # Link the Payment record to this Delivery
+            Payment.objects.filter(
+                client=delivery.client,
+                amount=delivery.fare,
+                status=Payment.PAID,
+                delivery__isnull=True,
+            ).order_by('-created_at').update(delivery=delivery)
 
         if Driver.role == CustomUser.DRIVER:
             Driver.driver_available = True
             Driver.save()
-            return Response({'message': 'Driver availability set to false'}, 
-                            {"message": "Trip ended successfully"}, status=status.HTTP_200_OK)
+            return Response({"message": "Trip ended successfully"}, status=status.HTTP_200_OK)
         else:
             return Response({'error': 'User is not a driver'}, status=status.HTTP_400_BAD_REQUEST)
     
@@ -316,5 +335,5 @@ def get_deliveries(request):
     paginator = DeliveryCursorPagination()
     result_page = paginator.paginate_queryset(deliveries, request)
     serializer = DeliverySerializer(result_page, many=True)
-    print(serializer.data)
+    logger.debug("Delivery history query returned %d results", len(serializer.data))
     return paginator.get_paginated_response(serializer.data)

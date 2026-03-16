@@ -39,6 +39,18 @@ local.properties
 .DS_Store
 Thumbs.db
 
+# Internal docs (not for GitHub)
+readiness.md
+production.md
+launch.md
+launch.pdf
+driver_bot.md
+client_bot.md
+amazonemail.md
+CLAUDE.md
+.agents/
+.claude/
+
 # Firebase secrets
 backend/django/TumaGo/delivery.json
 **/firebase-credentials.json

@@ -97,6 +97,49 @@ public class Token {
         }
     }
 
+    public static void storePhoneNumber(Context context, String phoneNumber) {
+        try {
+            MasterKey masterKey = new MasterKey.Builder(context)
+                    .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                    .build();
+
+            SharedPreferences securePrefs = EncryptedSharedPreferences.create(
+                    context,
+                    "secure_prefs",
+                    masterKey,
+                    EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                    EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            );
+
+            securePrefs.edit().putString("phone_number", phoneNumber).apply();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static String getPhoneNumber(Context context) {
+        try {
+            MasterKey masterKey = new MasterKey.Builder(context)
+                    .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                    .build();
+
+            SharedPreferences securePrefs = EncryptedSharedPreferences.create(
+                    context,
+                    "secure_prefs",
+                    masterKey,
+                    EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                    EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            );
+
+            return securePrefs.getString("phone_number", "");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "";
+        }
+    }
+
     public static String getDelivery_id(Context context) {
         try {
             MasterKey masterKey = new MasterKey.Builder(context)

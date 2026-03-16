@@ -28,6 +28,7 @@ public class WebSocketLocationClient extends WebSocketClient {
     private static final long BACKOFF_MAX_MS     = 60_000L;
 
     private final URI serverUri;
+    private final String authToken;
     private final Handler handler = new Handler(Looper.getMainLooper());
 
     private int  reconnectAttempts = 0;
@@ -37,9 +38,10 @@ public class WebSocketLocationClient extends WebSocketClient {
     private double pendingLat = Double.NaN;
     private double pendingLng = Double.NaN;
 
-    public WebSocketLocationClient(URI serverUri) {
+    public WebSocketLocationClient(URI serverUri, String authToken) {
         super(serverUri);
         this.serverUri = serverUri;
+        this.authToken = authToken;
     }
 
     // ── WebSocketClient callbacks ───────────────────────────────────────────
@@ -48,6 +50,17 @@ public class WebSocketLocationClient extends WebSocketClient {
     public void onOpen(ServerHandshake handshakedata) {
         Log.d(TAG, "Connected to server");
         reconnectAttempts = 0;
+
+        // Send auth token as the first message (server expects {"token":"<jwt>"})
+        try {
+            JSONObject authJson = new JSONObject();
+            authJson.put("token", authToken);
+            send(authJson.toString());
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to send auth token", e);
+            close();
+            return;
+        }
 
         // Flush any location that was buffered while disconnected
         if (!Double.isNaN(pendingLat) && !Double.isNaN(pendingLng)) {

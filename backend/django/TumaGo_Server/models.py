@@ -89,7 +89,7 @@ class TermsAndConditions(models.Model):
     date = models.DateField(auto_now_add=True)
 
 class DriverLocations(models.Model):
-    driver = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='driver_locations')
+    driver = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='driver_locations')
     latitude = models.CharField(max_length=50, null=True, blank=True)
     longitude = models.CharField(max_length=50, null=True, blank=True)
     
@@ -163,6 +163,63 @@ class Delivery(models.Model):
             # Client delivery history lookup (client + date)
             models.Index(fields=['client', 'date'], name='idx_delivery_client_date'),
         ]
+
+class Payment(models.Model):
+    PENDING = 'pending'
+    PAID = 'paid'
+    FAILED = 'failed'
+    CANCELLED = 'cancelled'
+
+    STATUS_CHOICES = [
+        (PENDING, 'Pending'),
+        (PAID, 'Paid'),
+        (FAILED, 'Failed'),
+        (CANCELLED, 'Cancelled'),
+    ]
+
+    # Payment methods that go through Paynow (not cash)
+    CARD = 'card'
+    ECOCASH = 'ecocash'
+    ONEMONEY = 'onemoney'
+
+    PAYMENT_METHOD_CHOICES = [
+        (CARD, 'Card'),
+        (ECOCASH, 'EcoCash'),
+        (ONEMONEY, 'OneMoney'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    client = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='payments')
+    delivery = models.ForeignKey(
+        'Delivery', on_delete=models.SET_NULL, null=True, blank=True, related_name='payments'
+    )
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_method = models.CharField(max_length=50, choices=PAYMENT_METHOD_CHOICES)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=PENDING, db_index=True)
+    paynow_reference = models.CharField(max_length=255, blank=True)
+    poll_url = models.URLField(max_length=500, blank=True)
+    redirect_url = models.URLField(max_length=500, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['client', 'status'], name='idx_payment_client_status'),
+        ]
+
+    def __str__(self):
+        return f"Payment {self.id} - {self.status} - ${self.amount}"
+
+
+class DriverBalance(models.Model):
+    driver = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='balance')
+    owed_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    total_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    last_paid_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.driver.email} — owed ${self.owed_amount}"
+
 
 class TripRequest(models.Model):
     requester = models.ForeignKey(CustomUser, on_delete=models.CASCADE)

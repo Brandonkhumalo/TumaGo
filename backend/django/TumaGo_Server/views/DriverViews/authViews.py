@@ -5,8 +5,11 @@ from rest_framework import status
 from rest_framework.throttling import AnonRateThrottle
 from ...serializers.driverSerializer.authSerializers import RegisterSerializer, VehicleSerializer, LicenseUploadSerializer, ResetPasswordSerializer
 from ...token import JWTAuthentication
+import logging
 from ...models import CustomUser
 from django.shortcuts import get_object_or_404
+
+logger = logging.getLogger(__name__)
 
 class DriverSignupThrottle(AnonRateThrottle):
     scope = 'signup'
@@ -54,7 +57,7 @@ def save_fcm_token(request):
         driver.driver_available = True
         driver.save()
 
-        print(f"{driver.name} online")
+        logger.info("Driver %s online", driver.id)
 
         return Response({"message": "Token saved"}, status=200)
     return Response({"error": "Token missing"}, status=400)
@@ -85,7 +88,7 @@ def driver_offline(request):
     driver.driver_available = False
     driver.driver_online = False
     driver.save()
-    print(f"{driver.name} is offline")
+    logger.info("Driver %s offline", driver.id)
     return Response({"status": "driver marked offline"}, status=status.HTTP_202_ACCEPTED)
 
 @api_view(['POST'])

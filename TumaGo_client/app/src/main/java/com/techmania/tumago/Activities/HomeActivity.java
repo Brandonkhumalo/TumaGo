@@ -1,6 +1,7 @@
 package com.techmania.tumago.Activities;
 
 import android.content.Intent;
+import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
@@ -10,6 +11,14 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.snackbar.Snackbar;
+import com.google.android.play.core.appupdate.AppUpdateInfo;
+import com.google.android.play.core.appupdate.AppUpdateManager;
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory;
+import com.google.android.play.core.install.InstallStateUpdatedListener;
+import com.google.android.play.core.install.model.AppUpdateType;
+import com.google.android.play.core.install.model.InstallStatus;
+import com.google.android.play.core.install.model.UpdateAvailability;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.techmania.tumago.Interface.ApiService;
@@ -34,6 +43,14 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class HomeActivity extends AppCompatActivity {
+
+    private static final int UPDATE_REQUEST_CODE = 200;
+    private AppUpdateManager appUpdateManager;
+    private final InstallStateUpdatedListener installStateListener = state -> {
+        if (state.installStatus() == InstallStatus.DOWNLOADED) {
+            showUpdateSnackbar();
+        }
+    };
 
     private BottomNavigationView bottomNav;
     private final SendFCMtoken sendFCMtoken = new SendFCMtoken();
@@ -95,6 +112,7 @@ public class HomeActivity extends AppCompatActivity {
         bottomNav.setSelectedItemId(R.id.nav_home);
 
         checkUserTerms();
+        checkForAppUpdate();
     }
 
     @Override
@@ -147,6 +165,53 @@ public class HomeActivity extends AppCompatActivity {
         });
     }
 
+    // --- In-App Update (Flexible) ---
+
+    private void checkForAppUpdate() {
+        appUpdateManager = AppUpdateManagerFactory.create(this);
+        appUpdateManager.registerListener(installStateListener);
+
+        appUpdateManager.getAppUpdateInfo().addOnSuccessListener(appUpdateInfo -> {
+            if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
+                    && appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.FLEXIBLE)) {
+                try {
+                    appUpdateManager.startUpdateFlowForResult(
+                            appUpdateInfo, AppUpdateType.FLEXIBLE, this, UPDATE_REQUEST_CODE);
+                } catch (IntentSender.SendIntentException e) {
+                    Log.e("AppUpdate", "Update flow failed", e);
+                }
+            }
+        });
+    }
+
+    private void showUpdateSnackbar() {
+        Snackbar.make(findViewById(android.R.id.content),
+                        "Update downloaded. Restart to apply.", Snackbar.LENGTH_INDEFINITE)
+                .setAction("RESTART", v -> appUpdateManager.completeUpdate())
+                .show();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // If the update was downloaded while app was in background, prompt restart
+        if (appUpdateManager != null) {
+            appUpdateManager.getAppUpdateInfo().addOnSuccessListener(info -> {
+                if (info.installStatus() == InstallStatus.DOWNLOADED) {
+                    showUpdateSnackbar();
+                }
+            });
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (appUpdateManager != null) {
+            appUpdateManager.unregisterListener(installStateListener);
+        }
+    }
+
     public void getUserData(String accessToken) {
         if (accessToken == null || accessToken.isEmpty()) {
             Toast.makeText(this, "Please Log in", Toast.LENGTH_SHORT).show();
@@ -174,6 +239,9 @@ public class HomeActivity extends AppCompatActivity {
                         .putString("user_surname", surname)
                         .putString("user_rating", String.valueOf(rating))
                         .apply();
+
+                // Store phone number securely for Paynow payments
+                Token.storePhoneNumber(HomeActivity.this, phoneNumber);
 
                 FirebaseMessaging.getInstance().getToken()
                         .addOnCompleteListener(task -> {

@@ -32,8 +32,14 @@ google-cloud-storage==3.1.0
 # Image processing
 pillow==11.2.1
 
+# Prometheus monitoring
+django-prometheus==2.3.1
+
 # API docs
 drf-yasg==1.21.10
+
+# Payments (Paynow Zimbabwe)
+paynow==2.1.1
 
 # Timezone
 pytz==2025.2

@@ -3,3 +3,4 @@ uvicorn[standard]==0.32.0
 redis[hiredis]==5.2.0
 firebase-admin==6.8.0
 pydantic==2.10.0
+prometheus-fastapi-instrumentator==7.0.2

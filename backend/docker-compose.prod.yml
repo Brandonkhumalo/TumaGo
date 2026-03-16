@@ -3,7 +3,7 @@
 #
 # Go services:  gateway (3x), location (3x), matching (2x)
 # Python:       Django (3x), Dramatiq worker (2x), notification_service
-# Infra:        Redis, PostgreSQL, PgBouncer, Prometheus, Grafana
+# Infra:        Redis, PostgreSQL, PgBouncer
 # ---------------------------------------------------------------------------
 
 x-django-env: &django-env
@@ -51,7 +51,7 @@ services:
       resources:
         limits:
           cpus: '0.5'
-          memory: 128M
+          memory: 256M
 
   # ── Go Location Service — 3 replicas ────────────────────────────────────
   location:
@@ -168,7 +168,8 @@ services:
       redis-server
       --maxmemory 1gb
       --maxmemory-policy allkeys-lru
-      --save ""
+      --save 900 1
+      --save 300 10
     volumes:
       - redis_data:/data
     restart: always
@@ -209,39 +210,13 @@ services:
       DB_NAME: postgres
       POOL_MODE: transaction
       MAX_CLIENT_CONN: "2000"
-      DEFAULT_POOL_SIZE: "25"
+      DEFAULT_POOL_SIZE: "50"
       AUTH_TYPE: plain
     depends_on:
       db:
         condition: service_healthy
     restart: always
 
-  # ── Prometheus ──────────────────────────────────────────────────────────
-  prometheus:
-    image: prom/prometheus:v2.52.0
-    volumes:
-      - ./infrastructure/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus_data:/prometheus
-    restart: always
-
-  # ── Grafana ─────────────────────────────────────────────────────────────
-  grafana:
-    image: grafana/grafana:10.4.2
-    ports:
-      - "3000:3000"
-    environment:
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
-      GF_USERS_ALLOW_SIGN_UP: "false"
-      GF_SERVER_ROOT_URL: "https://${ALLOWED_HOSTS:-api.tumago.com}/grafana"
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - ./infrastructure/monitoring/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
-    depends_on:
-      - prometheus
-    restart: always
-
 volumes:
   postgres_data:
   redis_data:
-  prometheus_data:
-  grafana_data:

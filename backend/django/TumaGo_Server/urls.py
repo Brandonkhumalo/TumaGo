@@ -4,6 +4,7 @@ from TumaGo import settings
 from django.conf.urls.static import static
 from .views.UserViews import views, userViews
 from .views.DriverViews import authViews, driverViews
+from .views.PaymentViews import paymentViews
 
 urlpatterns = [
     path('signup/', views.signup, name='signup'),
@@ -39,6 +40,14 @@ urlpatterns = [
     path('accept/trip/', driverViews.AcceptTrip, name="Accept_trip"),
     path('end_trip/', driverViews.end_trip, name='end_trip'),
     path('add/license/', authViews.upload_license, name='upload_license'),
+    path('driver/delivery_info/', driverViews.getDriver_Finances, name='driver_delivery_info'),
+
+    # Payments (Paynow)
+    path('payment/initiate/', paymentViews.initiate_payment, name='initiate_payment'),
+    path('payment/status/', paymentViews.check_payment_status, name='check_payment_status'),
+    path('payment/callback/', paymentViews.paynow_callback, name='paynow_callback'),
+    path('payment/driver-balance/', paymentViews.get_driver_balance, name='driver_balance'),
+    path('payment/pay-driver/', paymentViews.pay_driver, name='pay_driver'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # Serve media files during development

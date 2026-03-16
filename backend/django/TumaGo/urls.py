@@ -16,7 +16,10 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('tumago-admin-panel/', admin.site.urls),
+
+    # Prometheus metrics — scraped by Prometheus every 15s.
+    path('', include('django_prometheus.urls')),
 
     # Versioned API
     path('api/v1/', include('TumaGo_Server.urls')),

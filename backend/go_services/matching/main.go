@@ -58,7 +58,8 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte(`{"status":"ok"}`))
 	})
-	mux.HandleFunc("/match", matchHandler)
+	mux.Handle("/metrics", metricsHandler())
+	mux.HandleFunc("/match", instrumentedMatchHandler)
 
 	// ---------- server ----------
 	srv := &http.Server{

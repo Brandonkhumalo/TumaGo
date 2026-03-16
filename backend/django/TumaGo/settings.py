@@ -13,10 +13,19 @@ SECRET_KEY = config("SECRET_KEY")
 DEBUG = config('DEBUG', default=False, cast=bool)
 
 GOOGLE_MAPS_API_KEY = config("GOOGLE_MAPS_API_KEY", default="")
+
+# ---------------------------------------------------------------------------
+# Paynow Zimbabwe — payment gateway
+# ---------------------------------------------------------------------------
+PAYNOW_INTEGRATION_ID = config("PAYNOW_INTEGRATION_ID", default="")
+PAYNOW_INTEGRATION_KEY = config("PAYNOW_INTEGRATION_KEY", default="")
+PAYNOW_RETURN_URL = config("PAYNOW_RETURN_URL", default="http://localhost/payment-return")
+PAYNOW_RESULT_URL = config("PAYNOW_RESULT_URL", default="http://localhost/api/v1/payment/callback/")
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*').split(',')
 
 # Application definition
 INSTALLED_APPS = [
+    'django_prometheus',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -30,6 +39,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'django_prometheus.middleware.PrometheusBeforeMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -40,6 +50,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'TumaGo_Server.middleware.RequestLoggingMiddleware',
+    'django_prometheus.middleware.PrometheusAfterMiddleware',
 ]
 
 ROOT_URLCONF = 'TumaGo.urls'

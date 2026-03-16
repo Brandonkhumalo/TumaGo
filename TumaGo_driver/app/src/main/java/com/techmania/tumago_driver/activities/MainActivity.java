@@ -4,6 +4,7 @@ import com.techmania.tumago_driver.BuildConfig;
 
 import android.Manifest;
 import android.content.Intent;
+import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -23,6 +24,15 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+
+import com.google.android.material.snackbar.Snackbar;
+import com.google.android.play.core.appupdate.AppUpdateInfo;
+import com.google.android.play.core.appupdate.AppUpdateManager;
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory;
+import com.google.android.play.core.install.InstallStateUpdatedListener;
+import com.google.android.play.core.install.model.AppUpdateType;
+import com.google.android.play.core.install.model.InstallStatus;
+import com.google.android.play.core.install.model.UpdateAvailability;
 
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -80,6 +90,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private static final int BACKGROUND_LOCATION_REQUEST_CODE = 200;
 
+    private static final int UPDATE_REQUEST_CODE = 300;
+    private AppUpdateManager appUpdateManager;
+    private final InstallStateUpdatedListener installStateListener = state -> {
+        if (state.installStatus() == InstallStatus.DOWNLOADED) {
+            showUpdateSnackbar();
+        }
+    };
+
     SendFCMtoken sendFCMtoken = new SendFCMtoken();
     private static boolean userDataFetched = false;
 
@@ -112,6 +130,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         support = findViewById(R.id.support);
 
         checkUserTerms();
+        checkForAppUpdate();
 
         close.setOnClickListener(v -> {
             AnimHelper.slideDown(menuList);
@@ -261,12 +280,49 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 == PackageManager.PERMISSION_GRANTED) {
             fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null);
         }
+        // If the update was downloaded while app was in background, prompt restart
+        if (appUpdateManager != null) {
+            appUpdateManager.getAppUpdateInfo().addOnSuccessListener(info -> {
+                if (info.installStatus() == InstallStatus.DOWNLOADED) {
+                    showUpdateSnackbar();
+                }
+            });
+        }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (appUpdateManager != null) {
+            appUpdateManager.unregisterListener(installStateListener);
+        }
         // DriverHeartbeatService continues running independently
+    }
+
+    // --- In-App Update (Flexible) ---
+
+    private void checkForAppUpdate() {
+        appUpdateManager = AppUpdateManagerFactory.create(this);
+        appUpdateManager.registerListener(installStateListener);
+
+        appUpdateManager.getAppUpdateInfo().addOnSuccessListener(appUpdateInfo -> {
+            if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
+                    && appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.FLEXIBLE)) {
+                try {
+                    appUpdateManager.startUpdateFlowForResult(
+                            appUpdateInfo, AppUpdateType.FLEXIBLE, this, UPDATE_REQUEST_CODE);
+                } catch (IntentSender.SendIntentException e) {
+                    Log.e("AppUpdate", "Update flow failed", e);
+                }
+            }
+        });
+    }
+
+    private void showUpdateSnackbar() {
+        Snackbar.make(findViewById(android.R.id.content),
+                        "Update downloaded. Restart to apply.", Snackbar.LENGTH_INDEFINITE)
+                .setAction("RESTART", v -> appUpdateManager.completeUpdate())
+                .show();
     }
 
     @Override

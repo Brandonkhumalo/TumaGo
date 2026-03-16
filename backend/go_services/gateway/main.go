@@ -45,6 +45,9 @@ func main() {
 		_, _ = w.Write([]byte(`{"status":"ok"}`))
 	})
 
+	// Prometheus metrics endpoint — scraped by Prometheus every 15s.
+	mux.Handle("/metrics", metricsHandler())
+
 	// Static files.
 	if staticDir != "" {
 		mux.Handle("/static/", staticFileHandler(staticDir))
@@ -78,7 +81,7 @@ func main() {
 	// ---------- server ----------
 	srv := &http.Server{
 		Addr:              listenAddr,
-		Handler:           requestLogger(maxBodySize(rootHandler)),
+		Handler:           instrumentHandler(requestLogger(maxBodySize(rootHandler))),
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       30 * time.Second,
 		IdleTimeout:       120 * time.Second,
@@ -136,6 +139,8 @@ func (rh *routingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Specific routes handled by mux patterns.
 	switch {
 	case path == "/health":
+		rh.mux.ServeHTTP(w, r)
+	case path == "/metrics":
 		rh.mux.ServeHTTP(w, r)
 	case strings.HasPrefix(path, "/static/"):
 		rh.mux.ServeHTTP(w, r)

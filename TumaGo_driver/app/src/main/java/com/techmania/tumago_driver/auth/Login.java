@@ -116,8 +116,9 @@ public class Login extends AppCompatActivity {
                         if (response.code() == 400 || response.code() == 401) {
                             msg = "Incorrect email or password";
                         } else {
-                            msg = "Login failed, please try again";
+                            msg = "Login failed (error " + response.code() + "), please try again";
                         }
+                        Log.e("Login", "HTTP " + response.code() + " — " + response.message());
                         Toast.makeText(Login.this, msg, Toast.LENGTH_SHORT).show();
                         shakePinBoxes();
                     }

@@ -6,7 +6,10 @@ from rest_framework.decorators import api_view, permission_classes, throttle_cla
 from rest_framework.throttling import AnonRateThrottle
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import AllowAny, IsAuthenticated
+import logging
 from ...models import BlacklistedToken, Delivery, TermsAndConditions
+
+logger = logging.getLogger(__name__)
 from ...serializers.userSerializer.authserializers import (
     SignupSerializer,
     UserInfo,
@@ -67,7 +70,7 @@ def login(request):
             'refreshToken': refresh_token
         }, status=status.HTTP_200_OK)
 
-    print("Serializer errors:", serializer.errors)
+    logger.warning("Serializer errors: %s", serializer.errors)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(["POST"])
@@ -85,21 +88,20 @@ def logout(request):
     refresh_token = request.data.get("refreshToken") or request.query_params.get("refreshToken")
 
     if not refresh_token:
-        print('detail": "Refresh token is required.')
+        logger.debug("Logout failed: refresh token is required")
         return Response({"detail": "Refresh token is required."}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
         payload = jwt.decode(refresh_token, settings.SECRET_KEY, algorithms=['HS256'])
         if payload.get("type") != "refresh_token":
-            print('detail": "Invalid token type.')
+            logger.debug("Logout failed: invalid token type")
             return Response({"detail": "Invalid token type."}, status=status.HTTP_400_BAD_REQUEST)
 
         BlacklistedToken.objects.get_or_create(token=refresh_token)
-        print('detail": "Invalid token type.')
         return Response({"detail": "Logged out successfully."}, status=status.HTTP_200_OK)
 
     except (InvalidTokenError, ExpiredSignatureError, jwt.DecodeError) as e:
-        print('detail": "Invalid token.')
+        logger.debug("Logout failed: invalid token")
         return Response({"detail": f"Invalid token: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(["POST"])

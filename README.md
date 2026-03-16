@@ -1,6 +1,6 @@
 # TumaGo — Last-Mile Package Delivery Platform
 
-TumaGo connects clients who need to send packages with nearby drivers based on vehicle type (scooter, van, or truck). The platform features real-time GPS tracking, intelligent driver matching, and push notifications across two Android apps and a hybrid Go + Django backend.
+TumaGo connects clients who need to send packages with nearby drivers based on vehicle type (scooter, van, or truck). The platform features real-time GPS tracking, intelligent driver matching, integrated payments via Paynow (card, EcoCash, OneMoney), and push notifications — all across two Android apps and a hybrid Go + Django backend.
 
 ---
 
@@ -56,11 +56,13 @@ Finds the closest available driver when a delivery is requested.
 - Called internally by Django's Dramatiq background workers
 
 ### Django Backend
-Handles all business logic, authentication, and data management.
+Handles all business logic, authentication, data management, and payments.
 - Custom **JWT authentication** (HS256) — shared secret key with Go services
 - User and driver registration, login, profile management
 - Delivery creation, acceptance, cancellation, and completion
-- Driver finances and earnings tracking
+- **Paynow payment integration** — card, EcoCash, and OneMoney via Zimbabwe's leading payment gateway
+- Driver balance tracking — automatically calculates platform charges (10–50% by vehicle type) and tracks amounts owed to drivers
+- Admin payout endpoint for settling driver balances
 - **Dramatiq background workers** for async driver matching with Redis pub/sub
 - Django Admin panel for operations
 - Swagger/ReDoc API documentation
@@ -82,6 +84,7 @@ Sends Firebase Cloud Messaging (FCM) push notifications.
 | Matching Service | Go 1.22, go-redis, pgx |
 | Backend API | Django 5.2, Django REST Framework 3.16 |
 | Notifications | FastAPI, Firebase Admin SDK |
+| Payments | Paynow SDK (card, EcoCash, OneMoney) |
 | Background Tasks | Dramatiq + Redis |
 | Database | PostgreSQL 15 + PgBouncer |
 | Cache / Queue / GEO | Redis 7 |
@@ -127,6 +130,10 @@ DATABASE_URL=postgresql://postgres:postgres@pgbouncer:5432/postgres
 REDIS_URL=redis://redis:6379
 GOOGLE_MAPS_API_KEY=your-google-maps-key
 FIREBASE_CREDENTIALS={"type":"service_account",...}
+PAYNOW_INTEGRATION_ID=your-paynow-id
+PAYNOW_INTEGRATION_KEY=your-paynow-key
+PAYNOW_RETURN_URL=https://yourdomain.com/payment-return
+PAYNOW_RESULT_URL=https://yourdomain.com/api/v1/payment/callback/
 ```
 
 ---
@@ -136,6 +143,8 @@ FIREBASE_CREDENTIALS={"type":"service_account",...}
 ### Client App
 - Book deliveries by selecting vehicle type (scooter, van, truck)
 - Real-time price calculation based on distance
+- **Pay online** via card (WebView checkout), EcoCash, or OneMoney — or choose cash
+- Payment status polling with automatic retry (up to 2 minutes)
 - Live track your driver on Google Maps
 - View delivery history with status
 - Rate drivers after delivery
@@ -145,6 +154,7 @@ FIREBASE_CREDENTIALS={"type":"service_account",...}
 - Accept or decline delivery requests via push notification
 - Navigate to pickup and dropoff using Google Maps
 - Track earnings with daily, weekly, and monthly finance breakdowns
+- **View balance owed** by the platform for non-cash deliveries
 - Automatic availability management
 
 ### Shared
@@ -152,6 +162,31 @@ FIREBASE_CREDENTIALS={"type":"service_account",...}
 - Real-time GPS tracking over WebSocket
 - Firebase push notifications
 - Material Design 3 UI with TumaGo branding
+
+---
+
+## Payment Flow
+
+```
+User selects payment method
+  ├── Cash → skip payment, go straight to driver matching
+  └── Card / EcoCash / OneMoney
+        ├── POST /payment/initiate/ → Paynow SDK
+        ├── Card: WebView checkout page
+        │   EcoCash/OneMoney: USSD prompt sent to phone
+        ├── Client polls /payment/status/ every 3s (max 40 attempts)
+        └── Once paid → delivery request → driver matching
+```
+
+**Platform charges** are deducted from driver earnings on delivery completion:
+
+| Vehicle | Platform Charge |
+|---------|----------------|
+| Scooter | 20% |
+| Van | 30% |
+| Truck | 50% |
+
+For non-cash payments, the driver's net earnings are tracked in a `DriverBalance` record. Admins settle balances via the `/payment/pay-driver/` endpoint.
 
 ---
 
