@@ -4,10 +4,11 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.techmania.tumago.Activities.MainActivity;
+import com.techmania.tumago.Activities.HomeActivity;
 import com.techmania.tumago.Interface.ApiService;
 import com.techmania.tumago.R;
 import com.techmania.tumago.helper.ApiClient;
@@ -45,9 +46,10 @@ public class TermsAgreement extends AppCompatActivity {
                     if (response.isSuccessful()){
                         getSharedPreferences("app_cache", MODE_PRIVATE)
                                 .edit().putBoolean("terms_accepted", true).apply();
-                        Intent i = new Intent(TermsAgreement.this, MainActivity.class);
+                        Intent i = new Intent(TermsAgreement.this, HomeActivity.class);
                         i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                         startActivity(i);
+                        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
                         finish();
                     } else {
                         Log.d("Terms", response.message());
@@ -56,12 +58,13 @@ public class TermsAgreement extends AppCompatActivity {
 
                 @Override
                 public void onFailure(Call<ResponseBody> call, Throwable t) {
-
+                    Toast.makeText(TermsAgreement.this, "Something went wrong. Please try again.", Toast.LENGTH_SHORT).show();
                 }
             });
         } else {
             Intent i = new Intent(TermsAgreement.this, Login.class);
             startActivity(i);
+            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
             finish();
         }
     }

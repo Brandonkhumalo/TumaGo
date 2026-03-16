@@ -4,8 +4,12 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.app.AlertDialog;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -17,6 +21,7 @@ import com.techmania.tumago.R;
 import com.techmania.tumago.helper.ApiClient;
 import com.techmania.tumago.helper.GetUserData;
 import com.techmania.tumago.helper.Token;
+import com.techmania.tumago.helper.UiHelper;
 
 import okhttp3.ResponseBody;
 import retrofit2.Call;
@@ -26,6 +31,8 @@ import retrofit2.Response;
 public class UserProfile extends AppCompatActivity {
     TextView mainUsername, mainRating, mainName, mainPhonenumber, mainEmail, mainAddress;
     Button delete;
+    ProgressBar progressBar;
+    ScrollView contentScroll;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,7 +41,10 @@ public class UserProfile extends AppCompatActivity {
 
         Toolbar toolbar = findViewById(R.id.toolbarHome);
         setSupportActionBar(toolbar);
-        toolbar.setNavigationOnClickListener(v -> onBackPressed());
+        toolbar.setNavigationOnClickListener(v -> {
+            finish();
+            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
+        });
 
         mainUsername = findViewById(R.id.mainUsername);
         mainRating = findViewById(R.id.mainRating);
@@ -43,13 +53,22 @@ public class UserProfile extends AppCompatActivity {
         mainEmail = findViewById(R.id.mainEmail);
         mainAddress = findViewById(R.id.mainAddress);
         delete = findViewById(R.id.delete);
+        progressBar = findViewById(R.id.progressBar);
+        contentScroll = findViewById(R.id.contentScroll);
+        contentScroll.setVisibility(View.GONE);
+        progressBar.setVisibility(View.VISIBLE);
 
         getUserData();
 
         delete.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                deleteAccount();
+                new AlertDialog.Builder(UserProfile.this)
+                    .setTitle("Delete Account")
+                    .setMessage("Are you sure you want to delete your account? This action cannot be undone.")
+                    .setPositiveButton("Delete", (dialog, which) -> deleteAccount())
+                    .setNegativeButton("Cancel", null)
+                    .show();
             }
         });
 
@@ -57,6 +76,7 @@ public class UserProfile extends AppCompatActivity {
         resetPassword.setOnClickListener(v -> {
             Intent i = new Intent(UserProfile.this, ResetPassword.class);
             startActivity(i);
+            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
         });
     }
 
@@ -68,7 +88,8 @@ public class UserProfile extends AppCompatActivity {
             public void onUserDataReceived(String name, String surname, String phoneNumber, String email,
                                            double rating, String street, String addressLine, String province,
                                            String city, String postalCode, String role) {
-                // user the userData here
+                progressBar.setVisibility(View.GONE);
+                contentScroll.setVisibility(View.VISIBLE);
                 mainUsername.setText(name + " " + surname);
                 mainRating.setText(String.valueOf(rating));
                 mainName.setText(name + " " + surname);
@@ -79,7 +100,10 @@ public class UserProfile extends AppCompatActivity {
 
             @Override
             public void onFailure(Throwable t) {
+                progressBar.setVisibility(View.GONE);
+                contentScroll.setVisibility(View.VISIBLE);
                 Log.e("API", "Error: " + t.getMessage());
+                UiHelper.showRetry(findViewById(android.R.id.content), "Failed to load profile", () -> getUserData());
             }
         });
     }
@@ -96,17 +120,24 @@ public class UserProfile extends AppCompatActivity {
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                 if (response.isSuccessful()){
                     Token.clearToken(UserProfile.this);
-                    Intent intent = new Intent(UserProfile.this, MainActivity.class);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK); // optional: clear back stack
+                    Intent intent = new Intent(UserProfile.this, HomeActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(intent);
+                    overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
                     finish();
                 }
             }
 
             @Override
             public void onFailure(Call<ResponseBody> call, Throwable t) {
-
+                UiHelper.showRetry(findViewById(android.R.id.content), "Failed to delete account", () -> deleteAccount());
             }
         });
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
     }
 }

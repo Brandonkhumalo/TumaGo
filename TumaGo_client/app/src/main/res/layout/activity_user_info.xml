@@ -1,241 +1,356 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    tools:context=".auth.UserInfo"
-    android:background="@color/card_bg">
+    android:orientation="vertical"
+    android:background="@color/page_bg"
+    tools:context=".auth.UserInfo">
 
+    <!-- Toolbar -->
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/AppBarLayoutHome"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/light_blue"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        android:background="@color/card_bg"
+        app:elevation="2dp">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbarHome"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:paddingTop="5dp"
-            app:title="Roadlink Solutions"
-            app:titleTextColor="@color/blackish"
-            app:subtitle="The road to efficiency"
-            app:subtitleTextColor="@color/white"/>
+            app:title="Complete Registration"
+            app:titleTextColor="@color/dark_blue"
+            app:navigationIcon="@drawable/back"
+            app:navigationIconTint="@color/dark_blue"/>
+
     </com.google.android.material.appbar.AppBarLayout>
 
-    <TextView
-        android:id="@+id/dataForm"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Let's wrap up the registration"
-        android:fontFamily="sans-serif-medium"
-        android:textSize="20dp"
-        android:gravity="center"
-        android:textColor="@color/dark_blue"
-        android:layout_marginTop="10dp"
-        app:layout_constraintTop_toBottomOf="@id/AppBarLayoutHome"/>
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false">
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <TextView
+                android:id="@+id/dataForm"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Let's wrap up the registration"
+                android:fontFamily="sans-serif-black"
+                android:textSize="22sp"
+                android:textColor="@color/dark_blue"
+                android:layout_marginBottom="4dp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Please fill in all fields below"
+                android:textSize="14sp"
+                android:textColor="@color/secondary_text"
+                android:layout_marginBottom="24dp"/>
+
+            <TextView
+                android:id="@+id/fields"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="All fields are required"
+                android:fontFamily="sans-serif-medium"
+                android:textSize="14sp"
+                android:textColor="@color/error"
+                android:layout_marginBottom="12dp"
+                android:visibility="gone"/>
+
+            <!-- Personal Info -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Name"
+                android:textSize="13sp"
+                android:textColor="@color/blackish"
+                android:fontFamily="sans-serif-medium"
+                android:layout_marginBottom="6dp"/>
+
+            <EditText
+                android:id="@+id/nameInput"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:hint="First name"
+                android:background="@drawable/background_input"
+                android:paddingHorizontal="16dp"
+                android:textColorHint="@color/hint_text"
+                android:inputType="textPersonName"
+                android:textColor="@color/blackish"
+                android:textSize="15sp"
+                android:layout_marginBottom="14dp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Surname"
+                android:textSize="13sp"
+                android:textColor="@color/blackish"
+                android:fontFamily="sans-serif-medium"
+                android:layout_marginBottom="6dp"/>
+
+            <EditText
+                android:id="@+id/surnameInput"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:hint="Surname"
+                android:background="@drawable/background_input"
+                android:paddingHorizontal="16dp"
+                android:textColorHint="@color/hint_text"
+                android:inputType="textPersonName"
+                android:textColor="@color/blackish"
+                android:textSize="15sp"
+                android:layout_marginBottom="14dp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="ID Number"
+                android:textSize="13sp"
+                android:textColor="@color/blackish"
+                android:fontFamily="sans-serif-medium"
+                android:layout_marginBottom="6dp"/>
+
+            <EditText
+                android:id="@+id/userId"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:hint="ID number"
+                android:background="@drawable/background_input"
+                android:paddingHorizontal="16dp"
+                android:textColorHint="@color/hint_text"
+                android:inputType="textPersonName"
+                android:textColor="@color/blackish"
+                android:textSize="15sp"
+                android:layout_marginBottom="24dp"/>
+
+            <!-- Address section -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="RESIDENTIAL ADDRESS"
+                android:textSize="11sp"
+                android:letterSpacing="0.12"
+                android:textColor="@color/light_blue"
+                android:fontFamily="sans-serif-medium"
+                android:layout_marginBottom="14dp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Street Address"
+                android:textSize="13sp"
+                android:textColor="@color/blackish"
+                android:fontFamily="sans-serif-medium"
+                android:layout_marginBottom="6dp"/>
+
+            <EditText
+                android:id="@+id/userStreet"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:hint="Street address"
+                android:background="@drawable/background_input"
+                android:paddingHorizontal="16dp"
+                android:textColorHint="@color/hint_text"
+                android:inputType="textPersonName"
+                android:textColor="@color/blackish"
+                android:textSize="15sp"
+                android:layout_marginBottom="14dp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Address Line"
+                android:textSize="13sp"
+                android:textColor="@color/blackish"
+                android:fontFamily="sans-serif-medium"
+                android:layout_marginBottom="6dp"/>
+
+            <EditText
+                android:id="@+id/userAddress"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:hint="Address line 2"
+                android:background="@drawable/background_input"
+                android:paddingHorizontal="16dp"
+                android:textColorHint="@color/hint_text"
+                android:inputType="textPersonName"
+                android:textColor="@color/blackish"
+                android:textSize="15sp"
+                android:layout_marginBottom="14dp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Province"
+                android:textSize="13sp"
+                android:textColor="@color/blackish"
+                android:fontFamily="sans-serif-medium"
+                android:layout_marginBottom="6dp"/>
+
+            <EditText
+                android:id="@+id/userProvince"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:hint="Province"
+                android:background="@drawable/background_input"
+                android:paddingHorizontal="16dp"
+                android:textColorHint="@color/hint_text"
+                android:inputType="textPersonName"
+                android:textColor="@color/blackish"
+                android:textSize="15sp"
+                android:layout_marginBottom="14dp"/>
+
+            <!-- City + Postal side by side -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="14dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginEnd="8dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="City"
+                        android:textSize="13sp"
+                        android:textColor="@color/blackish"
+                        android:fontFamily="sans-serif-medium"
+                        android:layout_marginBottom="6dp"/>
+
+                    <EditText
+                        android:id="@+id/userCity"
+                        android:layout_width="match_parent"
+                        android:layout_height="52dp"
+                        android:hint="City"
+                        android:background="@drawable/background_input"
+                        android:paddingHorizontal="16dp"
+                        android:textColorHint="@color/hint_text"
+                        android:inputType="textPersonName"
+                        android:textColor="@color/blackish"
+                        android:textSize="15sp"/>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Postal Code"
+                        android:textSize="13sp"
+                        android:textColor="@color/blackish"
+                        android:fontFamily="sans-serif-medium"
+                        android:layout_marginBottom="6dp"/>
+
+                    <EditText
+                        android:id="@+id/userPostalCode"
+                        android:layout_width="match_parent"
+                        android:layout_height="52dp"
+                        android:hint="Postal code"
+                        android:background="@drawable/background_input"
+                        android:paddingHorizontal="16dp"
+                        android:textColorHint="@color/hint_text"
+                        android:inputType="number"
+                        android:textColor="@color/blackish"
+                        android:textSize="15sp"/>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Hidden file upload (kept for backwards compat) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:padding="10dp"
+                android:visibility="gone">
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/textSelectedFile"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:paddingTop="8dp"
+                    android:text="upload ID "
+                    android:textAppearance="?attr/textAppearanceBody1" />
+
+                <ImageView
+                    android:id="@+id/FileUpload"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_marginStart="10dp"
+                    app:srcCompat="@drawable/upload"/>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </ScrollView>
+
+    <!-- Bottom button -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_marginTop="5dp"
-        app:layout_constraintTop_toBottomOf="@id/dataForm">
-
-        <TextView
-            android:id="@+id/fields"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="All fields are required"
-            android:fontFamily="sans-serif-medium"
-            android:textSize="18dp"
-            android:gravity="center"
-            android:textColor="@color/red"
-            android:layout_marginTop="10dp"
-            android:visibility="gone"/>
-
-        <EditText
-            android:id="@+id/nameInput"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:hint="Name"
-            android:background="@drawable/background_input2"
-            android:padding="12dp"
-            android:textColorHint="@color/blackish"
-            android:inputType="textPersonName"
-            android:textColor="@color/blackish"
-            android:layout_marginTop="10dp"
-            android:layout_marginHorizontal="20dp"/>
-
-        <EditText
-            android:id="@+id/surnameInput"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:hint="Surname"
-            android:background="@drawable/background_input2"
-            android:padding="12dp"
-            android:textColorHint="@color/blackish"
-            android:inputType="textPersonName"
-            android:textColor="@color/blackish"
-            android:layout_marginTop="10dp"
-            android:layout_marginHorizontal="20dp"/>
-
-        <EditText
-            android:id="@+id/userId"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:hint="ID Number"
-            android:background="@drawable/background_input2"
-            android:padding="12dp"
-            android:textColorHint="@color/blackish"
-            android:inputType="textPersonName"
-            android:textColor="@color/blackish"
-            android:layout_marginTop="10dp"
-            android:layout_marginHorizontal="20dp"/>
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Residential Address"
-            android:fontFamily="sans-serif-medium"
-            android:textSize="18dp"
-            android:gravity="center"
-            android:textColor="@color/blackish"
-            android:layout_marginTop="10dp"/>
-
-        <EditText
-            android:id="@+id/userStreet"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:hint="Street Address"
-            android:background="@drawable/background_input2"
-            android:padding="12dp"
-            android:textColorHint="@color/blackish"
-            android:inputType="textPersonName"
-            android:textColor="@color/blackish"
-            android:layout_marginTop="10dp"
-            android:layout_marginHorizontal="20dp"/>
-
-        <EditText
-            android:id="@+id/userAddress"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:hint="Address Line"
-            android:background="@drawable/background_input2"
-            android:padding="12dp"
-            android:textColorHint="@color/blackish"
-            android:inputType="textPersonName"
-            android:textColor="@color/blackish"
-            android:layout_marginTop="10dp"
-            android:layout_marginHorizontal="20dp"/>
-
-        <EditText
-            android:id="@+id/userProvince"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:hint="Province"
-            android:background="@drawable/background_input2"
-            android:padding="12dp"
-            android:textColorHint="@color/blackish"
-            android:inputType="textPersonName"
-            android:textColor="@color/blackish"
-            android:layout_marginTop="10dp"
-            android:layout_marginHorizontal="20dp"/>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <EditText
-                android:id="@+id/userCity"
-                android:layout_width="175dp"
-                android:layout_height="50dp"
-                android:hint="City"
-                android:background="@drawable/background_input2"
-                android:padding="12dp"
-                android:textColorHint="@color/blackish"
-                android:inputType="textPersonName"
-                android:textColor="@color/blackish"
-                android:layout_marginTop="10dp"
-                android:layout_marginHorizontal="20dp"/>
-
-            <EditText
-                android:id="@+id/userPostalCode"
-                android:layout_width="175dp"
-                android:layout_height="50dp"
-                android:hint="Postal Code"
-                android:background="@drawable/background_input2"
-                android:padding="12dp"
-                android:textColorHint="@color/blackish"
-                android:inputType="textPersonName"
-                android:textColor="@color/blackish"
-                android:layout_marginTop="10dp"
-                android:layout_marginRight="20dp"/>
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="horizontal"
-            android:padding="10dp"
-            android:visibility="gone">
-
-            <com.google.android.material.textview.MaterialTextView
-                android:id="@+id/textSelectedFile"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:paddingTop="8dp"
-                android:text="upload ID "
-                android:textAppearance="?attr/textAppearanceBody1" />
-
-            <ImageView
-                android:id="@+id/FileUpload"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:layout_marginLeft="10dp"
-                app:srcCompat="@drawable/upload"
-                tools:layout_editor_absoluteX="0dp"
-                tools:layout_editor_absoluteY="0dp" />
-
-        </LinearLayout>
+        android:background="@color/card_bg"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="20dp"
+        android:elevation="8dp">
 
         <Button
             android:id="@+id/infoRegister"
             android:layout_width="match_parent"
-            android:layout_height="55dp"
-            android:text="Finish"
-            android:textSize="18sp"
+            android:layout_height="56dp"
+            android:text="Finish Registration"
+            android:textSize="16sp"
             android:textColor="@color/white"
-            android:backgroundTint="@color/dark_blue"
-            android:layout_marginHorizontal="20dp"
-            android:layout_marginTop="10dp"/>
+            android:fontFamily="sans-serif-medium"
+            android:background="@drawable/button"/>
 
     </LinearLayout>
 
+    <!-- Loading overlay -->
     <LinearLayout
         android:id="@+id/progressBar"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center"
         android:background="#99000000"
-        app:layout_constraintTop_toBottomOf="@id/dataForm"
         android:visibility="gone">
 
         <ProgressBar
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:indeterminateTint="@color/light_blue"/>
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:indeterminateTint="@color/white"/>
 
     </LinearLayout>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+</LinearLayout>

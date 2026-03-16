@@ -8,7 +8,9 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -20,7 +22,9 @@ import androidx.core.view.WindowInsetsCompat;
 import com.techmania.tumago_driver.Interface.ApiService;
 import com.techmania.tumago_driver.R;
 import com.techmania.tumago_driver.auth.Login;
+import com.techmania.tumago_driver.helpers.AnimHelper;
 import com.techmania.tumago_driver.helpers.ApiClient;
+import com.techmania.tumago_driver.helpers.UiHelper;
 import com.techmania.tumago_driver.helpers.Token;
 import com.techmania.tumago_driver.models.ResetPasswordModel;
 
@@ -34,6 +38,7 @@ public class ResetPassword extends AppCompatActivity {
     EditText password, passwordConfirm, oldPassword;
     Button changePass;
     TextView passwordChanged, passwordUnchanged;
+    ProgressBar progressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +56,7 @@ public class ResetPassword extends AppCompatActivity {
         password = findViewById(R.id.passwordInput);
         passwordConfirm = findViewById(R.id.passwordConfirm);
         changePass = findViewById(R.id.changePassword);
+        progressBar = findViewById(R.id.progressBar);
 
         ImageView togglePassword = findViewById(R.id.togglePassword);
         ImageView togglePasswordConfirm = findViewById(R.id.togglePasswordConfirm);
@@ -120,26 +126,35 @@ public class ResetPassword extends AppCompatActivity {
         String new_password = password.getText().toString();
         String confirm_password = passwordConfirm.getText().toString();
 
+        if (new_password.length() < 6) {
+            Toast.makeText(this, "Password must be at least 6 characters.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         if (!accessToken.isEmpty() && !old_password.isEmpty() && !new_password.isEmpty() && !confirm_password.isEmpty()) {
             ResetPasswordModel resetPasswordModel = new ResetPasswordModel(confirm_password, new_password, old_password);
 
             ApiService apiService = ApiClient.getClient().create(ApiService.class);
             Call<ResponseBody> call = apiService.resetPassword(authBearer, resetPasswordModel);
 
+            UiHelper.showLoading(progressBar, changePass);
+
             call.enqueue(new Callback<ResponseBody>() {
                 @Override
                 public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                    UiHelper.hideLoading(progressBar, changePass);
                     if (response.isSuccessful()){
-                        passwordChanged.setVisibility(View.VISIBLE);
+                        AnimHelper.fadeIn(passwordChanged);
                     } else {
-                        passwordUnchanged.setVisibility(View.VISIBLE);
+                        AnimHelper.fadeIn(passwordUnchanged);
                         Log.d("PASSWORD NOT CHANGED", response.message());
                     }
                 }
 
                 @Override
                 public void onFailure(Call<ResponseBody> call, Throwable t) {
-
+                    UiHelper.hideLoading(progressBar, changePass);
+                    UiHelper.showRetry(findViewById(android.R.id.content), "Connection error", () -> ChangePassword());
                 }
             });
 

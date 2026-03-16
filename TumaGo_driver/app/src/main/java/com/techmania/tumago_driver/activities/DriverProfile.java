@@ -4,8 +4,11 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -15,7 +18,9 @@ import com.techmania.tumago_driver.Interface.ApiService;
 import com.techmania.tumago_driver.Interface.DriverCallback;
 import com.techmania.tumago_driver.R;
 import com.techmania.tumago_driver.auth.EmailSender;
+import com.techmania.tumago_driver.helpers.AnimHelper;
 import com.techmania.tumago_driver.helpers.ApiClient;
+import com.techmania.tumago_driver.helpers.UiHelper;
 import com.techmania.tumago_driver.helpers.GetDriverData;
 import com.techmania.tumago_driver.helpers.Token;
 
@@ -27,6 +32,7 @@ import retrofit2.Response;
 public class DriverProfile extends AppCompatActivity {
     TextView mainUsername, mainRating, mainName, mainPhonenumber, mainEmail, mainAddress, licenseSubmitted, emailVerified;
     MaterialCardView delete;
+    ProgressBar progressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +50,7 @@ public class DriverProfile extends AppCompatActivity {
         mainEmail = findViewById(R.id.mainEmail);
         mainAddress = findViewById(R.id.mainAddress);
         delete = findViewById(R.id.delete);
+        progressBar = findViewById(R.id.progressBar);
         licenseSubmitted = findViewById(R.id.license);
         emailVerified = findViewById(R.id.Email);
 
@@ -66,11 +73,15 @@ public class DriverProfile extends AppCompatActivity {
     public void getDriverData(){
         String accessToken = Token.getAccessToken(this);
 
+        UiHelper.showLoading(progressBar);
+
         GetDriverData.GetData(this, accessToken, new DriverCallback() {
             @Override
             public void onDriverDataReceived(String name, String surname, String phoneNumber, String email, double rating, String street,
                                              String addressLine, String province, String city, String postalCode, String role, Boolean verified, Boolean license) {
 
+                UiHelper.hideLoading(progressBar);
+                AnimHelper.beginTransition((ViewGroup) findViewById(R.id.main));
                 mainUsername.setText(name + " " + surname);
                 mainRating.setText(String.valueOf(rating));
                 mainName.setText(name + " " + surname);
@@ -95,6 +106,8 @@ public class DriverProfile extends AppCompatActivity {
             @Override
             public void onFailure(Throwable t) {
                 Log.e("API", "Error: " + t.getMessage());
+                UiHelper.hideLoading(progressBar);
+                UiHelper.showRetry(findViewById(android.R.id.content), "Failed to load profile", () -> getDriverData());
             }
         });
     }
@@ -107,9 +120,12 @@ public class DriverProfile extends AppCompatActivity {
         ApiService apiService = ApiClient.getClient().create(ApiService.class);
         Call<ResponseBody> call = apiService.deleteAccount(authHeader);
 
+        UiHelper.showLoading(progressBar, delete);
+
         call.enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                UiHelper.hideLoading(progressBar, delete);
                 if (response.isSuccessful()){
                     Token.clearToken(DriverProfile.this);
                     Intent intent = new Intent(DriverProfile.this, EmailSender.class);
@@ -121,7 +137,8 @@ public class DriverProfile extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<ResponseBody> call, Throwable t) {
-
+                UiHelper.hideLoading(progressBar, delete);
+                UiHelper.showRetry(findViewById(android.R.id.content), "Failed to delete account", () -> deleteAccount());
             }
         });
     }

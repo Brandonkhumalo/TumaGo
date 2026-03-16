@@ -2,6 +2,7 @@ package com.techmania.tumago.helper;
 
 import android.util.Log;
 
+import com.techmania.tumago.BuildConfig;
 import com.techmania.tumago.Interface.ApiService;
 import com.techmania.tumago.Model.FcmTokenRequest;
 
@@ -14,7 +15,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class SendFCMtoken {
     public void sendFcmTokenToBackend(String fcmToken, String jwtToken) {
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://13.246.35.254/")
+                .baseUrl(BuildConfig.BASE_URL)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 

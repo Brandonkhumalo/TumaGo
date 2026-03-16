@@ -21,4 +21,8 @@
     <color name="error">#EF4444</color>
     <color name="divider">#E8F4FD</color>
     <color name="ripple_blue">#1A00a4e4</color>
+    <color name="menu_icon_bg">#0D2B3E</color>
+    <color name="splash_subtitle">#CCE8F7</color>
+    <color name="orange_accent">#F97316</color>
+    <color name="home_header_bg">#0B5EA6</color>
 </resources>

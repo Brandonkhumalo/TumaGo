@@ -44,25 +44,6 @@
                 android:scaleType="fitCenter"/>
         </androidx.cardview.widget.CardView>
 
-        <View
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_weight="1"/>
-
-        <androidx.cardview.widget.CardView
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            app:cardCornerRadius="22dp"
-            app:cardElevation="6dp"
-            app:cardBackgroundColor="@color/card_bg">
-            <ImageView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:src="@drawable/tuma_go_logo"
-                android:padding="6dp"
-                android:scaleType="fitCenter"/>
-        </androidx.cardview.widget.CardView>
-
     </LinearLayout>
 
     <!-- Slide-out side menu overlay -->
@@ -162,27 +143,33 @@
             android:layout_height="0dp"
             android:layout_weight="1"
             android:orientation="vertical"
-            android:paddingTop="8dp">
+            android:paddingTop="12dp">
 
             <!-- Profile -->
             <LinearLayout
                 android:id="@+id/goToProfile"
                 android:layout_width="match_parent"
-                android:layout_height="56dp"
+                android:layout_height="64dp"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:paddingStart="24dp"
+                android:paddingStart="20dp"
                 android:paddingEnd="20dp"
                 android:background="@drawable/menu_item_ripple"
                 android:clickable="true"
                 android:focusable="true">
 
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/profile"
-                    android:tint="@color/primary_dark"
-                    android:layout_marginEnd="20dp"/>
+                <FrameLayout
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/ic_menu_item_bg"
+                    android:layout_marginEnd="16dp">
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/profile"
+                        android:tint="@color/light_blue"/>
+                </FrameLayout>
 
                 <TextView
                     android:layout_width="0dp"
@@ -205,21 +192,27 @@
             <LinearLayout
                 android:id="@+id/parcel"
                 android:layout_width="match_parent"
-                android:layout_height="56dp"
+                android:layout_height="64dp"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:paddingStart="24dp"
+                android:paddingStart="20dp"
                 android:paddingEnd="20dp"
                 android:background="@drawable/menu_item_ripple"
                 android:clickable="true"
                 android:focusable="true">
 
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/parcel"
-                    android:tint="@color/primary_dark"
-                    android:layout_marginEnd="20dp"/>
+                <FrameLayout
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/ic_menu_item_bg"
+                    android:layout_marginEnd="16dp">
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/parcel"
+                        android:tint="@color/light_blue"/>
+                </FrameLayout>
 
                 <TextView
                     android:layout_width="0dp"
@@ -242,21 +235,27 @@
             <LinearLayout
                 android:id="@+id/goToSettings"
                 android:layout_width="match_parent"
-                android:layout_height="56dp"
+                android:layout_height="64dp"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:paddingStart="24dp"
+                android:paddingStart="20dp"
                 android:paddingEnd="20dp"
                 android:background="@drawable/menu_item_ripple"
                 android:clickable="true"
                 android:focusable="true">
 
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_settings"
-                    android:tint="@color/primary_dark"
-                    android:layout_marginEnd="20dp"/>
+                <FrameLayout
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/ic_menu_item_bg"
+                    android:layout_marginEnd="16dp">
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_settings"
+                        android:tint="@color/light_blue"/>
+                </FrameLayout>
 
                 <TextView
                     android:layout_width="0dp"
@@ -277,53 +276,43 @@
 
         </LinearLayout>
 
-        <!-- Bottom: divider + logout + branding -->
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@color/divider"
-            android:layout_marginStart="24dp"
-            android:layout_marginEnd="24dp"/>
-
+        <!-- Sign Out button with red border -->
         <LinearLayout
-            android:id="@+id/logOut"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:paddingStart="24dp"
-            android:paddingEnd="20dp"
-            android:background="@drawable/menu_item_ripple"
-            android:clickable="true"
-            android:focusable="true">
-
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/logout"
-                android:tint="@color/error"
-                android:layout_marginEnd="20dp"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Sign Out"
-                android:textSize="15sp"
-                android:textColor="@color/error"
-                android:fontFamily="sans-serif-medium"/>
-
-        </LinearLayout>
-
-        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="TumaGo"
-            android:textSize="11sp"
-            android:textColor="@color/hint_text"
-            android:fontFamily="sans-serif"
-            android:gravity="center"
-            android:paddingBottom="16dp"
-            android:paddingTop="4dp"/>
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="20dp"
+            android:paddingTop="8dp">
+
+            <LinearLayout
+                android:id="@+id/logOut"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:background="@drawable/logout_border"
+                android:clickable="true"
+                android:focusable="true">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/logout"
+                    android:tint="@color/error"
+                    android:layout_marginEnd="8dp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Sign Out"
+                    android:textSize="15sp"
+                    android:textColor="@color/error"
+                    android:fontFamily="sans-serif-medium"/>
+
+            </LinearLayout>
+
+        </LinearLayout>
 
     </LinearLayout>
 

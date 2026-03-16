@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/page_bg">
+
+    <!-- Header -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="My Parcels"
+        android:fontFamily="sans-serif-black"
+        android:textSize="22sp"
+        android:textColor="@color/dark_blue"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:paddingTop="36dp"
+        android:paddingBottom="12dp"
+        android:background="@color/card_bg"
+        app:elevation="2dp" />
+
+    <!-- Empty state -->
+    <LinearLayout
+        android:id="@+id/noParcel"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="32dp"
+        android:visibility="gone">
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            app:cardCornerRadius="60dp"
+            app:cardElevation="0dp"
+            app:cardBackgroundColor="@color/page_bg"
+            android:layout_marginBottom="20dp">
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@drawable/no_parcel"
+                android:padding="24dp"
+                android:scaleType="fitCenter"/>
+
+        </androidx.cardview.widget.CardView>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="No Deliveries Yet"
+            android:fontFamily="sans-serif-black"
+            android:textSize="20sp"
+            android:textColor="@color/dark_blue"
+            android:layout_marginBottom="8dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Your delivery history will appear here"
+            android:textSize="14sp"
+            android:textColor="@color/secondary_text"
+            android:gravity="center"/>
+
+    </LinearLayout>
+
+    <!-- Deliveries list -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/DeliveryRecycleView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="16dp"
+        android:clipToPadding="false"
+        android:layoutAnimation="@anim/recycler_layout_animation"/>
+
+    <!-- Pagination controls -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:background="@color/card_bg"
+        android:elevation="4dp"
+        android:paddingHorizontal="16dp">
+
+        <ImageView
+            android:id="@+id/prevPage"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@drawable/back"
+            android:padding="8dp"
+            android:scaleType="fitCenter"
+            android:tint="@color/dark_blue"
+            android:contentDescription="Previous page"/>
+
+        <TextView
+            android:id="@+id/pageNumberTextView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="1"
+            android:textSize="15sp"
+            android:textColor="@color/dark_blue"
+            android:fontFamily="sans-serif-medium"
+            android:gravity="center"/>
+
+        <ImageView
+            android:id="@+id/nextPage"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@drawable/back"
+            android:rotation="180"
+            android:padding="8dp"
+            android:scaleType="fitCenter"
+            android:tint="@color/dark_blue"
+            android:contentDescription="Next page"/>
+
+    </LinearLayout>
+
+</LinearLayout>

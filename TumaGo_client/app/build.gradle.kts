@@ -1,3 +1,11 @@
+import java.util.Properties
+
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(localPropertiesFile.inputStream())
+}
+
 plugins {
     alias(libs.plugins.android.application)
     id("com.google.gms.google-services")
@@ -6,6 +14,9 @@ plugins {
 android {
     namespace = "com.techmania.tumago"
     compileSdk = 35
+    buildFeatures {
+        buildConfig = true
+    }
 
     packagingOptions {
         exclude ("META-INF/NOTICE.md")
@@ -24,6 +35,11 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "MAPS_API_KEY", "\"${localProperties["MAPS_API_KEY"]}\"")
+        buildConfigField("String", "BASE_URL", "\"${localProperties["BASE_URL"]}\"")
+
+        manifestPlaceholders["MAPS_API_KEY"] = localProperties["MAPS_API_KEY"] ?: ""
     }
 
     buildTypes {

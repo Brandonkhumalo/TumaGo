@@ -16,7 +16,10 @@ import com.techmania.tumago_driver.R;
 import com.techmania.tumago_driver.models.Deliveries;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -39,25 +42,45 @@ public class DeliveryAdapter extends RecyclerView.Adapter<DeliveryAdapter.cardvi
 
     @Override
     public void onBindViewHolder(@NonNull cardviewholder holder, int position) {
-        holder.delivery_id.setText(arrayList.get(position).getDelivery_id());
-        holder.date.setText(arrayList.get(position).getDate().toString());
-        holder.fare.setText(String.valueOf(arrayList.get(position).getFare()));
+        Deliveries item = arrayList.get(position);
+
+        holder.delivery_id.setText("ID: " + item.getDelivery_id());
+        holder.fare.setText("$" + String.format(Locale.US, "%.2f", item.getFare()));
+
+        // Format date: "2026-03-13T14:04:00Z" → "Friday 13 March 2026 14:04"
+        String startTime = item.getStart_time();
+        if (startTime != null) {
+            try {
+                SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
+                Date parsed = inputFormat.parse(startTime);
+                if (parsed != null) {
+                    SimpleDateFormat outputFormat = new SimpleDateFormat("EEEE d MMMM yyyy HH:mm", Locale.US);
+                    holder.date.setText(outputFormat.format(parsed));
+                }
+            } catch (ParseException e) {
+                holder.date.setText(item.getDate() != null ? item.getDate() : "");
+            }
+        } else {
+            holder.date.setText(item.getDate() != null ? item.getDate() : "");
+        }
+
+        // Reverse geocode destination coordinates to a readable address
         Geocoder geocoder = new Geocoder(holder.itemView.getContext(), Locale.getDefault());
-        double lat = arrayList.get(position).getDestination_lat();
-        double lng = arrayList.get(position).getDestination_lng();
+        double lat = item.getDestination_lat();
+        double lng = item.getDestination_lng();
 
         try {
             List<Address> addresses = geocoder.getFromLocation(lat, lng, 1);
             if (addresses != null && !addresses.isEmpty()) {
                 Address address = addresses.get(0);
 
-                String streetNumber = address.getSubThoroughfare(); // e.g., "123"
-                String streetName = address.getThoroughfare();      // e.g., "Main St"
-                String city = address.getLocality();                // e.g., "Harare"
+                String streetNumber = address.getSubThoroughfare();
+                String streetName = address.getThoroughfare();
+                String city = address.getLocality();
 
-                // Combine into one line, or display separately
-                String formattedAddress = streetNumber + " " + streetName + ", " + city;
-                holder.destination.setText(formattedAddress);
+                String streetFull = (streetNumber != null ? streetNumber + " " : "") + (streetName != null ? streetName : "");
+                String formattedAddress = streetFull + (city != null ? ", " + city : "");
+                holder.destination.setText(formattedAddress.isEmpty() ? "Unknown location" : formattedAddress);
             } else {
                 holder.destination.setText("Unknown location");
             }

@@ -72,14 +72,30 @@
 
                 </LinearLayout>
 
-                <TextView
-                    android:id="@+id/DeliveryFare"
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="$20.50"
-                    android:textSize="24sp"
-                    android:fontFamily="sans-serif-black"
-                    android:textColor="@color/primary"/>
+                    android:orientation="vertical"
+                    android:gravity="end">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Fare"
+                        android:textSize="12sp"
+                        android:fontFamily="sans-serif"
+                        android:textColor="@color/secondary_text"/>
+
+                    <TextView
+                        android:id="@+id/DeliveryFare"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="$20.50"
+                        android:textSize="24sp"
+                        android:fontFamily="sans-serif-black"
+                        android:textColor="@color/primary"/>
+
+                </LinearLayout>
 
             </LinearLayout>
 
@@ -123,6 +139,18 @@
                     android:textColor="@color/primary"/>
 
             </LinearLayout>
+
+            <!-- Countdown timer bar -->
+            <ProgressBar
+                android:id="@+id/countdownBar"
+                style="@android:style/Widget.ProgressBar.Horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="6dp"
+                android:layout_marginBottom="12dp"
+                android:max="10000"
+                android:progress="10000"
+                android:progressTint="@color/primary"
+                android:progressBackgroundTint="@color/input_border"/>
 
             <!-- Accept swipe card -->
             <com.google.android.material.card.MaterialCardView

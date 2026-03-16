@@ -1,92 +1,131 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    tools:context=".auth.verification"
-    android:background="@color/card_bg">
+    android:orientation="vertical"
+    android:background="@color/page_bg"
+    tools:context=".auth.verification">
 
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
-
-        <ImageView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:src="@drawable/tuma_go_logo"
-            android:layout_marginTop="-120dp"/>
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Enter Verification Code"
-            android:textSize="25dp"
-            android:textColor="@color/blackish"
-            android:gravity="center"
-            android:layout_marginTop="-120dp"/>
-
-        <TextView
-            android:id="@+id/emailOtp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/sent"
-            android:textSize="15sp"
-            android:gravity="center"
-            android:textColor="@color/blackish"
-            android:layout_marginTop="2dp"/>
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
 
         <LinearLayout
-            android:id="@+id/otpContainer"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:orientation="horizontal"
-            android:layout_marginTop="20dp"
-            android:gravity="center">
+            android:orientation="vertical"
+            android:padding="24dp"
+            android:gravity="center_horizontal">
 
-            <EditText android:id="@+id/otp1" style="@style/OtpBox" />
-            <EditText android:id="@+id/otp2" style="@style/OtpBox" />
-            <EditText android:id="@+id/otp3" style="@style/OtpBox" />
-            <EditText android:id="@+id/otp4" style="@style/OtpBox" />
-            <EditText android:id="@+id/otp5" style="@style/OtpBox" />
+            <!-- Icon -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="96dp"
+                android:layout_height="96dp"
+                app:cardCornerRadius="48dp"
+                app:cardElevation="0dp"
+                app:cardBackgroundColor="@color/card_bg"
+                android:layout_marginTop="48dp"
+                android:layout_marginBottom="24dp">
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/email"
+                    android:tint="@color/primary"
+                    android:padding="24dp"
+                    android:scaleType="fitCenter"/>
+
+            </androidx.cardview.widget.CardView>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Enter Verification Code"
+                android:fontFamily="sans-serif-black"
+                android:textSize="24sp"
+                android:textColor="@color/blackish"
+                android:gravity="center"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:id="@+id/emailOtp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/sent"
+                android:textSize="14sp"
+                android:gravity="center"
+                android:textColor="@color/secondary_text"
+                android:layout_marginBottom="32dp"/>
+
+            <!-- OTP boxes -->
+            <LinearLayout
+                android:id="@+id/otpContainer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginBottom="24dp">
+
+                <EditText android:id="@+id/otp1" style="@style/OtpBox" />
+                <EditText android:id="@+id/otp2" style="@style/OtpBox" />
+                <EditText android:id="@+id/otp3" style="@style/OtpBox" />
+                <EditText android:id="@+id/otp4" style="@style/OtpBox" />
+                <EditText android:id="@+id/otp5" style="@style/OtpBox" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Didn't receive the code?"
+                android:textSize="14sp"
+                android:gravity="center"
+                android:textColor="@color/secondary_text"
+                android:layout_marginBottom="4dp"/>
+
+            <TextView
+                android:id="@+id/resendOtp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Resend Code"
+                android:textSize="15sp"
+                android:fontFamily="sans-serif-medium"
+                android:gravity="center"
+                android:textColor="@color/primary"
+                android:layout_marginBottom="32dp"/>
+
         </LinearLayout>
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Didn't receive OTP code?"
-            android:textSize="15sp"
-            android:gravity="center"
-            android:textColor="@color/blackish"
-            android:layout_marginTop="10dp"/>
+    </ScrollView>
 
-        <TextView
-            android:id="@+id/resendOtp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Resend Otp"
-            android:textSize="16sp"
-            android:fontFamily="sans-serif-black"
-            android:gravity="center"
-            android:textColor="@color/dark_blue"
-            android:layout_marginTop="2dp"/>
+    <!-- Bottom verify button -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/card_bg"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="20dp"
+        android:elevation="8dp">
 
         <Button
             android:id="@+id/verify"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
+            android:layout_height="56dp"
             android:text="Verify &amp; Proceed"
             android:textSize="16sp"
             android:textColor="@color/white"
-            android:layout_marginHorizontal="30dp"
-            android:layout_marginTop="10dp"
-            android:backgroundTint="@color/dark_blue"
-            android:visibility="gone"/>
+            android:fontFamily="sans-serif-medium"
+            android:backgroundTint="@color/primary"/>
 
     </LinearLayout>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+</LinearLayout>

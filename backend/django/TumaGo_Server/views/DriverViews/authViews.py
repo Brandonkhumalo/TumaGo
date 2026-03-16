@@ -1,15 +1,20 @@
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import status
+from rest_framework.throttling import AnonRateThrottle
 from ...serializers.driverSerializer.authSerializers import RegisterSerializer, VehicleSerializer, LicenseUploadSerializer, ResetPasswordSerializer
 from ...token import JWTAuthentication
 from ...models import CustomUser
 from django.shortcuts import get_object_or_404
 
+class DriverSignupThrottle(AnonRateThrottle):
+    scope = 'signup'
+
 # Register Driver / User (Unified Registration)
 @api_view(['POST'])
 @permission_classes([AllowAny])
+@throttle_classes([DriverSignupThrottle])
 def driver_register(request):
     # Initialize the serializer with the incoming data
     serializer = RegisterSerializer(data=request.data)

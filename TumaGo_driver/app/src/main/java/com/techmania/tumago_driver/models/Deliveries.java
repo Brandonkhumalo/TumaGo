@@ -1,7 +1,5 @@
 package com.techmania.tumago_driver.models;
 
-import java.util.Date;
-
 public class Deliveries {
     private String delivery_id;
     private double origin_lat;
@@ -11,23 +9,15 @@ public class Deliveries {
     private String vehicle;
     private double fare;
     private String payment_method;
-    private Date date;
+    private String date;
+    private String start_time;
 
-    public Deliveries(String delivery_id, double origin_lat, double origin_lng, double destination_lat,
-                      double destination_lng, String vehicle, double fare, String payment_method, Date date) {
-        this.delivery_id = delivery_id;
-        this.origin_lat = origin_lat;
-        this.origin_lng = origin_lng;
-        this.destination_lat = destination_lat;
-        this.destination_lng = destination_lng;
-        this.vehicle = vehicle;
-        this.fare = fare;
-        this.payment_method = payment_method;
-        this.date = date;
+    public String getDate() {
+        return date;
     }
 
-    public Date getDate() {
-        return date;
+    public String getStart_time() {
+        return start_time;
     }
 
     public String getDelivery_id() {

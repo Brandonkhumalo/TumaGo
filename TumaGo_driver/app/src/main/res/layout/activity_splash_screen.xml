@@ -12,8 +12,8 @@
 
     <ImageView
         android:id="@+id/imageSplash"
-        android:layout_width="220dp"
-        android:layout_height="220dp"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
         android:src="@drawable/tuma_go_logo"
         android:scaleType="fitCenter"
         app:layout_constraintTop_toTopOf="parent"
@@ -21,7 +21,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintVertical_chainStyle="packed"
-        app:layout_constraintVertical_bias="0.45"/>
+        app:layout_constraintVertical_bias="0.40"/>
 
     <TextView
         android:id="@+id/tagline"
@@ -29,7 +29,7 @@
         android:layout_height="wrap_content"
         android:text="Fast. Reliable. Delivered."
         android:textSize="16sp"
-        android:textColor="#CCffffff"
+        android:textColor="@color/splash_subtitle"
         android:fontFamily="sans-serif"
         android:layout_marginTop="8dp"
         app:layout_constraintTop_toBottomOf="@+id/imageSplash"
@@ -43,7 +43,7 @@
         android:layout_height="wrap_content"
         android:text="Driver"
         android:textSize="13sp"
-        android:textColor="#80FFFFFF"
+        android:textColor="@color/splash_badge"
         android:fontFamily="sans-serif"
         android:layout_marginBottom="32dp"
         app:layout_constraintBottom_toBottomOf="parent"

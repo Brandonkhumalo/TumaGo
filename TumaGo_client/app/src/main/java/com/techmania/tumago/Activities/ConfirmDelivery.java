@@ -26,6 +26,7 @@ import com.techmania.tumago.auth.Login;
 import com.techmania.tumago.helper.ApiClient;
 import com.techmania.tumago.helper.NetworkUtils;
 import com.techmania.tumago.helper.Token;
+import com.techmania.tumago.helper.UiHelper;
 
 import java.io.IOException;
 import java.util.List;
@@ -54,7 +55,10 @@ public class ConfirmDelivery extends AppCompatActivity {
 
         Toolbar toolbar = findViewById(R.id.toolbarHome);
         setSupportActionBar(toolbar);
-        toolbar.setNavigationOnClickListener(v -> onBackPressed());
+        toolbar.setNavigationOnClickListener(v -> {
+            finish();
+            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
+        });
 
         look_for_driver = findViewById(R.id.LookForDriver);
         look_for_driver.setVisibility(View.GONE);
@@ -91,16 +95,24 @@ public class ConfirmDelivery extends AppCompatActivity {
 
         SharedPreferences prefs = getSharedPreferences("MyPrefs", MODE_PRIVATE);
 
-        double originLat = Double.longBitsToDouble(prefs.getLong("originLat", 0));
-        double originLng = Double.longBitsToDouble(prefs.getLong("originLng", 0));
-        double destLat = Double.longBitsToDouble(prefs.getLong("destLat", 0));
-        double destLng = Double.longBitsToDouble(prefs.getLong("destLng", 0));
+        long originLatBits = prefs.getLong("originLat", 0);
+        long originLngBits = prefs.getLong("originLng", 0);
+        long destLatBits = prefs.getLong("destLat", 0);
+        long destLngBits = prefs.getLong("destLng", 0);
 
-        originLatLng = new LatLng(originLat, originLng);
-        destLatLng = new LatLng(destLat, destLng);
-
-        getAddressFromLatLng(originLatLng, true);
-        getAddressFromLatLng(destLatLng, false);
+        // Only use coords if they were actually saved (avoid 0,0 default)
+        if (originLatBits != 0 && originLngBits != 0) {
+            double originLat = Double.longBitsToDouble(originLatBits);
+            double originLng = Double.longBitsToDouble(originLngBits);
+            originLatLng = new LatLng(originLat, originLng);
+            getAddressFromLatLng(originLatLng, true);
+        }
+        if (destLatBits != 0 && destLngBits != 0) {
+            double destLat = Double.longBitsToDouble(destLatBits);
+            double destLng = Double.longBitsToDouble(destLngBits);
+            destLatLng = new LatLng(destLat, destLng);
+            getAddressFromLatLng(destLatLng, false);
+        }
 
         findViewById(R.id.lookForTrip).setOnClickListener(view -> {
             LookForDriver();
@@ -119,6 +131,12 @@ public class ConfirmDelivery extends AppCompatActivity {
 
         // Start monitoring changes
         NetworkUtils.registerNetworkCallback(this);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        NetworkUtils.unregisterNetworkCallback(this);
     }
 
     private void getAddressFromLatLng(LatLng latLng, boolean isOrigin) {
@@ -147,11 +165,19 @@ public class ConfirmDelivery extends AppCompatActivity {
         }
     }
 
+    private boolean isRequesting = false;
+
     public void LookForDriver(){
+        if (isRequesting) return;
+
         String accessToken = Token.getAccessToken(this);
         String authHeader = "Bearer " + accessToken;
 
         if (accessToken != null && !accessToken.isEmpty()){
+            isRequesting = true;
+            look_for_driver.setVisibility(View.VISIBLE);
+            findViewById(R.id.lookForTrip).setEnabled(false);
+
             String payment_method = paymentSpinner.getSelectedItem().toString().toLowerCase();
 
             DeliveryRequest request = new DeliveryRequest(originLatLng, destLatLng, vehicleValue, fareValue, payment_method);
@@ -162,27 +188,47 @@ public class ConfirmDelivery extends AppCompatActivity {
             call.enqueue(new Callback<ResponseBody>() {
                 @Override
                 public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-                    if (response.isSuccessful() && response.body() != null) {
-                        look_for_driver.setVisibility(View.VISIBLE);
+                    isRequesting = false;
+                    look_for_driver.setVisibility(View.GONE);
+                    findViewById(R.id.lookForTrip).setEnabled(true);
 
+                    if (response.isSuccessful() && response.body() != null) {
+                        Intent searchIntent = new Intent(ConfirmDelivery.this, SearchingForDriver.class);
+                        searchIntent.putExtra("transportImage", getIntent().getStringExtra("transportImage"));
+                        startActivity(searchIntent);
+                        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+                        finish();
                     } else {
                         Log.d("failed", response.message());
-                        Intent i = new Intent(ConfirmDelivery.this, MainActivity.class);
-                        startActivity(i);
-                        finish();
+                        UiHelper.showRetry(findViewById(android.R.id.content), "Failed to request delivery", () -> LookForDriver());
                     }
                 }
 
                 @Override
                 public void onFailure(Call<ResponseBody> call, Throwable t) {
+                    isRequesting = false;
+                    look_for_driver.setVisibility(View.GONE);
+                    findViewById(R.id.lookForTrip).setEnabled(true);
                     Log.e("ConfirmDelivery", "Error: " + t.getMessage());
+                    UiHelper.showRetry(findViewById(android.R.id.content), "Connection error. Please try again.", () -> LookForDriver());
                 }
             });
         } else {
             Intent i = new Intent(ConfirmDelivery.this, Login.class);
             startActivity(i);
+            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
             finish();
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (isRequesting) {
+            Toast.makeText(this, "Please wait while we process your request.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        super.onBackPressed();
+        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
     }
 }
 

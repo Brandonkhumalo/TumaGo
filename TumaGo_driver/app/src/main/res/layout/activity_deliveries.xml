@@ -24,8 +24,9 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             app:title="My Deliveries"
-            app:titleTextColor="@color/blackish"
-            app:navigationIcon="@drawable/back"/>
+            app:titleTextColor="@color/primary_dark"
+            app:navigationIcon="@drawable/back"
+            app:navigationIconTint="@color/primary_dark"/>
 
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -38,6 +39,17 @@
         android:visibility="gone"
         app:layout_constraintTop_toBottomOf="@+id/AppBarLayoutHome"/>
 
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:indeterminate="true"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@+id/AppBarLayoutHome"
+        app:layout_constraintBottom_toTopOf="@+id/paginationBar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
     <!-- Delivery list -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/DeliveryRecycleView"
@@ -45,6 +57,7 @@
         android:layout_height="0dp"
         android:padding="16dp"
         android:clipToPadding="false"
+        android:layoutAnimation="@anim/recycler_layout_animation"
         android:visibility="gone"
         app:layout_constraintTop_toBottomOf="@+id/AppBarLayoutHome"
         app:layout_constraintBottom_toTopOf="@+id/paginationBar"

@@ -33,6 +33,9 @@ func matchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Limit request body to 1KB — match requests are small JSON payloads.
+	r.Body = http.MaxBytesReader(w, r.Body, 1024)
+
 	var req matchRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSON(w, http.StatusBadRequest, errorResponse{Detail: "invalid request body"})

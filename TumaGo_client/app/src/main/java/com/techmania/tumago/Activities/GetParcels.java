@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -22,6 +23,7 @@ import com.techmania.tumago.helper.ApiClient;
 import com.techmania.tumago.helper.NetworkUtils;
 import com.techmania.tumago.helper.PaginatedDeliveryResponse;
 import com.techmania.tumago.helper.Token;
+import com.techmania.tumago.helper.UiHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +44,7 @@ public class GetParcels extends AppCompatActivity {
     DeliveryAdapter adapter;
     ArrayList<Deliveries> arrayList;
     LinearLayout noParcels;
+    ProgressBar progressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,13 +53,17 @@ public class GetParcels extends AppCompatActivity {
 
         Toolbar toolbar = findViewById(R.id.toolbarHome);
         setSupportActionBar(toolbar);
-        toolbar.setNavigationOnClickListener(v -> onBackPressed());
+        toolbar.setNavigationOnClickListener(v -> {
+            finish();
+            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
+        });
 
         if (currentPage < 1) {
             currentPage = 1;
         }
 
         noParcels = findViewById(R.id.noParcel);
+        progressBar = findViewById(R.id.progressBar);
 
         recyclerView = findViewById(R.id.DeliveryRecycleView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -104,9 +111,19 @@ public class GetParcels extends AppCompatActivity {
         NetworkUtils.registerNetworkCallback(this);
     }
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+        NetworkUtils.unregisterNetworkCallback(this);
+    }
+
     private void getDeliveries(String cursor){
         String accessToken = Token.getAccessToken(this);
         String authHeader = "Bearer " + accessToken;
+
+        progressBar.setVisibility(View.VISIBLE);
+        recyclerView.setVisibility(View.GONE);
+        noParcels.setVisibility(View.GONE);
 
         ApiService apiService = ApiClient.getClient().create(ApiService.class);
         Call<PaginatedDeliveryResponse> call = apiService.getDeliveries(cursor, authHeader);
@@ -114,6 +131,7 @@ public class GetParcels extends AppCompatActivity {
         call.enqueue(new Callback<PaginatedDeliveryResponse>() {
             @Override
             public void onResponse(Call<PaginatedDeliveryResponse> call, Response<PaginatedDeliveryResponse> response) {
+                progressBar.setVisibility(View.GONE);
                 if (response.isSuccessful() && response.body() != null) {
                     List<Deliveries> deliveries = response.body().getResults();
 
@@ -150,7 +168,9 @@ public class GetParcels extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<PaginatedDeliveryResponse> call, Throwable t) {
+                progressBar.setVisibility(View.GONE);
                 Log.d("FAILED", t.getMessage());
+                UiHelper.showRetry(findViewById(android.R.id.content), "Failed to load deliveries", () -> getDeliveries(cursor));
             }
         });
     }
@@ -164,6 +184,12 @@ public class GetParcels extends AppCompatActivity {
             e.printStackTrace();
             return null;
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
     }
 }
 

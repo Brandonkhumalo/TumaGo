@@ -5,6 +5,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -14,6 +16,7 @@ import com.techmania.tumago.R;
 import com.techmania.tumago.auth.Login;
 import com.techmania.tumago.helper.ApiClient;
 import com.techmania.tumago.helper.Token;
+import com.techmania.tumago.helper.UiHelper;
 
 import okhttp3.ResponseBody;
 import retrofit2.Call;
@@ -24,6 +27,8 @@ public class RateDeliver extends AppCompatActivity {
 
     private ImageView[] stars = new ImageView[5];
     private int selectedRating = 0;
+    private ProgressBar progressBar;
+    private Button rateButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,7 +49,8 @@ public class RateDeliver extends AppCompatActivity {
             });
         }
 
-        Button rateButton = findViewById(R.id.rateButton);
+        progressBar = findViewById(R.id.progressBar);
+        rateButton = findViewById(R.id.rateButton);
         rateButton.setOnClickListener(v -> {
             RateDelivery();
         });
@@ -72,25 +78,37 @@ public class RateDeliver extends AppCompatActivity {
             ApiService apiService = ApiClient.getClient().create(ApiService.class);
             Call<ResponseBody> call = apiService.rateTrip(authHeader, rate_trip);
 
+            UiHelper.showLoading(progressBar, rateButton);
             call.enqueue(new Callback<ResponseBody>() {
                 @Override
                 public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                    UiHelper.hideLoading(progressBar, rateButton);
                     if (response.isSuccessful()){
-                        Intent i = new Intent(RateDeliver.this, MainActivity.class);
+                        Intent i = new Intent(RateDeliver.this, HomeActivity.class);
                         startActivity(i);
+                        overridePendingTransition(R.anim.slide_down, R.anim.fade_out);
                         finish();
                     }
                 }
 
                 @Override
                 public void onFailure(Call<ResponseBody> call, Throwable t) {
+                    UiHelper.hideLoading(progressBar, rateButton);
                     Log.d("FAILED", t.getMessage());
+                    UiHelper.showRetry(findViewById(android.R.id.content), "Failed to submit rating", () -> RateDelivery());
                 }
             });
         } else {
             Intent i = new Intent(RateDeliver.this, Login.class);
             startActivity(i);
+            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
             finish();
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
     }
 }

@@ -6,9 +6,9 @@ from drf_yasg import openapi
 
 schema_view = get_schema_view(
    openapi.Info(
-      title="TumaGo api",
+      title="TumaGo API",
       default_version='v1',
-      description="Backend api development overview of a food delivering app",
+      description="TumaGo last-mile delivery platform API",
       contact=openapi.Contact(email="brandonkhumz40@gmail.com"),
    ),
    public=True,
@@ -17,13 +17,13 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('TumaGo_Server.urls')),
+
+    # Versioned API
+    path('api/v1/', include('TumaGo_Server.urls')),
 
     # Swagger UI
     re_path(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
-    #http://localhost:8000/swagger/
 
-    # ReDoc UI (optional)
+    # ReDoc UI
     re_path(r'^redoc/$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
-    #http://localhost:8000/redoc/
 ]

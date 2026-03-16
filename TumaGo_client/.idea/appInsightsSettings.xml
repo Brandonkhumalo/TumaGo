@@ -9,9 +9,9 @@
               <option name="connection">
                 <ConnectionSetting>
                   <option name="appId" value="com.techmania.tumago" />
-                  <option name="mobileSdkAppId" value="1:485609625849:android:312ebef407498ed112aa28" />
-                  <option name="projectId" value="deliveryapp-80d31" />
-                  <option name="projectNumber" value="485609625849" />
+                  <option name="mobileSdkAppId" value="1:1073164123872:android:7eac1d4d25c15ed9325a85" />
+                  <option name="projectId" value="roadlinksolutions-5e2db" />
+                  <option name="projectNumber" value="1073164123872" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

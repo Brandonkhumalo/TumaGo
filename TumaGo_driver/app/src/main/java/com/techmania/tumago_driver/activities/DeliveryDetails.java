@@ -8,10 +8,13 @@ import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -31,13 +34,17 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.material.card.MaterialCardView;
+import com.techmania.tumago_driver.BuildConfig;
 import com.techmania.tumago_driver.Interface.ApiService;
 import com.techmania.tumago_driver.R;
 import com.techmania.tumago_driver.auth.Login;
+import com.techmania.tumago_driver.helpers.AnimHelper;
 import com.techmania.tumago_driver.helpers.ApiClient;
+import com.techmania.tumago_driver.helpers.UiHelper;
 import com.techmania.tumago_driver.helpers.Token;
 
 import org.json.JSONArray;
@@ -61,7 +68,7 @@ import retrofit2.Response;
 
 public class DeliveryDetails extends AppCompatActivity implements OnMapReadyCallback {
 
-    private static final String API_KEY = "AIzaSyAVw3B6eS91Vw5aBew8cCoTwhu2zy3atiI";
+    private static final String API_KEY = BuildConfig.MAPS_API_KEY;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
 
     private GoogleMap mMap;
@@ -78,8 +85,10 @@ public class DeliveryDetails extends AppCompatActivity implements OnMapReadyCall
     String cost;
     static String deliveryCost;
 
-    private Handler handler = new Handler();
+    private Handler handler = new Handler(Looper.getMainLooper());
     private Runnable timeoutRunnable;
+    private CountDownTimer countDownTimer;
+    private ProgressBar countdownBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -119,8 +128,8 @@ public class DeliveryDetails extends AppCompatActivity implements OnMapReadyCall
         userLati = intent.getStringExtra("userLatitude");
         userLong = intent.getStringExtra("userLongi");
 
-        double lat = Double.parseDouble(lati);
-        double lng = Double.parseDouble(longi);
+        double lat = lati != null ? Double.parseDouble(lati) : 0.0;
+        double lng = longi != null ? Double.parseDouble(longi) : 0.0;
 
         destinationLatLng = new LatLng(lat, lng);
         if (destinationLatLng != null) {
@@ -128,8 +137,16 @@ public class DeliveryDetails extends AppCompatActivity implements OnMapReadyCall
         }
 
         name.setText(requester);
-        fare.setText("$" + deliveryCost);
-        distance.setText(Distance + " km");
+        fare.setText("$" + cost);
+
+        // Backend sends distance in meters — convert to km for display
+        try {
+            double distMeters = Double.parseDouble(Distance);
+            double distKm = distMeters / 1000.0;
+            distance.setText(String.format(Locale.US, "%.1f km", distKm));
+        } catch (NumberFormatException e) {
+            distance.setText(Distance + " km");
+        }
 
         /**motionLayout.setTransitionListener(new MotionLayout.TransitionListener() {
             @Override
@@ -151,18 +168,22 @@ public class DeliveryDetails extends AppCompatActivity implements OnMapReadyCall
             public void onTransitionTrigger(MotionLayout motionLayout, int triggerId, boolean positive, float progress) {}
         });*/
 
-        // Set the 10-second timeout
-        timeoutRunnable = new Runnable() {
+        // Visible countdown timer
+        countdownBar = findViewById(R.id.countdownBar);
+        countDownTimer = new CountDownTimer(10000, 50) {
             @Override
-            public void run() {
+            public void onTick(long millisUntilFinished) {
+                countdownBar.setProgress((int) millisUntilFinished);
+            }
+
+            @Override
+            public void onFinish() {
+                countdownBar.setProgress(0);
                 Intent i = new Intent(DeliveryDetails.this, MainActivity.class);
                 startActivity(i);
                 finish();
             }
-        };
-
-        // Start the countdown
-        handler.postDelayed(timeoutRunnable, 10000); // 10,000 ms = 10 seconds
+        }.start();
     }
 
     private void decodeLatLng(LatLng latLng) {
@@ -224,7 +245,13 @@ public class DeliveryDetails extends AppCompatActivity implements OnMapReadyCall
                 .title("Destination")
                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
 
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(originLatLng, 7f));
+        // Zoom to fit both origin and destination markers with padding
+        LatLngBounds.Builder boundsBuilder = new LatLngBounds.Builder();
+        boundsBuilder.include(originLatLng);
+        boundsBuilder.include(destinationLatLng);
+        LatLngBounds bounds = boundsBuilder.build();
+        int padding = 120; // pixels of padding around the markers
+        mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, padding));
 
         drawRouteAndDistance(originLatLng, destinationLatLng);
     }
@@ -271,6 +298,14 @@ public class DeliveryDetails extends AppCompatActivity implements OnMapReadyCall
     }
 
     @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (countDownTimer != null) {
+            countDownTimer.cancel();
+        }
+    }
+
+    @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
@@ -283,6 +318,9 @@ public class DeliveryDetails extends AppCompatActivity implements OnMapReadyCall
     }
 
     private void AcceptTrip(){
+        if (countDownTimer != null) {
+            countDownTimer.cancel();
+        }
         String accessToken = Token.getAccessToken(this);
         String trip_id = getTrip_id(this);
         Map<String, String> map = new HashMap<>();
@@ -297,21 +335,25 @@ public class DeliveryDetails extends AppCompatActivity implements OnMapReadyCall
                 @Override
                 public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                     if (response.isSuccessful()){
-                        accept_Trip.setVisibility(View.GONE);
+                        AnimHelper.slideDown(accept_Trip);
 
                         try {
                             // Convert response body to String
+                            if (response.body() == null) return;
                             String responseString = response.body().string();
 
                             // Parse JSON to extract delivery_id
                             JSONObject jsonObject = new JSONObject(responseString);
-                            String deliveryId = jsonObject.getString("delivery_id");
+                            String deliveryId = jsonObject.optString("delivery_id", null);
+                            if (deliveryId == null || deliveryId.isEmpty()) {
+                                Log.e("AcceptTrip", "Missing delivery_id in response");
+                                return;
+                            }
 
                             BigDecimal trip_cost = new BigDecimal(cost);
                             store_deliveryDetails(DeliveryDetails.this, trip_cost, deliveryId);
 
                             // Continue with navigation
-                            accept_Trip.setVisibility(View.GONE);
                             Intent i = new Intent(DeliveryDetails.this, Navigation.class);
                             i.putExtra("userLatitude", userLati);
                             i.putExtra("userLongi", userLong);
@@ -335,6 +377,7 @@ public class DeliveryDetails extends AppCompatActivity implements OnMapReadyCall
                 @Override
                 public void onFailure(Call<ResponseBody> call, Throwable t) {
                     Log.d("FAILED", t.getMessage());
+                    UiHelper.showRetry(findViewById(android.R.id.content), "Failed to accept trip", () -> AcceptTrip());
                 }
             });
         } else {

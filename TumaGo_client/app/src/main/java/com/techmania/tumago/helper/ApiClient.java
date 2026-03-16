@@ -1,5 +1,7 @@
 package com.techmania.tumago.helper;
 
+import com.techmania.tumago.BuildConfig;
+
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
@@ -12,11 +14,7 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class ApiClient {
-    // Update this to your production base URL before release.
-    // Development:  http://10.0.2.2:8000/   (emulator → localhost)
-    // Local device: http://192.168.x.x:8000/
-    // Production:   https://api.tumago.com/
-    private static final String BASE_URL = "http://13.246.35.254/";
+    private static final String BASE_URL = BuildConfig.BASE_URL;
 
     private static final int MAX_RETRIES    = 3;
     private static final int CONNECT_TIMEOUT_S = 15;
@@ -45,8 +43,11 @@ public class ApiClient {
 
     private static OkHttpClient buildOkHttpClient() {
         HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
-        // Use BODY in debug builds only; use NONE in release to protect user data.
-        logging.setLevel(HttpLoggingInterceptor.Level.BODY);
+        if (BuildConfig.DEBUG) {
+            logging.setLevel(HttpLoggingInterceptor.Level.BODY);
+        } else {
+            logging.setLevel(HttpLoggingInterceptor.Level.NONE);
+        }
 
         return new OkHttpClient.Builder()
                 .connectTimeout(CONNECT_TIMEOUT_S, TimeUnit.SECONDS)

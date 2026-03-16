@@ -12,6 +12,8 @@ import androidx.annotation.NonNull;
 
 public class NetworkUtils {
 
+    private static ConnectivityManager.NetworkCallback networkCallback;
+
     // Method to check internet availability
     public static boolean isInternetAvailable(Context context) {
         ConnectivityManager connectivityManager =
@@ -39,7 +41,7 @@ public class NetworkUtils {
             ConnectivityManager connectivityManager =
                     (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 
-            connectivityManager.registerDefaultNetworkCallback(new ConnectivityManager.NetworkCallback() {
+            networkCallback = new ConnectivityManager.NetworkCallback() {
                 @Override
                 public void onAvailable(@NonNull Network network) {
                     super.onAvailable(network);
@@ -51,7 +53,19 @@ public class NetworkUtils {
                     super.onLost(network);
                     Toast.makeText(context, "Internet disconnected", Toast.LENGTH_SHORT).show();
                 }
-            });
+            };
+            connectivityManager.registerDefaultNetworkCallback(networkCallback);
+        }
+    }
+
+    public static void unregisterNetworkCallback(Context context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && networkCallback != null) {
+            ConnectivityManager connectivityManager =
+                    (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (connectivityManager != null) {
+                connectivityManager.unregisterNetworkCallback(networkCallback);
+                networkCallback = null;
+            }
         }
     }
 }

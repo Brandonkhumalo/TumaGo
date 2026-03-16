@@ -5,4 +5,4 @@ class DeliverySerializer(serializers.ModelSerializer):
     class Meta:
         model = Delivery
         fields = ['origin_lat', 'origin_lng', 'destination_lat', 'destination_lng', 'vehicle', 'fare',
-                  'payment_method', 'delivery_id', 'date' ]
+                  'payment_method', 'delivery_id', 'date', 'start_time']

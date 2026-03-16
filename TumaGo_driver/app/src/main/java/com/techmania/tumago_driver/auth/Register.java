@@ -21,6 +21,7 @@ import androidx.security.crypto.MasterKey;
 import com.techmania.tumago_driver.Interface.ApiService;
 import com.techmania.tumago_driver.activities.MainActivity;
 import com.techmania.tumago_driver.R;
+import com.techmania.tumago_driver.helpers.AnimHelper;
 import com.techmania.tumago_driver.helpers.ApiClient;
 import com.techmania.tumago_driver.helpers.Token;
 import com.techmania.tumago_driver.models.CreateDriver;
@@ -60,8 +61,8 @@ public class Register extends AppCompatActivity {
         continueBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                personalInfo.setVisibility(View.GONE);
-                pinLayout.setVisibility(View.VISIBLE);
+                AnimHelper.fadeOut(personalInfo);
+                AnimHelper.fadeIn(pinLayout);
             }
         });
 
@@ -108,8 +109,22 @@ public class Register extends AppCompatActivity {
         String city = this.city.getText().toString();
         String postalCode = this.code.getText().toString();
 
-        progressBar.setVisibility(View.VISIBLE);
-        pinLayout.setVisibility(View.GONE);
+        AnimHelper.fadeIn(progressBar);
+        AnimHelper.fadeOut(pinLayout);
+
+        if (email != null && !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            Toast.makeText(this, "Invalid email address.", Toast.LENGTH_SHORT).show();
+            AnimHelper.fadeOut(progressBar);
+            AnimHelper.fadeIn(personalInfo);
+            return;
+        }
+
+        if (!phone_number.matches("\\d{7,15}")) {
+            Toast.makeText(this, "Invalid phone number.", Toast.LENGTH_SHORT).show();
+            AnimHelper.fadeOut(progressBar);
+            AnimHelper.fadeIn(personalInfo);
+            return;
+        }
 
         if (!name.isEmpty() && !surname.isEmpty() && !email.isEmpty() && !phone_number.isEmpty() && !streetAdress.isEmpty() &&
                 !province.isEmpty() && !city.isEmpty() && !postalCode.isEmpty()){
@@ -139,27 +154,27 @@ public class Register extends AppCompatActivity {
                             startActivity(intent);
                             finish();
                         }
-                        progressBar.setVisibility(View.GONE);
+                        AnimHelper.fadeOut(progressBar);
                     }
 
                     @Override
                     public void onFailure(Call<TokenResponse> call, Throwable t) {
                         Log.e("failed", t.getMessage());
-                        progressBar.setVisibility(View.GONE);
-                        personalInfo.setVisibility(View.VISIBLE);
+                        AnimHelper.fadeOut(progressBar);
+                        AnimHelper.fadeIn(personalInfo);
                     }
                 });
 
             } catch (Exception e) {
                 Toast.makeText(this, "File error: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 Log.e("File error", e.getMessage());
-                progressBar.setVisibility(View.GONE);
-                personalInfo.setVisibility(View.VISIBLE);
+                AnimHelper.fadeOut(progressBar);
+                AnimHelper.fadeIn(personalInfo);
             }
         } else {
             Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_LONG).show();
-            progressBar.setVisibility(View.GONE);
-            personalInfo.setVisibility(View.VISIBLE);
+            AnimHelper.fadeOut(progressBar);
+            AnimHelper.fadeIn(personalInfo);
         }
     }
 

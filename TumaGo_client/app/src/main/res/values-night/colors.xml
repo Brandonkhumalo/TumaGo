@@ -11,4 +11,7 @@
     <color name="divider">#2C2C2C</color>
     <color name="grey">#424242</color>
     <color name="ripple_blue">#2600a4e4</color>
+    <color name="menu_icon_bg">#0D2B3E</color>
+    <color name="orange_accent">#F97316</color>
+    <color name="home_header_bg">#0A1929</color>
 </resources>

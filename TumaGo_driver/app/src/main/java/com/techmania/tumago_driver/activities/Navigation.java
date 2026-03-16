@@ -1,5 +1,7 @@
 package com.techmania.tumago_driver.activities;
 
+import com.techmania.tumago_driver.BuildConfig;
+
 import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
@@ -32,7 +34,9 @@ import com.google.android.gms.location.*;
 import com.google.android.gms.maps.*;
 import com.google.android.gms.maps.model.*;
 import com.techmania.tumago_driver.auth.Login;
+import com.techmania.tumago_driver.helpers.AnimHelper;
 import com.techmania.tumago_driver.helpers.ApiClient;
+import com.techmania.tumago_driver.helpers.UiHelper;
 import com.techmania.tumago_driver.helpers.Token;
 import com.techmania.tumago_driver.models.EndTrip;
 
@@ -50,7 +54,7 @@ import retrofit2.Response;
 public class Navigation extends FragmentActivity implements OnMapReadyCallback {
 
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
-    private static final String API_KEY = "AIzaSyAVw3B6eS91Vw5aBew8cCoTwhu2zy3atiI";
+    private static final String API_KEY = BuildConfig.MAPS_API_KEY;
 
     private GoogleMap mMap;
     private LatLng userLatLng, driverLatLng;
@@ -86,8 +90,20 @@ public class Navigation extends FragmentActivity implements OnMapReadyCallback {
         // Get user pickup location and destination
         String userLat = getIntent().getStringExtra("userLatitude");
         String userLng = getIntent().getStringExtra("userLongi");
-        userLatLng = new LatLng(Double.parseDouble(userLat), Double.parseDouble(userLng));
+        try {
+            double lat = userLat != null ? Double.parseDouble(userLat) : 0.0;
+            double lng = userLng != null ? Double.parseDouble(userLng) : 0.0;
+            userLatLng = new LatLng(lat, lng);
+        } catch (NumberFormatException e) {
+            Log.e("Navigation", "Invalid lat/lng format", e);
+            userLatLng = new LatLng(0.0, 0.0);
+        }
         destination = getIntent().getParcelableExtra("destination");
+        if (destination == null) {
+            Toast.makeText(this, "Missing destination", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
@@ -105,7 +121,7 @@ public class Navigation extends FragmentActivity implements OnMapReadyCallback {
 
         navigate.setOnClickListener(v -> {
             hasStartedTrip = true;
-            startTrip.setVisibility(View.GONE);
+            AnimHelper.slideDown(startTrip);
             drawRoute(driverLatLng, destination);
         });
 
@@ -179,7 +195,7 @@ public class Navigation extends FragmentActivity implements OnMapReadyCallback {
                 + "&destination=" + destination.latitude + "," + destination.longitude
                 + "&mode=driving&key=" + API_KEY;
 
-        RequestQueue queue = Volley.newRequestQueue(this);
+        RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
 
         JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.GET, url, null,
                 response -> {
@@ -301,7 +317,7 @@ public class Navigation extends FragmentActivity implements OnMapReadyCallback {
 
         float distanceInMeters = results[0];
         if (distanceInMeters <= 50) {
-            startTrip.setVisibility(View.VISIBLE);
+            AnimHelper.slideUp(startTrip);
         }
     }
 
@@ -319,7 +335,7 @@ public class Navigation extends FragmentActivity implements OnMapReadyCallback {
 
         float distanceInMeters = results[0];
         if (distanceInMeters <= 50) {
-            endTrip.setVisibility(View.VISIBLE);
+            AnimHelper.slideUp(endTrip);
         }
     }
 
@@ -379,6 +395,7 @@ public class Navigation extends FragmentActivity implements OnMapReadyCallback {
                 @Override
                 public void onFailure(Call<ResponseBody> call, Throwable t) {
                     Log.d("FAILED", t.getMessage());
+                    UiHelper.showRetry(findViewById(android.R.id.content), "Something went wrong", () -> RateDelivery());
                 }
             });
         } else {
@@ -389,7 +406,7 @@ public class Navigation extends FragmentActivity implements OnMapReadyCallback {
     }
 
     private void EndTrip(){
-        layout2.setVisibility(View.VISIBLE);
+        AnimHelper.slideUp(layout2);
     }
 
     public static BigDecimal getCost(Context context) {

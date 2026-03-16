@@ -20,11 +20,17 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
+import android.os.Handler;
+import android.os.Looper;
 
 public class DeliveryAdapter extends RecyclerView.Adapter<DeliveryAdapter.cardviewholder> {
 
     ArrayList<Deliveries> arrayList;
     Context context;
+    private static final ExecutorService geocodeExecutor = Executors.newSingleThreadExecutor();
+    private static final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     public DeliveryAdapter(ArrayList<Deliveries> arrayList, Context context) {
         this.arrayList = arrayList;
@@ -45,29 +51,30 @@ public class DeliveryAdapter extends RecyclerView.Adapter<DeliveryAdapter.cardvi
         String formattedDate = sdf.format(arrayList.get(position).getDate());
         holder.date.setText(formattedDate);
         holder.fare.setText(String.format("$%s", String.valueOf(arrayList.get(position).getFare())));
-        Geocoder geocoder = new Geocoder(holder.itemView.getContext(), Locale.getDefault());
         double lat = arrayList.get(position).getDestination_lat();
         double lng = arrayList.get(position).getDestination_lng();
+        holder.destination.setText("Loading...");
 
-        try {
-            List<Address> addresses = geocoder.getFromLocation(lat, lng, 1);
-            if (addresses != null && !addresses.isEmpty()) {
-                Address address = addresses.get(0);
-
-                String streetNumber = address.getSubThoroughfare(); // e.g., "123"
-                String streetName = address.getThoroughfare();      // e.g., "Main St"
-                String city = address.getLocality();                // e.g., "Harare"
-
-                // Combine into one line, or display separately
-                String formattedAddress = streetNumber + " " + streetName + ", " + city;
-                holder.destination.setText(formattedAddress);
-            } else {
-                holder.destination.setText("Unknown location");
+        geocodeExecutor.execute(() -> {
+            try {
+                Geocoder geocoder = new Geocoder(holder.itemView.getContext(), Locale.getDefault());
+                List<Address> addresses = geocoder.getFromLocation(lat, lng, 1);
+                if (addresses != null && !addresses.isEmpty()) {
+                    Address address = addresses.get(0);
+                    String streetNumber = address.getSubThoroughfare();
+                    String streetName = address.getThoroughfare();
+                    String city = address.getLocality();
+                    String formattedAddress = (streetNumber != null ? streetNumber + " " : "")
+                            + (streetName != null ? streetName : "")
+                            + ", " + (city != null ? city : "Unknown");
+                    mainHandler.post(() -> holder.destination.setText(formattedAddress));
+                } else {
+                    mainHandler.post(() -> holder.destination.setText("Unknown location"));
+                }
+            } catch (IOException e) {
+                mainHandler.post(() -> holder.destination.setText("Error loading address"));
             }
-        } catch (IOException e) {
-            holder.destination.setText("Error loading address");
-            e.printStackTrace();
-        }
+        });
 
         // Set image based on vehicle type
         String vehicleType = arrayList.get(position).getVehicle().toLowerCase();

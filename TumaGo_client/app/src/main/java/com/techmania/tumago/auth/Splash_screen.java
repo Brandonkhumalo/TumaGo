@@ -3,6 +3,7 @@ package com.techmania.tumago.auth;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -16,7 +17,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import com.techmania.tumago.Activities.MainActivity;
+import com.techmania.tumago.Activities.HomeActivity;
 import com.techmania.tumago.Interface.ApiService;
 import com.techmania.tumago.R;
 import com.techmania.tumago.helper.ApiClient;
@@ -33,6 +34,8 @@ public class Splash_screen extends AppCompatActivity {
 
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 100;
     private int permissionRequestCount = 0;
+    private Handler handler;
+    private Runnable runnable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,18 +47,26 @@ public class Splash_screen extends AppCompatActivity {
         Animation anim = AnimationUtils.loadAnimation(this, R.anim.roadlink_splash);
         imageSplash.startAnimation(anim);
 
-        new Handler().postDelayed(new Runnable() {
+        handler = new Handler();
+        runnable = new Runnable() {
             @Override
             public void run() {
                 checkLocationPermission();
             }
-        }, 3000);
+        };
+        handler.postDelayed(runnable, 3000);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        handler.removeCallbacks(runnable);
     }
 
     private void checkLocationPermission() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
-            CheckToken(); // ✅ Permission already granted
+            CheckToken();
         } else {
             if (permissionRequestCount < 3) {
                 permissionRequestCount++;
@@ -63,8 +74,9 @@ public class Splash_screen extends AppCompatActivity {
                         new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                         LOCATION_PERMISSION_REQUEST_CODE);
             } else {
-                Toast.makeText(this, "Location permission denied. Closing app.", Toast.LENGTH_LONG).show();
-                finish(); // ❌ Shut down the app
+                // Continue without location instead of force-closing
+                Toast.makeText(this, "Continuing without location access. Some features may be limited.", Toast.LENGTH_LONG).show();
+                CheckToken();
             }
         }
     }
@@ -78,14 +90,25 @@ public class Splash_screen extends AppCompatActivity {
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 &&
                     grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                CheckToken(); // ✅ Permission granted now
+                CheckToken();
             } else {
-                checkLocationPermission(); // 🔁 Retry or exit
+                checkLocationPermission();
+            }
+        }
+    }
+
+    private void requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.POST_NOTIFICATIONS}, 101);
             }
         }
     }
 
     private void CheckToken() {
+        requestNotificationPermission();
         String accessToken = Token.getAccessToken(this);
 
         if (accessToken != null && !accessToken.isEmpty()) {
@@ -97,12 +120,14 @@ public class Splash_screen extends AppCompatActivity {
                 @Override
                 public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                     if (response.isSuccessful()) {
-                        Intent mainActivity = new Intent(Splash_screen.this, MainActivity.class);
+                        Intent mainActivity = new Intent(Splash_screen.this, HomeActivity.class);
                         startActivity(mainActivity);
+                        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
                         finish();
                     } else {
                         Intent login = new Intent(Splash_screen.this, Login.class);
                         startActivity(login);
+                        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
                         finish();
                         Token.clearToken(Splash_screen.this);
                     }
@@ -113,12 +138,14 @@ public class Splash_screen extends AppCompatActivity {
                     Log.d("Failed", t.getMessage());
                     Intent login = new Intent(Splash_screen.this, Login.class);
                     startActivity(login);
+                    overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
                     finish();
                 }
             });
         } else {
             Intent i = new Intent(Splash_screen.this, Login.class);
             startActivity(i);
+            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
             finish();
         }
     }

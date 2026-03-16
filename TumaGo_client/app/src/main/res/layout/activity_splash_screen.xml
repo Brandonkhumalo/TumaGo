@@ -2,30 +2,33 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#00a4e4"
-    android:fitsSystemWindows="true">
+    android:background="@color/primary"
+    android:fitsSystemWindows="true"
+    tools:context=".auth.Splash_screen">
 
     <ImageView
         android:id="@+id/imageSplash"
-        android:layout_width="220dp"
-        android:layout_height="220dp"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
         android:src="@drawable/tuma_go_logo"
         android:scaleType="fitCenter"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintVertical_bias="0.42"/>
+        app:layout_constraintVertical_bias="0.40"/>
 
     <TextView
+        android:id="@+id/appName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="TumaGo"
         android:textSize="32sp"
-        android:textColor="#FFFFFF"
+        android:textColor="@color/white"
         android:fontFamily="sans-serif-black"
         android:letterSpacing="0.08"
         app:layout_constraintTop_toBottomOf="@+id/imageSplash"
@@ -38,7 +41,7 @@
         android:layout_height="wrap_content"
         android:text="Fast. Reliable. Delivered."
         android:textSize="14sp"
-        android:textColor="#CCE8F7"
+        android:textColor="@color/splash_subtitle"
         android:fontFamily="sans-serif"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"

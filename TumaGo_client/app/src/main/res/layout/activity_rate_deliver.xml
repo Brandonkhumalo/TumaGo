@@ -350,6 +350,14 @@
 
     </ScrollView>
 
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_gravity="center"
+        android:indeterminate="true"
+        android:visibility="gone"/>
+
     <!-- Submit rating button -->
     <LinearLayout
         android:layout_width="match_parent"

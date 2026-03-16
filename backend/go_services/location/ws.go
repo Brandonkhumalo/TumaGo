@@ -4,14 +4,68 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"net"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/redis/go-redis/v9"
+	"golang.org/x/time/rate"
 )
 
 const driverGeoKey = "driver_locations"
+
+// wsConnLimiter limits WebSocket connection attempts per IP.
+// Allows 5 connection attempts per minute with a burst of 3.
+var wsConnLimiter = &connRateLimiter{
+	limiters: make(map[string]*wsIPEntry),
+	rps:      rate.Limit(5.0 / 60.0), // 5 per minute
+	burst:    3,
+}
+
+type wsIPEntry struct {
+	limiter  *rate.Limiter
+	lastSeen time.Time
+}
+
+type connRateLimiter struct {
+	mu       sync.Mutex
+	limiters map[string]*wsIPEntry
+	rps      rate.Limit
+	burst    int
+}
+
+func (cl *connRateLimiter) allow(ip string) bool {
+	cl.mu.Lock()
+	defer cl.mu.Unlock()
+
+	entry, exists := cl.limiters[ip]
+	if !exists {
+		entry = &wsIPEntry{limiter: rate.NewLimiter(cl.rps, cl.burst)}
+		cl.limiters[ip] = entry
+	}
+	entry.lastSeen = time.Now()
+	return entry.limiter.Allow()
+}
+
+// cleanup removes stale IP entries every 5 minutes.
+func (cl *connRateLimiter) cleanup() {
+	for {
+		time.Sleep(5 * time.Minute)
+		cl.mu.Lock()
+		for ip, entry := range cl.limiters {
+			if time.Since(entry.lastSeen) > 10*time.Minute {
+				delete(cl.limiters, ip)
+			}
+		}
+		cl.mu.Unlock()
+	}
+}
+
+func init() {
+	go wsConnLimiter.cleanup()
+}
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  256,
@@ -28,6 +82,13 @@ type gpsMessage struct {
 // handleDriverWS is the HTTP handler mounted at /ws/driver_location.
 func handleDriverWS(rdb *redis.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// Rate limit WebSocket connection attempts per IP.
+		ip := extractIP(r)
+		if !wsConnLimiter.allow(ip) {
+			http.Error(w, `{"detail":"rate limit exceeded"}`, http.StatusTooManyRequests)
+			return
+		}
+
 		token := r.URL.Query().Get("token")
 		driverID, err := validateToken(token)
 		if err != nil {
@@ -116,4 +177,24 @@ func handleDriverWS(rdb *redis.Client) http.HandlerFunc {
 			upsertDriverLocation(ctx, driverID, msg.Latitude, msg.Longitude)
 		}
 	}
+}
+
+// extractIP returns the client IP from the request, respecting proxy headers.
+func extractIP(r *http.Request) string {
+	if ip := r.Header.Get("X-Real-IP"); ip != "" {
+		return ip
+	}
+	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+		for i, c := range xff {
+			if c == ',' {
+				return xff[:i]
+			}
+		}
+		return xff
+	}
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return r.RemoteAddr
+	}
+	return host
 }

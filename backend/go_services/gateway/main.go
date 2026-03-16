@@ -58,22 +58,14 @@ func main() {
 	// Internal matching endpoint — block external access.
 	mux.Handle("/internal/match/", internalOnly(matchingProxy))
 
-	// Auth endpoints — strict rate limit.
+	// Auth endpoints — strict rate limit (versioned API).
 	authHandler := authRL.limit(djangoProxy)
-	mux.Handle("/login/", authHandler)
-	mux.Handle("/signup/", authHandler)
-	mux.Handle("/driver/signup/", authHandler)
+	mux.Handle("/api/v1/login/", authHandler)
+	mux.Handle("/api/v1/signup/", authHandler)
+	mux.Handle("/api/v1/driver/signup/", authHandler)
 
-	// Delivery request — medium rate limit.
-	mux.Handle("/delivery/request/", deliveryRL.limit(djangoProxy))
-
-	// Everything else → Django with general rate limit.
-	// Use a custom handler because ServeMux needs exact or wildcard patterns.
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Check if the path was already handled by a more specific pattern.
-		// ServeMux routes to "/" as a catch-all.
-		mux.ServeHTTP(w, r)
-	})
+	// Delivery request — medium rate limit (versioned API).
+	mux.Handle("/api/v1/delivery/request/", deliveryRL.limit(djangoProxy))
 
 	// Wrap the entire mux: for paths not matched by specific patterns above,
 	// apply the general rate limiter to the Django proxy.
@@ -86,9 +78,11 @@ func main() {
 	// ---------- server ----------
 	srv := &http.Server{
 		Addr:              listenAddr,
-		Handler:           rootHandler,
+		Handler:           requestLogger(maxBodySize(rootHandler)),
 		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       30 * time.Second,
 		IdleTimeout:       120 * time.Second,
+		MaxHeaderBytes:    1 << 20, // 1 MB max header size
 	}
 
 	// Graceful shutdown.
@@ -107,11 +101,25 @@ func main() {
 	log.Printf("  location → %s", locationService)
 	log.Printf("  matching → %s", matchingService)
 
-	_ = handler // suppress unused warning
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("server error: %v", err)
 	}
 	log.Println("gateway stopped")
+}
+
+// maxBodySize wraps a handler to limit request body size to 10 MB.
+// WebSocket upgrades are excluded since they have their own framing.
+func maxBodySize(next http.Handler) http.Handler {
+	const maxBytes = 10 << 20 // 10 MB
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Skip body limit for WebSocket upgrade requests.
+		if strings.EqualFold(r.Header.Get("Upgrade"), "websocket") {
+			next.ServeHTTP(w, r)
+			return
+		}
+		r.Body = http.MaxBytesReader(w, r.Body, maxBytes)
+		next.ServeHTTP(w, r)
+	})
 }
 
 // routingHandler dispatches requests. Specific paths go through the mux with
@@ -135,13 +143,13 @@ func (rh *routingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		rh.mux.ServeHTTP(w, r)
 	case strings.HasPrefix(path, "/internal/match"):
 		rh.mux.ServeHTTP(w, r)
-	case strings.HasPrefix(path, "/login/"):
+	case strings.HasPrefix(path, "/api/v1/login/"):
 		rh.mux.ServeHTTP(w, r)
-	case strings.HasPrefix(path, "/signup/"):
+	case strings.HasPrefix(path, "/api/v1/signup/"):
 		rh.mux.ServeHTTP(w, r)
-	case strings.HasPrefix(path, "/driver/signup/"):
+	case strings.HasPrefix(path, "/api/v1/driver/signup/"):
 		rh.mux.ServeHTTP(w, r)
-	case strings.HasPrefix(path, "/delivery/request/"):
+	case strings.HasPrefix(path, "/api/v1/delivery/request/"):
 		rh.mux.ServeHTTP(w, r)
 	default:
 		// General rate-limited Django proxy.

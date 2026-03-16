@@ -15,7 +15,7 @@ import java.net.URI;
  *
  * Improvements for 50k-scale deployment:
  *   - Exponential backoff reconnection (prevents thundering herd after server restart)
- *   - Max reconnect attempts before giving up
+ *   - Unlimited reconnect attempts (resets backoff after hitting cap)
  *   - Location queuing: if socket is not open, the last known location is cached
  *     and sent as soon as reconnection succeeds (no silent drops)
  */
@@ -23,10 +23,9 @@ public class WebSocketLocationClient extends WebSocketClient {
 
     private static final String TAG = "WebSocketLocation";
 
-    // Backoff: starts at 1s, doubles each attempt, caps at 60s
+    // Backoff: starts at 1s, doubles each attempt, caps at 60s, then stays at 60s indefinitely
     private static final long BACKOFF_BASE_MS    = 1_000L;
     private static final long BACKOFF_MAX_MS     = 60_000L;
-    private static final int  MAX_RECONNECT_TRIES = 10;
 
     private final URI serverUri;
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -113,12 +112,9 @@ public class WebSocketLocationClient extends WebSocketClient {
     // ── Reconnection ────────────────────────────────────────────────────────
 
     private void scheduleReconnect() {
-        if (reconnectAttempts >= MAX_RECONNECT_TRIES) {
-            Log.w(TAG, "Max reconnect attempts reached — giving up");
-            return;
-        }
-
-        long delay = Math.min(BACKOFF_BASE_MS * (1L << reconnectAttempts), BACKOFF_MAX_MS);
+        // Cap the exponent to avoid overflow — once at max, delay stays at BACKOFF_MAX_MS
+        int exponent = Math.min(reconnectAttempts, 20);
+        long delay = Math.min(BACKOFF_BASE_MS * (1L << exponent), BACKOFF_MAX_MS);
         reconnectAttempts++;
 
         Log.d(TAG, "Reconnect attempt " + reconnectAttempts + " in " + delay + "ms");

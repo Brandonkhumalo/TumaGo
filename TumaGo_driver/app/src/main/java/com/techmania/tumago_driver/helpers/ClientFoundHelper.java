@@ -29,9 +29,14 @@ public class ClientFoundHelper {
         String cost = data.get("cost");
         String tripId = data.get("trip_id");
 
-        if (tripId != null) {
-            storeTripId(context, tripId);
+        // Validate required parameters to prevent crashes downstream
+        if (requesterName == null || destinationLat == null || destinationLng == null
+                || requesterLat == null || requesterLng == null || cost == null || tripId == null) {
+            Log.e("ClientFoundHelper", "Missing required FCM data fields");
+            return;
         }
+
+        storeTripId(context, tripId);
 
         showDeliveryDetailsActivity(context, requesterName, destinationLat, destinationLng, distance, cost, requesterLat, requesterLng);
         showNotification(context, "New Delivery Request", requesterName + " needs a ride nearby!");

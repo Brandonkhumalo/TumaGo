@@ -22,8 +22,9 @@ public class NoDriverFound extends AppCompatActivity {
         goBack = findViewById(R.id.goHome);
 
         goBack.setOnClickListener(v -> {
-            Intent intent = new Intent(this, MainActivity.class);
+            Intent intent = new Intent(this, HomeActivity.class);
             startActivity(intent);
+            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
             finish();
         });
     }
@@ -39,5 +40,17 @@ public class NoDriverFound extends AppCompatActivity {
 
         // Start monitoring changes
         NetworkUtils.registerNetworkCallback(this);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        NetworkUtils.unregisterNetworkCallback(this);
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
     }
 }

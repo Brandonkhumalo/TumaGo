@@ -20,7 +20,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.security.crypto.EncryptedSharedPreferences;
 import androidx.security.crypto.MasterKey;
 
-import com.techmania.tumago.Activities.MainActivity;
 import com.techmania.tumago.Interface.ApiService;
 import com.techmania.tumago.Model.UserProfileData;
 import com.techmania.tumago.R;
@@ -128,6 +127,7 @@ public class UserInfo extends AppCompatActivity {
                             progressBar.setVisibility(View.GONE);
                             Intent i = new Intent(UserInfo.this, TermsAgreement.class);
                             startActivity(i);
+                            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
                             finish();
                         } else {
                                 Toast.makeText(UserInfo.this, "Registration failed", Toast.LENGTH_SHORT).show();
@@ -138,7 +138,7 @@ public class UserInfo extends AppCompatActivity {
                     @Override
                     public void onFailure(Call<ResponseBody> call, Throwable t) {
                             progressBar.setVisibility(View.GONE);
-                            Toast.makeText(UserInfo.this, "Error: " + t.getMessage(), Toast.LENGTH_LONG).show();
+                            Toast.makeText(UserInfo.this, "Something went wrong. Please try again.", Toast.LENGTH_LONG).show();
                     }
                 });
             } else {

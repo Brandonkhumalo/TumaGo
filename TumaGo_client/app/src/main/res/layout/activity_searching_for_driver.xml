@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    android:orientation="vertical"
+    android:background="@color/page_bg"
+    android:gravity="center"
+    tools:context=".Activities.SearchingForDriver">
+
+    <!-- Animated vehicle icon -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="140dp"
+        android:layout_height="140dp"
+        app:cardCornerRadius="70dp"
+        app:cardElevation="4dp"
+        app:cardBackgroundColor="@color/card_bg"
+        android:layout_marginBottom="32dp">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <ImageView
+                android:id="@+id/searchVehicleImage"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="28dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/scooter"/>
+
+            <!-- Circular progress around the icon -->
+            <ProgressBar
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:indeterminateTint="@color/light_blue"
+                style="?android:attr/progressBarStyleLarge"/>
+
+        </FrameLayout>
+
+    </androidx.cardview.widget.CardView>
+
+    <!-- Title -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Looking for a Driver"
+        android:fontFamily="sans-serif-black"
+        android:textSize="24sp"
+        android:textColor="@color/dark_blue"
+        android:layout_marginBottom="10dp"/>
+
+    <!-- Subtitle -->
+    <TextView
+        android:id="@+id/searchingSubtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Searching for available drivers&#10;in your area..."
+        android:textSize="15sp"
+        android:textColor="@color/secondary_text"
+        android:gravity="center"
+        android:lineSpacingMultiplier="1.4"
+        android:layout_marginBottom="12dp"
+        android:paddingStart="32dp"
+        android:paddingEnd="32dp"/>
+
+    <!-- Hint -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="This may take a moment. Please wait."
+        android:textSize="13sp"
+        android:textColor="@color/hint_text"
+        android:gravity="center"
+        android:layout_marginBottom="48dp"/>
+
+    <!-- Cancel button -->
+    <Button
+        android:id="@+id/cancelSearch"
+        android:layout_width="wrap_content"
+        android:layout_height="56dp"
+        android:text="Cancel"
+        android:textColor="@color/dark_blue"
+        android:textSize="16sp"
+        android:fontFamily="sans-serif-medium"
+        android:backgroundTint="@color/card_bg"
+        android:paddingStart="48dp"
+        android:paddingEnd="48dp"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+
+</LinearLayout>

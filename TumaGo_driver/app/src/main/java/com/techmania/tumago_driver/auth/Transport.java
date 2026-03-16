@@ -1,7 +1,6 @@
 package com.techmania.tumago_driver.auth;
 
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -11,11 +10,13 @@ import android.widget.ScrollView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import com.google.android.material.card.MaterialCardView;
 import com.techmania.tumago_driver.Interface.ApiService;
 import com.techmania.tumago_driver.R;
 import com.techmania.tumago_driver.activities.MainActivity;
+import com.techmania.tumago_driver.helpers.AnimHelper;
 import com.techmania.tumago_driver.helpers.ApiClient;
 import com.techmania.tumago_driver.helpers.Token;
 import com.techmania.tumago_driver.models.CreateVehicle;
@@ -58,12 +59,12 @@ public class Transport extends AppCompatActivity {
                 int pos = getPosition(view);
 
                 for (MaterialCardView card : position) {
-                    card.setStrokeColor(Color.GRAY);  // default border color
-                    card.setStrokeWidth(1);
+                    card.setStrokeColor(ContextCompat.getColor(Transport.this, R.color.grey));
+                    card.setStrokeWidth(0);
                 }
 
                 // Highlight the clicked card
-                view.setStrokeColor(Color.GREEN);
+                view.setStrokeColor(ContextCompat.getColor(Transport.this, R.color.light_blue));
                 view.setStrokeWidth(4);
 
                 switch(pos) {
@@ -83,8 +84,8 @@ public class Transport extends AppCompatActivity {
         continueButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                firstLayout.setVisibility(View.GONE);
-                secondLayout.setVisibility(View.VISIBLE);
+                AnimHelper.fadeOut(firstLayout);
+                AnimHelper.fadeIn(secondLayout);
             }
         });
 

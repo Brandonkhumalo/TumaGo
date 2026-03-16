@@ -16,6 +16,7 @@ from .deliveryMatching.delivery import driver_found
 import googlemaps
 from django.conf import settings
 from TumaGo.firebase_init import initialize_firebase
+from calendar import monthrange
 from datetime import date, timedelta
 from django.db.models import Sum
 from .deliveryMatching.tasks import retry_trip_matching, publish_trip_accepted
@@ -62,45 +63,43 @@ def getDriver_Finances(request):
     user = request.user
     
     today = date.today()
-    weekday = today.weekday()  # Monday=0, Sunday=6
 
-# Shift so Sunday is the start of the week
-# Convert weekday to have Sunday=0, Monday=1, ..., Saturday=6
+    # Week: Sunday (start) to Saturday (end)
     sunday_start_offset = (today.weekday() + 1) % 7
     week_start = today - timedelta(days=sunday_start_offset)
     week_end = week_start + timedelta(days=6)
+
+    # Month: 1st to last day (28/29/30/31 depending on month)
     month_start = today.replace(day=1)
-    # For month_end, we get the last day of the month
-    import calendar
-    last_day = calendar.monthrange(today.year, today.month)[1]
+    last_day = monthrange(today.year, today.month)[1]
     month_end = today.replace(day=last_day)
 
-    # Aggregations:
-    # Filter by driver and date range for each period, then sum earnings, charges, profit and trips
-
-    def aggregate_period(start_date, end_date):
-        qs = DriverFinances.objects.filter(
-            driver=user,
-            month_start__lte=end_date,
-            month_end__gte=start_date
-        )
-        return qs.aggregate(
-            earnings=Sum('earnings') or 0,
-            charges=Sum('charges') or 0,
-            profit=Sum('profit') or 0,
-            total_trips=Sum('total_trips') or 0,
-        )
-
-    # Today (exact today match)
-    today_data = DriverFinances.objects.filter(driver=user, today=today).aggregate(
+    # Shared aggregation fields
+    agg_fields = dict(
         earnings=Sum('earnings') or 0,
         charges=Sum('charges') or 0,
         profit=Sum('profit') or 0,
         total_trips=Sum('total_trips') or 0,
     )
 
-    week_data = aggregate_period(week_start, week_end)
-    month_data = aggregate_period(month_start, month_end)
+    # Today (exact today match)
+    today_data = DriverFinances.objects.filter(
+        driver=user, today=today
+    ).aggregate(**agg_fields)
+
+    # This week: Sunday–Saturday using the week_start/week_end fields
+    week_data = DriverFinances.objects.filter(
+        driver=user,
+        week_start__lte=week_end,
+        week_end__gte=week_start,
+    ).aggregate(**agg_fields)
+
+    # This month: 1st–last day using the month_start/month_end fields
+    month_data = DriverFinances.objects.filter(
+        driver=user,
+        month_start__lte=month_end,
+        month_end__gte=month_start,
+    ).aggregate(**agg_fields)
 
     # All time totals (no date filter)
     all_time = DriverFinances.objects.filter(driver=user).aggregate(
@@ -195,7 +194,7 @@ def AcceptTrip(request):
             print('error Driver vehicle not found')
             return Response({'error': 'Driver vehicle not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        # ✅ Build delivery payload (driver details + vehicle)
+        # ✅ Build delivery payload (driver details + vehicle + trip info)
         deliveryData = {
             "driver": f"{driver.name.capitalize()} {driver.surname.capitalize()}",
             "delivery_vehicle": driver_vehicle.delivery_vehicle,
@@ -203,8 +202,16 @@ def AcceptTrip(request):
             "number_plate": driver_vehicle.number_plate,
             "vehicle_model": driver_vehicle.vehicle_model,
             "color": driver_vehicle.color,
-            "rating":driver.rating,
-            "total_ratings":driver.rating_count,
+            "rating": driver.rating,
+            "total_ratings": driver.rating_count,
+            "fare": fare,
+            "payment_method": payment_method,
+            "vehicle_type": vehicle,
+            "date": str(delivery.start_time),
+            "origin_lat": origin_lat,
+            "origin_lng": origin_lng,
+            "destination_lat": destination_lat,
+            "destination_lng": destination_lng,
         }
 
         driver_found(client, deliveryData, str(delivery.delivery_id))
@@ -224,11 +231,9 @@ def AcceptTrip(request):
         print("Trip not found.")
         return Response({"error": "Trip not found"}, status=status.HTTP_404_NOT_FOUND)
 
-    except Exception as e:
-        import traceback
-        print("Unhandled exception occurred:")
-        traceback.print_exc()
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    except Exception:
+        logger.exception("Unhandled exception in AcceptTrip")
+        return Response({"error": "An internal error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
@@ -303,9 +308,9 @@ def end_trip(request):
 def get_deliveries(request):
     user = request.user
 
-    # Get deliveries related to the user (as client or driver)
+    # Get successful deliveries related to the user (as client or driver)
     deliveries = Delivery.objects.filter(
-    Q(client=user) | Q(driver=user)).order_by('-start_time')  # Optional: latest first ..... must match ordering in pagination class
+    Q(client=user) | Q(driver=user), successful=True).order_by('-start_time')
 
     # Paginate
     paginator = DeliveryCursorPagination()

@@ -14,7 +14,9 @@
       "Bash(mv infrastructure backend/)",
       "Bash(mv docker-compose.prod.yml backend/)",
       "Bash(rm -rf backend/django/.git)",
-      "Bash(rm -f backend/django/.gitignore)"
+      "Bash(rm -f backend/django/.gitignore)",
+      "Bash(rm \"d:/Portfolio Projects/TumaGo/backend/django/TumaGo_Server/tests.py\")",
+      "Bash(mkdir -p \"d:/Portfolio Projects/TumaGo/backend/django/TumaGo_Server/tests\")"
     ],
     "additionalDirectories": [
       "d:\\Portfolio Projects\\TumaGo\\.claude",

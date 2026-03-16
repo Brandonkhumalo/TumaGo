@@ -1,5 +1,7 @@
 package com.techmania.tumago.Activities;
 
+import com.techmania.tumago.BuildConfig;
+
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
@@ -15,6 +17,8 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -50,7 +54,6 @@ import com.techmania.tumago.helper.GetUserData;
 import com.techmania.tumago.helper.LogOutUser;
 import com.techmania.tumago.helper.NetworkUtils;
 import com.techmania.tumago.helper.SendFCMtoken;
-import com.techmania.tumago.helper.ServerSync;
 import com.techmania.tumago.helper.Token;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -89,7 +92,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private LatLng originLatLng;
     private LatLng destLatLng;
 
-    private final String API_KEY = "AIzaSyAVw3B6eS91Vw5aBew8cCoTwhu2zy3atiI";
+    private final String API_KEY = BuildConfig.MAPS_API_KEY;
 
     RecyclerView mainRecycler;
     CardView scooter;
@@ -106,7 +109,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     double TruckPrice;
 
     SendFCMtoken sendFCMtoken = new SendFCMtoken();
-    private static boolean userDataFetched = false;
+    private static volatile boolean userDataFetched = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -116,7 +119,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         setContentView(R.layout.activity_main);
 
-        ServerSync.syncServerTime(this);
         requestLocationPermission();
 
         scooter = findViewById(R.id.scooter);
@@ -138,25 +140,51 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         close.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                menu.setVisibility(View.VISIBLE);
-                menuList.setVisibility(View.GONE);
+                Animation slideOut = AnimationUtils.loadAnimation(MainActivity.this, R.anim.menu_slide_out);
+                slideOut.setAnimationListener(new Animation.AnimationListener() {
+                    @Override public void onAnimationStart(Animation animation) {}
+                    @Override public void onAnimationRepeat(Animation animation) {}
+                    @Override
+                    public void onAnimationEnd(Animation animation) {
+                        menuList.setVisibility(View.GONE);
+                        menu.setVisibility(View.VISIBLE);
+                        Animation fadeIn = AnimationUtils.loadAnimation(MainActivity.this, R.anim.fade_in);
+                        menu.startAnimation(fadeIn);
+                    }
+                });
+                menuList.startAnimation(slideOut);
             }
         });
 
         menu.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                menuList.setVisibility(View.VISIBLE);
-                menu.setVisibility(View.GONE);
+                Animation fadeOut = AnimationUtils.loadAnimation(MainActivity.this, R.anim.fade_out);
+                fadeOut.setAnimationListener(new Animation.AnimationListener() {
+                    @Override public void onAnimationStart(Animation animation) {}
+                    @Override public void onAnimationRepeat(Animation animation) {}
+                    @Override
+                    public void onAnimationEnd(Animation animation) {
+                        menu.setVisibility(View.GONE);
+                        menuList.setVisibility(View.VISIBLE);
+                        Animation slideIn = AnimationUtils.loadAnimation(MainActivity.this, R.anim.menu_slide_in);
+                        menuList.startAnimation(slideIn);
+                    }
+                });
+                menu.startAnimation(fadeOut);
             }
         });
 
         parcels.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, GetParcels.class);
             startActivity(intent);
+            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
         });
 
-        settings.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, AppSettings.class)));
+        settings.setOnClickListener(v -> {
+            startActivity(new Intent(MainActivity.this, AppSettings.class));
+            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+        });
 
         if (!Places.isInitialized()) {
             Places.initialize(getApplicationContext(), API_KEY);
@@ -181,6 +209,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             public void onClick(View v) {
                 Intent intent = new Intent(MainActivity.this, UserProfile.class);
                 startActivity(intent);
+                overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
             }
         });
 
@@ -273,6 +302,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 saveLatLngToSharedPreferences();
 
                 scooter.setVisibility(View.VISIBLE);
+                Animation slideUp = AnimationUtils.loadAnimation(MainActivity.this, R.anim.slide_up);
+                scooter.startAnimation(slideUp);
             }
 
             // Move camera after small delay to avoid race
@@ -282,12 +313,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         } else if (resultCode == AutocompleteActivity.RESULT_ERROR) {
             Status status = Autocomplete.getStatusFromIntent(data);
-            Toast.makeText(this, "Error: " + status.getStatusMessage(), Toast.LENGTH_SHORT).show();
+            Log.e("Places", "Autocomplete error: " + status.getStatusMessage());
+            Toast.makeText(this, "Location search failed. Please try again.", Toast.LENGTH_SHORT).show();
         }
     }
 
     private void drawRouteAndDistance(LatLng origin, LatLng destination) {
         if (mMap == null) return;
+
+        distanceText.setText("Calculating route...");
+        distanceText.setVisibility(View.VISIBLE);
 
         String url = "https://maps.googleapis.com/maps/api/directions/json?origin=" +
                 origin.latitude + "," + origin.longitude +
@@ -354,6 +389,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             Toast.makeText(this, "Please Log in", Toast.LENGTH_SHORT).show();
             Intent intent = new Intent(MainActivity.this, Login.class);
             startActivity(intent);
+            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
             finish();
             return;
         }
@@ -382,11 +418,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 FirebaseMessaging.getInstance().getToken()
                         .addOnCompleteListener(task -> {
-                            if (task.isSuccessful()) {
-                                String token = task.getResult();
-                                sendFCMtoken.sendFcmTokenToBackend(token, accessToken);
-                            } else {
-                                Log.w("FCM", "Fetching FCM registration token failed", task.getException());
+                            if (!isFinishing() && !isDestroyed()) {
+                                if (task.isSuccessful()) {
+                                    String token = task.getResult();
+                                    sendFCMtoken.sendFcmTokenToBackend(token, accessToken);
+                                } else {
+                                    Log.w("FCM", "Fetching FCM registration token failed", task.getException());
+                                }
                             }
                         });
             }
@@ -425,7 +463,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             @Override
             public void onFailure(Call<Expense> call, Throwable t) {
-                Toast.makeText(getApplicationContext(), "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                Log.e("API", "Trip expense error: " + t.getMessage());
+                Toast.makeText(getApplicationContext(), "Failed to load pricing. Please try again.", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -436,6 +475,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (accessToken == null || accessToken.isEmpty()) {
             Intent i = new Intent(MainActivity.this, Login.class);
             startActivity(i);
+            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
             finish();
             return;
         }
@@ -459,6 +499,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     Intent terms = new Intent(MainActivity.this, TermsAgreement.class);
                     terms.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(terms);
+                    overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
                     finish();
                 }
             }

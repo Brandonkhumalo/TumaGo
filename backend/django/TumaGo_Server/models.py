@@ -32,7 +32,7 @@ class CustomUser(AbstractUser):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default=USER, null=False)
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default=USER, null=False, db_index=True)
 
     email = models.EmailField(unique=True, null=False)
     verifiedEmail = models.BooleanField(default=False)
@@ -59,13 +59,19 @@ class CustomUser(AbstractUser):
     license_picture = models.ImageField(upload_to='License/', null=True, blank=True) 
     license = models.BooleanField(default=False)
 
-    driver_online = models.BooleanField(default=False)
-    driver_available = models.BooleanField(default=False)
+    driver_online = models.BooleanField(default=False, db_index=True)
+    driver_available = models.BooleanField(default=False, db_index=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['name', 'surname', 'phone_number']
 
     objects = CustomUserManager()
+
+    class Meta:
+        indexes = [
+            # Composite index for the matching query: online + available + role
+            models.Index(fields=['role', 'driver_online', 'driver_available'], name='idx_driver_matching'),
+        ]
 
     def __str__(self):
         return f"{self.email} ({self.role})"
@@ -149,6 +155,14 @@ class Delivery(models.Model):
     fare = models.DecimalField(max_digits=6, decimal_places=2, null=False, blank=False)
     payment_method = models.CharField(max_length=50, null=False, blank=False)
     successful = models.BooleanField(default=True) #True is successful, False is unsuccessful
+
+    class Meta:
+        indexes = [
+            # Driver delivery history lookup (driver + date)
+            models.Index(fields=['driver', 'date'], name='idx_delivery_driver_date'),
+            # Client delivery history lookup (client + date)
+            models.Index(fields=['client', 'date'], name='idx_delivery_client_date'),
+        ]
 
 class TripRequest(models.Model):
     requester = models.ForeignKey(CustomUser, on_delete=models.CASCADE)

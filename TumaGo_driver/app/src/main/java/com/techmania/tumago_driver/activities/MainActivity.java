@@ -1,15 +1,19 @@
 package com.techmania.tumago_driver.activities;
 
+import com.techmania.tumago_driver.BuildConfig;
+
 import android.Manifest;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -42,15 +46,14 @@ import com.techmania.tumago_driver.R;
 import com.techmania.tumago_driver.auth.Login;
 import com.techmania.tumago_driver.auth.TermsAgreement;
 import com.techmania.tumago_driver.auth.splash_screen;
+import com.techmania.tumago_driver.helpers.AnimHelper;
 import com.techmania.tumago_driver.helpers.ApiClient;
 import com.techmania.tumago_driver.helpers.GetDriverData;
 import com.techmania.tumago_driver.helpers.LogOutUser;
+import com.techmania.tumago_driver.helpers.DriverHeartbeatService;
 import com.techmania.tumago_driver.helpers.NetworkUtils;
 import com.techmania.tumago_driver.helpers.SendFCMtoken;
 import com.techmania.tumago_driver.helpers.Token;
-import com.techmania.tumago_driver.helpers.WebSocketLocationClient;
-
-import java.net.URI;
 
 import okhttp3.ResponseBody;
 import retrofit2.Call;
@@ -60,13 +63,14 @@ import retrofit2.Response;
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     FrameLayout menuList;
-    LinearLayout UserProfile, upload, deliveries, finances, settings;
+    RelativeLayout UserProfile;
+    LinearLayout upload, deliveries, finances, settings, logout, support;
+    CardView menuButton;
     ImageView menu, close;
-    TextView mainUsername, mainRating;
-    CardView logout;
+    TextView mainUsername, mainRating, avatarInitials;
 
     private GoogleMap mMap;
-    private final String API_KEY = "AIzaSyAVw3B6eS91Vw5aBew8cCoTwhu2zy3atiI";
+    private final String API_KEY = BuildConfig.MAPS_API_KEY;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 100;
     private int permissionRequestCount = 0;
 
@@ -74,7 +78,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private LocationRequest locationRequest;
     private LocationCallback locationCallback;
 
-    private WebSocketLocationClient webSocketClient;
+    private static final int BACKGROUND_LOCATION_REQUEST_CODE = 200;
+
     SendFCMtoken sendFCMtoken = new SendFCMtoken();
     private static boolean userDataFetched = false;
 
@@ -91,28 +96,31 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         checkLocationPermission();
 
         // UI init
+        menuButton = findViewById(R.id.menuButton);
         menu = findViewById(R.id.menuOption);
         menuList = findViewById(R.id.MenuList);
         close = findViewById(R.id.close);
         mainUsername = findViewById(R.id.mainUsername);
         mainRating = findViewById(R.id.mainRating);
+        avatarInitials = findViewById(R.id.avatarInitials);
         UserProfile = findViewById(R.id.goToProfile);
         logout = findViewById(R.id.logOut);
         upload = findViewById(R.id.upload);
         deliveries = findViewById(R.id.deliveries);
         finances = findViewById(R.id.finances);
         settings = findViewById(R.id.goToSettings);
+        support = findViewById(R.id.support);
 
         checkUserTerms();
 
         close.setOnClickListener(v -> {
-            menu.setVisibility(View.VISIBLE);
-            menuList.setVisibility(View.GONE);
+            AnimHelper.slideDown(menuList);
+            AnimHelper.fadeIn(menuButton);
         });
 
         menu.setOnClickListener(v -> {
-            menuList.setVisibility(View.VISIBLE);
-            menu.setVisibility(View.GONE);
+            AnimHelper.slideUp(menuList);
+            AnimHelper.fadeOut(menuButton);
         });
 
         UserProfile.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, DriverProfile.class)));
@@ -120,6 +128,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         deliveries.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, GetDeliveries.class)));
         finances.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, Finances.class)));
         settings.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, AppSettings.class)));
+        support.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, Support.class)));
 
         logout.setOnClickListener(v -> logOut());
 
@@ -133,15 +142,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             mapFragment.getMapAsync(this);
         }
 
-        try {
-            String token = Token.getAccessToken(this);
-            String wsUrl = "ws://13.246.35.254/ws/driver_location/?token=" + token;
-            URI uri = new URI(wsUrl);
-            webSocketClient = new WebSocketLocationClient(uri);
-            webSocketClient.connect();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     @Override
@@ -161,17 +161,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void setupLocationCallback() {
+        // Location callback for the map UI only — actual tracking is in DriverHeartbeatService
         locationCallback = new LocationCallback() {
             @Override
             public void onLocationResult(@NonNull LocationResult locationResult) {
-                if (locationResult == null || webSocketClient == null || !webSocketClient.isOpen()) {
-                    return;
-                }
-
-                double lat = locationResult.getLastLocation().getLatitude();
-                double lon = locationResult.getLastLocation().getLongitude();
-                webSocketClient.sendLocation(lat, lon);
-                Log.d("WebSocket", "Location sent: " + lat + ", " + lon);
+                // Map camera updates handled by enableMyLocation; no-op here
             }
         };
     }
@@ -190,8 +184,35 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
             });
 
-            // Start location updates
+            // Start map UI location updates
             fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null);
+
+            // Start the foreground location service for background tracking
+            startLocationService();
+
+            // Request background location permission (API 29+)
+            requestBackgroundLocationPermission();
+        }
+    }
+
+    private void startLocationService() {
+        Intent serviceIntent = new Intent(this, DriverHeartbeatService.class);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(serviceIntent);
+        } else {
+            startService(serviceIntent);
+        }
+    }
+
+    private void requestBackgroundLocationPermission() {
+        // ACCESS_BACKGROUND_LOCATION only exists on API 29+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION},
+                        BACKGROUND_LOCATION_REQUEST_CODE);
+            }
         }
     }
 
@@ -229,14 +250,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     protected void onPause() {
         super.onPause();
-        if (fusedLocationClient != null && locationCallback != null) {
-            fusedLocationClient.removeLocationUpdates(locationCallback);
-        }
+        // Location updates continue in DriverHeartbeatService — no need to stop here
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        // Map location updates for UI
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
             fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null);
@@ -246,9 +266,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (webSocketClient != null) {
-            webSocketClient.close();
-        }
+        // DriverHeartbeatService continues running independently
     }
 
     @Override
@@ -285,6 +303,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             if (cachedName != null) {
                 mainUsername.setText(cachedName);
                 mainRating.setText(cache.getString("driver_rating", ""));
+                setAvatarInitials(cachedName, cache.getString("driver_surname", ""));
                 return;
             }
         }
@@ -297,10 +316,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 userDataFetched = true;
                 getSharedPreferences("app_cache", MODE_PRIVATE).edit()
                         .putString("driver_name", name)
+                        .putString("driver_surname", surname)
                         .putString("driver_rating", String.valueOf(rating))
                         .apply();
                 mainUsername.setText(name);
                 mainRating.setText(String.valueOf(rating));
+                setAvatarInitials(name, surname);
 
                 if (license == null || Boolean.FALSE.equals(license)){
                     Intent intent = new Intent(MainActivity.this, UploadLicenseActivity.class);
@@ -309,11 +330,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 FirebaseMessaging.getInstance().getToken()
                         .addOnCompleteListener(task -> {
-                            if (task.isSuccessful()) {
-                                String token = task.getResult();
-                                sendFCMtoken.sendFcmTokenToBackend(token, accessToken);
-                            } else {
-                                Log.w("FCM", "Fetching FCM registration token failed", task.getException());
+                            if (!isFinishing() && !isDestroyed()) {
+                                if (task.isSuccessful()) {
+                                    String token = task.getResult();
+                                    sendFCMtoken.sendFcmTokenToBackend(token, accessToken);
+                                } else {
+                                    Log.w("FCM", "Fetching FCM registration token failed", task.getException());
+                                }
                             }
                         });
             }
@@ -333,6 +356,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         } else {
             Log.d("AccessToken", "No accessToken");
         }
+    }
+
+    private void setAvatarInitials(String name, String surname) {
+        String initials = "";
+        if (name != null && !name.isEmpty()) {
+            initials += name.charAt(0);
+        }
+        if (surname != null && !surname.isEmpty()) {
+            initials += surname.charAt(0);
+        }
+        avatarInitials.setText(initials.toUpperCase());
     }
 
     private void checkUserTerms(){

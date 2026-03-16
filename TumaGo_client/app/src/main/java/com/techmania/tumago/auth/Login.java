@@ -16,13 +16,14 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.techmania.tumago.Activities.MainActivity;
+import com.techmania.tumago.Activities.HomeActivity;
 import com.techmania.tumago.Interface.ApiService;
 import com.techmania.tumago.Model.LoginUser;
 import com.techmania.tumago.Model.TokenResponse;
 import com.techmania.tumago.R;
 import com.techmania.tumago.helper.ApiClient;
 import com.techmania.tumago.helper.Token;
+import com.techmania.tumago.helper.UiHelper;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -72,6 +73,7 @@ public class Login extends AppCompatActivity {
             public void onClick(View v) {
                 Intent i = new Intent(Login.this, SignUp.class);
                 startActivity(i);
+                overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
             }
         });
 
@@ -103,16 +105,29 @@ public class Login extends AppCompatActivity {
 
         progressBar.setVisibility(View.VISIBLE);
 
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            progressBar.setVisibility(View.GONE);
+            Toast.makeText(Login.this, "Please enter a valid email address", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         if (!email.isEmpty() && !password.isEmpty()) {
             LoginUser loginUser = new LoginUser(email, password);
 
             ApiService apiService = ApiClient.getClient().create(ApiService.class);
             Call<TokenResponse> call = apiService.login(loginUser);
 
+            loginBtn.setEnabled(false);
             call.enqueue(new Callback<TokenResponse>() {
                 @Override
                 public void onResponse(Call<TokenResponse> call, Response<TokenResponse> response) {
                     if(response.isSuccessful()){
+                        if (response.body() == null) {
+                            progressBar.setVisibility(View.GONE);
+                            loginBtn.setEnabled(true);
+                            Toast.makeText(Login.this, "Login failed, please try again", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
                         String accessToken = response.body().getAccess();
                         String refreshToken = response.body().getRefresh();
 
@@ -120,13 +135,16 @@ public class Login extends AppCompatActivity {
                             Token.storeToken(Login.this, accessToken, refreshToken);
                         }
 
-                        Intent i = new Intent(Login.this, MainActivity.class);
+                        Intent i = new Intent(Login.this, HomeActivity.class);
                         startActivity(i);
+                        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
                         finish();
 
                         progressBar.setVisibility(View.GONE);
+                        loginBtn.setEnabled(true);
                     } else {
                         progressBar.setVisibility(View.GONE);
+                        loginBtn.setEnabled(true);
                         String msg;
                         if (response.code() == 400 || response.code() == 401) {
                             msg = "Incorrect email or password";
@@ -139,9 +157,9 @@ public class Login extends AppCompatActivity {
 
                 @Override
                 public void onFailure(Call<TokenResponse> call, Throwable t) {
-                    progressBar.setVisibility(View.GONE);
-                    Toast.makeText(Login.this, "No connection, check your internet", Toast.LENGTH_LONG).show();
+                    UiHelper.hideLoading(progressBar, loginBtn);
                     Log.d("Failure", t.getMessage());
+                    UiHelper.showRetry(findViewById(android.R.id.content), "No connection, check your internet", () -> LoginUser());
                 }
             });
         } else {

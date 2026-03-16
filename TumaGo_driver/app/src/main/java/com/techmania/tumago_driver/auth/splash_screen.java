@@ -3,6 +3,7 @@ package com.techmania.tumago_driver.auth;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -33,6 +34,9 @@ public class splash_screen extends AppCompatActivity {
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 100;
     private int permissionRequestCount = 0;
 
+    private Handler handler;
+    private Runnable runnable;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -43,12 +47,22 @@ public class splash_screen extends AppCompatActivity {
         Animation anim = AnimationUtils.loadAnimation(this, R.anim.roadlink_splash);
         imageSplash.startAnimation(anim);
 
-        new Handler().postDelayed(new Runnable() {
+        handler = new Handler();
+        runnable = new Runnable() {
             @Override
             public void run() {
                 checkLocationPermission();
             }
-        }, 3000);
+        };
+        handler.postDelayed(runnable, 3000);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (handler != null && runnable != null) {
+            handler.removeCallbacks(runnable);
+        }
     }
 
     private void checkLocationPermission() {
@@ -84,7 +98,18 @@ public class splash_screen extends AppCompatActivity {
         }
     }
 
+    private void requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.POST_NOTIFICATIONS}, 101);
+            }
+        }
+    }
+
     public void CheckToken() {
+        requestNotificationPermission();
         String accessToken = Token.getAccessToken(this);
 
         if (accessToken != null && !accessToken.isEmpty()) {

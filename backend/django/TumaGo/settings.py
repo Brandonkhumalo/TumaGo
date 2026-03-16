@@ -26,7 +26,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'TumaGo_Server',
     'corsheaders',
-    'channels',
     'drf_yasg',
 ]
 
@@ -40,6 +39,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'TumaGo_Server.middleware.RequestLoggingMiddleware',
 ]
 
 ROOT_URLCONF = 'TumaGo.urls'
@@ -85,7 +85,6 @@ REST_FRAMEWORK = {
 }
 
 WSGI_APPLICATION = 'TumaGo.wsgi.application'
-ASGI_APPLICATION = "TumaGo.asgi.application"
 
 # ---------------------------------------------------------------------------
 # Database — persistent connections + health checks (PgBouncer-compatible)
@@ -102,20 +101,6 @@ DATABASES = {
 # Redis URL — single source of truth for Channel Layer, Caches, and broker
 # ---------------------------------------------------------------------------
 REDIS_URL = config("REDIS_URL", default="redis://localhost:6379")
-
-# ---------------------------------------------------------------------------
-# Django Channels — Redis Channel Layer (required for WS group messaging)
-# ---------------------------------------------------------------------------
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [REDIS_URL],
-            "capacity": 1500,
-            "expiry": 10,
-        },
-    },
-}
 
 # ---------------------------------------------------------------------------
 # Cache — Redis backend for query/response/session caching

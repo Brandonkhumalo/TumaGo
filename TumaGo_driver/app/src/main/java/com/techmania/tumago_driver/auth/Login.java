@@ -17,6 +17,7 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import com.techmania.tumago_driver.Interface.ApiService;
 import com.techmania.tumago_driver.R;
 import com.techmania.tumago_driver.activities.MainActivity;
+import com.techmania.tumago_driver.helpers.AnimHelper;
 import com.techmania.tumago_driver.helpers.ApiClient;
 import com.techmania.tumago_driver.helpers.SendFCMtoken;
 import com.techmania.tumago_driver.helpers.Token;
@@ -75,7 +76,7 @@ public class Login extends AppCompatActivity {
         if(!email.isEmpty() && !password.isEmpty()){
             LoginDriver driver = new LoginDriver(email, password);
 
-            progressBar.setVisibility(View.VISIBLE);
+            AnimHelper.fadeIn(progressBar);
             login.setEnabled(false);
 
             ApiService apiService = ApiClient.getClient().create(ApiService.class);
@@ -106,10 +107,10 @@ public class Login extends AppCompatActivity {
                         startActivity(i);
                         finish();
 
-                        progressBar.setVisibility(View.GONE);
+                        AnimHelper.fadeOut(progressBar);
                         login.setEnabled(true);
                     } else {
-                        progressBar.setVisibility(View.GONE);
+                        AnimHelper.fadeOut(progressBar);
                         login.setEnabled(true);
                         String msg;
                         if (response.code() == 400 || response.code() == 401) {
@@ -125,7 +126,7 @@ public class Login extends AppCompatActivity {
                 @Override
                 public void onFailure(Call<TokenResponse> call, Throwable t) {
                     Log.e("Login Error", t.getMessage());
-                    progressBar.setVisibility(View.GONE);
+                    AnimHelper.fadeOut(progressBar);
                     login.setEnabled(true);
                     Toast.makeText(Login.this, "No connection, check your internet", Toast.LENGTH_LONG).show();
                 }

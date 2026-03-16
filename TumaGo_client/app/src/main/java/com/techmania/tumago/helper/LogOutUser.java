@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.util.Log;
 
 import com.techmania.tumago.Interface.ApiService;
+import com.techmania.tumago.R;
 import com.techmania.tumago.auth.Login;
 
 import okhttp3.ResponseBody;
@@ -33,7 +34,8 @@ public class LogOutUser {
                         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK); // optional: clear back stack
                         context.startActivity(intent);
                         if (context instanceof Activity) {
-                            ((Activity) context).finish(); //close current activity
+                            ((Activity) context).overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+                            ((Activity) context).finish();
                         }
                     }
                 }

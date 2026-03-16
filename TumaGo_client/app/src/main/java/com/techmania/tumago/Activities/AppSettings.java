@@ -18,7 +18,10 @@ public class AppSettings extends AppCompatActivity {
         setContentView(R.layout.activity_settings);
 
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
-        toolbar.setNavigationOnClickListener(v -> finish());
+        toolbar.setNavigationOnClickListener(v -> {
+            finish();
+            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
+        });
 
         RadioGroup themeGroup = findViewById(R.id.themeRadioGroup);
         RadioButton radioSystem = findViewById(R.id.radioSystem);
@@ -49,5 +52,11 @@ public class AppSettings extends AppCompatActivity {
             }
             ThemeHelper.saveAndApplyTheme(AppSettings.this, mode);
         });
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
     }
 }

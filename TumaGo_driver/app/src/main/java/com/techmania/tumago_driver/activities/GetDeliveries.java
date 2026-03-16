@@ -7,6 +7,8 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -17,7 +19,9 @@ import com.techmania.tumago_driver.Interface.ApiService;
 import com.techmania.tumago_driver.R;
 import com.techmania.tumago_driver.adapters.DeliveryAdapter;
 import com.techmania.tumago_driver.auth.Token;
+import com.techmania.tumago_driver.helpers.AnimHelper;
 import com.techmania.tumago_driver.helpers.ApiClient;
+import com.techmania.tumago_driver.helpers.UiHelper;
 import com.techmania.tumago_driver.helpers.PaginatedDeliveryResponse;
 import com.techmania.tumago_driver.models.Deliveries;
 
@@ -40,6 +44,7 @@ public class GetDeliveries extends AppCompatActivity {
     DeliveryAdapter adapter;
     ArrayList<Deliveries> arrayList;
     LinearLayout noParcels;
+    ProgressBar progressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +60,7 @@ public class GetDeliveries extends AppCompatActivity {
         }
 
         noParcels = findViewById(R.id.noParcel);
+        progressBar = findViewById(R.id.progressBar);
 
         recyclerView = findViewById(R.id.DeliveryRecycleView);
         recyclerView.setLayoutManager(new LinearLayoutManager (this));
@@ -96,9 +102,12 @@ public class GetDeliveries extends AppCompatActivity {
         ApiService apiService = ApiClient.getClient().create(ApiService.class);
         Call<PaginatedDeliveryResponse> call = apiService.getDeliveries(cursor, authHeader);
 
+        UiHelper.showLoading(progressBar);
+
         call.enqueue(new Callback<PaginatedDeliveryResponse>() {
             @Override
             public void onResponse(Call<PaginatedDeliveryResponse> call, Response<PaginatedDeliveryResponse> response) {
+                UiHelper.hideLoading(progressBar);
                 if (response.isSuccessful() && response.body() != null) {
                     List<Deliveries> deliveries = response.body().getResults();
 
@@ -109,12 +118,13 @@ public class GetDeliveries extends AppCompatActivity {
                             arrayList.addAll(deliveries);
                             adapter.notifyDataSetChanged();
 
-                            recyclerView.setVisibility(View.VISIBLE);
-                            noParcels.setVisibility(View.GONE);
+                            AnimHelper.fadeIn(recyclerView);
+                            AnimHelper.fadeOut(noParcels);
+                            recyclerView.scheduleLayoutAnimation();
                         } else {
                             Log.d("API", "No more deliveries to display");
-                            recyclerView.setVisibility(View.GONE);
-                            noParcels.setVisibility(View.VISIBLE);
+                            AnimHelper.fadeOut(recyclerView);
+                            AnimHelper.fadeIn(noParcels);
                         }
 
                         // Cursor handling
@@ -136,6 +146,8 @@ public class GetDeliveries extends AppCompatActivity {
             @Override
             public void onFailure(Call<PaginatedDeliveryResponse> call, Throwable t) {
                 Log.d("FAILED", t.getMessage());
+                UiHelper.hideLoading(progressBar);
+                UiHelper.showRetry(findViewById(android.R.id.content), "Failed to load deliveries", () -> getDeliveries(cursor));
             }
         });
     }

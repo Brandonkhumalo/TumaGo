@@ -22,6 +22,7 @@ import com.techmania.tumago.Model.TokenResponse;
 import com.techmania.tumago.R;
 import com.techmania.tumago.helper.ApiClient;
 import com.techmania.tumago.helper.Token;
+import com.techmania.tumago.helper.UiHelper;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -164,6 +165,7 @@ public class SignUp extends AppCompatActivity {
             public void onClick(View v) {
                 Intent i = new Intent(SignUp.this, Login.class);
                 startActivity(i);
+                overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
             }
         });
 
@@ -175,36 +177,57 @@ public class SignUp extends AppCompatActivity {
 
         progressBar.setVisibility(View.VISIBLE);
 
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            progressBar.setVisibility(View.GONE);
+            Toast.makeText(SignUp.this, "Please enter a valid email address", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (password.length() < 6) {
+            progressBar.setVisibility(View.GONE);
+            Toast.makeText(SignUp.this, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         if(!email.isEmpty() && !password.isEmpty() && !getFullPhoneNumber().isEmpty()) {
             CreateUser createUser = new CreateUser(email, password, getFullPhoneNumber());
 
             ApiService apiService = ApiClient.getClient().create(ApiService.class);
             Call<TokenResponse> call = apiService.signup(createUser);
 
+            btnLayout.setEnabled(false);
             call.enqueue(new Callback<TokenResponse>() {
                 @Override
                 public void onResponse(Call<TokenResponse> call, Response<TokenResponse> response) {
                     if (response.isSuccessful()) {
-
+                        if (response.body() == null) {
+                            progressBar.setVisibility(View.GONE);
+                            btnLayout.setEnabled(true);
+                            Toast.makeText(SignUp.this, "Registration failed, try again later", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
                         String accessToken = response.body().getAccess();
                         String refreshToken = response.body().getRefresh();
 
                         Token.storeToken(SignUp.this, accessToken, refreshToken);
 
                         progressBar.setVisibility(View.GONE);
+                        btnLayout.setEnabled(true);
                         Intent i = new Intent(SignUp.this, UserInfo.class);
                         startActivity(i);
+                        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
                         finish();
                     } else {
                         progressBar.setVisibility(View.GONE);
+                        btnLayout.setEnabled(true);
                         Toast.makeText(SignUp.this, "Registration failed, try again later", Toast.LENGTH_SHORT).show();
                     }
                 }
 
                 @Override
                 public void onFailure(Call<TokenResponse> call, Throwable t) {
-                    progressBar.setVisibility(View.GONE);
-                    Toast.makeText(SignUp.this, "Failure: " + t.getMessage(), Toast.LENGTH_LONG).show();
+                    UiHelper.hideLoading(progressBar, btnLayout);
+                    UiHelper.showRetry(findViewById(android.R.id.content), "Connection error", () -> RegisterUser());
                 }
             });
         } else {
@@ -227,5 +250,11 @@ public class SignUp extends AppCompatActivity {
 
     public String getFullPhoneNumber() {
         return countryCode + getRawPhoneNumber();
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
     }
 }

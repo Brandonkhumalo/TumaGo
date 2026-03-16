@@ -8,6 +8,8 @@ from ...models import Delivery, CustomUser
 from firebase_admin import messaging
 from TumaGo.firebase_init import initialize_firebase
 from django.shortcuts import get_object_or_404
+import logging
+logger = logging.getLogger(__name__)
 
 initialize_firebase()
 
@@ -95,12 +97,50 @@ def update_driver_delivery_cancelled(driver, name, surname):
 
     try:
         response = messaging.send(message)
-        print(f"Successfully sent message: {response}")
+        logger.info(f"FCM cancellation sent to driver {driver.id}: {response}")
         return True
     except Exception as e:
-        print(f"Error sending FCM message: {e}")
+        logger.error(f"FCM cancellation error for driver {driver.id}: {e}")
         return False
     
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def track_delivery(request):
+    user = request.user
+    delivery_id = request.query_params.get("delivery_id")
+
+    if not delivery_id:
+        return Response({"error": "delivery_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        delivery = Delivery.objects.select_related('driver').get(delivery_id=delivery_id, client=user)
+    except Delivery.DoesNotExist:
+        return Response({"error": "Delivery not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    driver = delivery.driver
+    # Determine if delivery is still in transit (no end_time and still successful)
+    in_transit = delivery.end_time is None and delivery.successful
+
+    data = {
+        "delivery_id": str(delivery.delivery_id),
+        "origin_lat": delivery.origin_lat,
+        "origin_lng": delivery.origin_lng,
+        "destination_lat": delivery.destination_lat,
+        "destination_lng": delivery.destination_lng,
+        "vehicle": delivery.vehicle,
+        "fare": float(delivery.fare),
+        "payment_method": delivery.payment_method,
+        "date": str(delivery.date),
+        "in_transit": in_transit,
+        "successful": delivery.successful,
+        "driver_name": f"{driver.name} {driver.surname}",
+        "driver_rating": float(driver.rating) if driver.rating else 0.0,
+        "driver_rating_count": driver.rating_count if hasattr(driver, 'rating_count') and driver.rating_count else 0,
+    }
+
+    return Response(data, status=status.HTTP_200_OK)
+
+
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def rate_driver(request):

@@ -28,62 +28,62 @@ import retrofit2.http.Part;
 import retrofit2.http.Query;
 
 public interface ApiService {
-    @POST("driver/signup/")
+    @POST("api/v1/driver/signup/")
     Call<TokenResponse> createDriver(@Body CreateDriver request);
 
-    @POST("login/")
+    @POST("api/v1/login/")
     Call<TokenResponse> login(@Body LoginDriver request);
 
-    @POST("logout/")
+    @POST("api/v1/logout/")
     Call<ResponseBody> logout(@Header("Authorization") String authHeader,@Body LogOutRequest request);
 
-    @POST("reset_password/")
+    @POST("api/v1/reset_password/")
     Call<ResponseBody> resetPassword(@Header("Authorization") String authHeader, @Body ResetPasswordModel request);
 
-    @POST("driver/data/")
+    @POST("api/v1/driver/data/")
     Call<Driver> getDriverData(@Header("Authorization") String authHeader);
 
-    @DELETE("delete/account/")
+    @DELETE("api/v1/delete/account/")
     Call<ResponseBody> deleteAccount(@Header("Authorization") String authHeader);
 
-    @POST("accept/terms/")
+    @POST("api/v1/accept/terms/")
     Call<ResponseBody> acceptTerms(@Header("Authorization") String authHeader);
 
-    @POST("save-fcm-token/")
+    @POST("api/v1/save-fcm-token/")
     Call<Void> sendFcmToken(
             @Body FcmTokenRequest tokenRequest,
             @Header("Authorization") String authToken
     );
 
-    @POST("driver/offline/")
+    @POST("api/v1/driver/offline/")
     Call<Void> sendOffline();
 
-    @POST("verify_token/")
+    @POST("api/v1/verify_token/")
     Call<ResponseBody> verifyToken(@Header("Authorization") String authHeader);
 
-    @GET("verifyTerms/")
+    @GET("api/v1/verifyTerms/")
     Call<ResponseBody> checkTerms(@Header("Authorization") String authHeader);
 
-    @GET("driver/delivery_info/")
+    @GET("api/v1/driver/delivery_info/")
     Call<FinanceInfo> getFinances(@Header("Authorization") String authHeader);
 
-    @POST("add/vehicle/")
+    @POST("api/v1/add/vehicle/")
     Call<ResponseBody> AddVehicle(@Header("Authorization") String authHeader, @Body CreateVehicle request);
 
-    @POST("accept/trip/")
+    @POST("api/v1/accept/trip/")
     Call<ResponseBody> acceptTrip(@Header("Authorization") String authHeader, @Body Map<String, String> body);
 
-    @POST("end_trip/")
+    @POST("api/v1/end_trip/")
     Call<ResponseBody> endTrip(@Header("Authorization") String authHeader, @Body EndTrip request);
 
     @Multipart
-    @PUT("add/license/")
+    @PUT("api/v1/add/license/")
     Call<Void> uploadLicense(
             @Header("Authorization") String authHeader,
             @Part MultipartBody.Part license
     );
 
-    @GET("get/deliveries/")
+    @GET("api/v1/get/deliveries/")
     Call<PaginatedDeliveryResponse> getDeliveries(
             @Query("cursor") String cursor,
             @Header("Authorization") String authToken

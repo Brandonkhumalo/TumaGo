@@ -10,7 +10,13 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class NetworkUtils {
+
+    // Per-context callbacks to avoid overwriting when multiple activities register
+    private static final Map<Context, ConnectivityManager.NetworkCallback> callbackMap = new HashMap<>();
 
     // Method to check internet availability
     public static boolean isInternetAvailable(Context context) {
@@ -36,10 +42,13 @@ public class NetworkUtils {
 
     public static void registerNetworkCallback(Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            // Unregister existing callback for this context first to avoid leaks
+            unregisterNetworkCallback(context);
+
             ConnectivityManager connectivityManager =
                     (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 
-            connectivityManager.registerDefaultNetworkCallback(new ConnectivityManager.NetworkCallback() {
+            ConnectivityManager.NetworkCallback callback = new ConnectivityManager.NetworkCallback() {
                 @Override
                 public void onAvailable(@NonNull Network network) {
                     super.onAvailable(network);
@@ -51,7 +60,20 @@ public class NetworkUtils {
                     super.onLost(network);
                     Toast.makeText(context, "Internet disconnected", Toast.LENGTH_SHORT).show();
                 }
-            });
+            };
+            callbackMap.put(context, callback);
+            connectivityManager.registerDefaultNetworkCallback(callback);
+        }
+    }
+
+    public static void unregisterNetworkCallback(Context context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            ConnectivityManager.NetworkCallback callback = callbackMap.remove(context);
+            if (callback != null) {
+                ConnectivityManager connectivityManager =
+                        (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+                connectivityManager.unregisterNetworkCallback(callback);
+            }
         }
     }
 }

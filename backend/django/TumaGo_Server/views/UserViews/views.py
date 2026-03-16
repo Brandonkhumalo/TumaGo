@@ -2,7 +2,8 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, throttle_classes
+from rest_framework.throttling import AnonRateThrottle
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from ...models import BlacklistedToken, Delivery, TermsAndConditions
@@ -19,10 +20,18 @@ from datetime import datetime
 import pytz
 import jwt
 
+# Scoped throttles — rates pulled from settings.DEFAULT_THROTTLE_RATES
+class LoginThrottle(AnonRateThrottle):
+    scope = 'login'
+
+class SignupThrottle(AnonRateThrottle):
+    scope = 'signup'
+
 User = None
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@throttle_classes([SignupThrottle])
 def signup(request):
     serializer = SignupSerializer(data=request.data)
     if serializer.is_valid():
@@ -41,6 +50,7 @@ def signup(request):
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@throttle_classes([LoginThrottle])
 def login(request):
     serializer = LoginSerializer(data=request.data)
     if serializer.is_valid():

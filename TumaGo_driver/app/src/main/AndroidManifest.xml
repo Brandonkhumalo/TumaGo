@@ -6,6 +6,13 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
 
     <application
         android:allowBackup="true"
@@ -48,6 +55,9 @@
         <activity
             android:name=".activities.Finances"
             android:exported="false" />
+        <activity
+            android:name=".activities.Support"
+            android:exported="false" />
 
         <service
             android:name=".helpers.DriverMessagingService"
@@ -56,6 +66,11 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
+
+        <service
+            android:name=".helpers.DriverHeartbeatService"
+            android:exported="false"
+            android:foregroundServiceType="location" />
 
         <activity
             android:name=".activities.DeliveryDetails"
@@ -84,7 +99,7 @@
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyAVw3B6eS91Vw5aBew8cCoTwhu2zy3atiI" />
+            android:value="${MAPS_API_KEY}" />
     </application>
 
 </manifest>

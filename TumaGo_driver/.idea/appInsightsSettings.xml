@@ -9,9 +9,9 @@
               <option name="connection">
                 <ConnectionSetting>
                   <option name="appId" value="com.techmania.tumago_driver" />
-                  <option name="mobileSdkAppId" value="1:485609625849:android:0e83dd5b04f8d66b12aa28" />
-                  <option name="projectId" value="deliveryapp-80d31" />
-                  <option name="projectNumber" value="485609625849" />
+                  <option name="mobileSdkAppId" value="1:1073164123872:android:ea014d752ea2bdbb325a85" />
+                  <option name="projectId" value="roadlinksolutions-5e2db" />
+                  <option name="projectNumber" value="1073164123872" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

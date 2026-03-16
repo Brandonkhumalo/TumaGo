@@ -29,6 +29,14 @@ public class DriverFoundHelper {
         String delivery_id = data.get("delivery_id");
         String total_ratings = data.get("total_ratings");
         String rating = data.get("rating");
+        String fare = data.get("fare");
+        String payment_method = data.get("payment_method");
+        String vehicle_type = data.get("vehicle_type");
+        String date = data.get("date");
+        String origin_lat = data.get("origin_lat");
+        String origin_lng = data.get("origin_lng");
+        String destination_lat = data.get("destination_lat");
+        String destination_lng = data.get("destination_lng");
 
         String title = data.get("title");
         String body = data.get("body");
@@ -38,14 +46,19 @@ public class DriverFoundHelper {
         }
 
         showDeliveryDetailsActivity(context, driver, vehicle, vehicle_name, number_plate,
-                vehicle_model, color, total_ratings, rating);
+                vehicle_model, color, total_ratings, rating, delivery_id, fare,
+                payment_method, vehicle_type, date, origin_lat, origin_lng,
+                destination_lat, destination_lng);
 
         showNotification(context, title, body);
     }
 
     private static void showDeliveryDetailsActivity(Context context, String driver, String vehicle, String vehicle_name,
                                                     String number_plate, String vehicle_model, String color,
-                                                    String total_ratings, String rating) {
+                                                    String total_ratings, String rating, String delivery_id,
+                                                    String fare, String payment_method, String vehicle_type,
+                                                    String date, String origin_lat, String origin_lng,
+                                                    String destination_lat, String destination_lng) {
 
         Intent intent = new Intent(context, DeliveryDetails.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -57,6 +70,15 @@ public class DriverFoundHelper {
         intent.putExtra("color", color);
         intent.putExtra("rating", rating);
         intent.putExtra("total_ratings", total_ratings);
+        intent.putExtra("delivery_id", delivery_id);
+        intent.putExtra("fare", fare);
+        intent.putExtra("payment_method", payment_method);
+        intent.putExtra("vehicle_type", vehicle_type);
+        intent.putExtra("date", date);
+        intent.putExtra("origin_lat", origin_lat);
+        intent.putExtra("origin_lng", origin_lng);
+        intent.putExtra("destination_lat", destination_lat);
+        intent.putExtra("destination_lng", destination_lng);
         context.startActivity(intent);
     }
 
