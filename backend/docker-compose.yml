@@ -95,9 +95,7 @@ services:
     build:
       context: ./django
       dockerfile: Dockerfile
-    command: >
-      dramatiq TumaGo_Server.views.DriverViews.deliveryMatching.tasks
-      --processes 2 --threads 4
+    command: ["dramatiq", "TumaGo_Server.views.DriverViews.deliveryMatching.tasks", "--processes", "2", "--threads", "4"]
     environment:
       SECRET_KEY: ${SECRET_KEY}
       DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@pgbouncer:5432/postgres
@@ -163,7 +161,7 @@ services:
       POOL_MODE: transaction
       MAX_CLIENT_CONN: "1000"
       DEFAULT_POOL_SIZE: "25"
-      AUTH_TYPE: plain
+      AUTH_TYPE: scram-sha-256
     ports:
       - "5432:5432"
     depends_on:

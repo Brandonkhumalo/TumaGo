@@ -1,4 +1,5 @@
 from django.urls import path
+from django.http import JsonResponse
 
 from TumaGo import settings
 from django.conf.urls.static import static
@@ -6,7 +7,13 @@ from .views.UserViews import views, userViews
 from .views.DriverViews import authViews, driverViews
 from .views.PaymentViews import paymentViews
 
+
+def health_check(request):
+    return JsonResponse({"status": "ok"})
+
+
 urlpatterns = [
+    path('health/', health_check, name='health_check'),
     path('signup/', views.signup, name='signup'),
     path('update/user/profile/', views.update_profile, name='update_profile'),
     path('user/Data/', userViews.GetUserData, name='User_Data'),

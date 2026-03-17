@@ -122,15 +122,15 @@ services:
   # ── Dramatiq workers — 2 replicas ───────────────────────────────────────
   worker:
     image: ${REGISTRY:-tumago}/backend:${VERSION:-latest}
-    command: >
-      dramatiq TumaGo_Server.views.DriverViews.deliveryMatching.tasks
-      --processes 4 --threads 8
+    command: ["dramatiq", "TumaGo_Server.views.DriverViews.deliveryMatching.tasks", "--processes", "4", "--threads", "8"]
     environment:
       <<: *django-env
     depends_on:
       - redis
       - pgbouncer
     restart: always
+    healthcheck:
+      disable: true
     deploy:
       replicas: 2
       resources:
@@ -211,7 +211,7 @@ services:
       POOL_MODE: transaction
       MAX_CLIENT_CONN: "2000"
       DEFAULT_POOL_SIZE: "50"
-      AUTH_TYPE: plain
+      AUTH_TYPE: scram-sha-256
     depends_on:
       db:
         condition: service_healthy
