@@ -1,8 +1,13 @@
 from django.contrib import admin
 from django.urls import path, re_path, include
+from django.http import JsonResponse
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
+
+
+def health_check(request):
+    return JsonResponse({"status": "ok"})
 
 schema_view = get_schema_view(
    openapi.Info(
@@ -16,6 +21,7 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
+    path('health/', health_check, name='health_check'),
     path('tumago-admin-panel/', admin.site.urls),
 
     # Prometheus metrics — scraped by Prometheus every 15s.
