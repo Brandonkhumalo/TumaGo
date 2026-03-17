@@ -166,13 +166,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # ---------------------------------------------------------------------------
 # CORS
 # ---------------------------------------------------------------------------
-if DEBUG:
+_cors_origins = config('CORS_ALLOWED_ORIGINS', default='')
+if DEBUG or _cors_origins == '*':
     CORS_ALLOW_ALL_ORIGINS = True
 else:
-    CORS_ALLOWED_ORIGINS = config(
-        'CORS_ALLOWED_ORIGINS',
-        default='https://api.tumago.com',
-    ).split(',')
+    CORS_ALLOWED_ORIGINS = [
+        o.strip() for o in (_cors_origins or 'https://api.tumago.com').split(',') if o.strip()
+    ]
 
 # ---------------------------------------------------------------------------
 # Logging
