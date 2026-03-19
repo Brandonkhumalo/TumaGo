@@ -38,6 +38,19 @@ from prometheus_client import Counter
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
+
+class HealthCheckFilter(logging.Filter):
+    """Suppress uvicorn access logs for /health — called every 30s by Docker."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        msg = record.getMessage()
+        if "GET /health" in msg:
+            return False
+        return True
+
+
+logging.getLogger("uvicorn.access").addFilter(HealthCheckFilter())
+
 REDIS_URL = os.environ.get("REDIS_URL", "redis://redis:6379")
 NOTIFY_CHANNELS = ["tumago:notify:driver", "tumago:notify:client"]
 

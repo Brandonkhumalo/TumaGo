@@ -34,6 +34,11 @@ func (sw *statusWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 // connection gets hijacked.
 func requestLogger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Skip logging health checks — they are called every 30s and create noise.
+		if r.URL.Path == "/health" {
+			next.ServeHTTP(w, r)
+			return
+		}
 		start := time.Now()
 		// For WebSocket upgrades, pass the original ResponseWriter so Hijack works,
 		// and log after the handler returns.
