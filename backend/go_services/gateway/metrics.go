@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -50,6 +51,7 @@ func metricsHandler() http.Handler {
 
 // instrumentHandler wraps an http.Handler to record Prometheus metrics.
 // It captures status code, request count, duration, and in-flight gauge.
+// WebSocket upgrades bypass the status wrapper to preserve http.Hijacker.
 func instrumentHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Don't instrument the metrics endpoint itself.
@@ -63,6 +65,15 @@ func instrumentHandler(next http.Handler) http.Handler {
 
 		httpInFlight.Inc()
 		defer httpInFlight.Dec()
+
+		// For WebSocket upgrades, pass the original ResponseWriter so Hijack works.
+		if strings.EqualFold(r.Header.Get("Upgrade"), "websocket") {
+			next.ServeHTTP(w, r)
+			duration := time.Since(start).Seconds()
+			httpRequestsTotal.WithLabelValues(r.Method, route, "101").Inc()
+			httpRequestDuration.WithLabelValues(r.Method, route).Observe(duration)
+			return
+		}
 
 		sw := &metricsStatusWriter{ResponseWriter: w, code: http.StatusOK}
 		next.ServeHTTP(sw, r)

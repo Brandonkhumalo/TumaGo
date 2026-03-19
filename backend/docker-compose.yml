@@ -24,12 +24,14 @@ services:
       STATIC_DIR: /static
       LISTEN_ADDR: ":80"
       WHATSAPP_VERIFY_TOKEN: ${WHATSAPP_VERIFY_TOKEN}
+      WHATSAPP_SERVICE: whatsapp:8004
     volumes:
       - django_static:/static:ro
     depends_on:
       - web
       - location
       - matching
+      - whatsapp
     restart: always
 
   # ── Go Location Service ─────────────────────────────────────────────────
@@ -108,6 +110,26 @@ services:
     depends_on:
       - redis
       - pgbouncer
+    restart: always
+
+  # ── WhatsApp Service ───────────────────────────────────────────────────
+  whatsapp:
+    build:
+      context: ./whatsapp
+      dockerfile: Dockerfile
+    expose:
+      - "8004"
+    environment:
+      WHATSAPP_ACCESS_TOKEN: ${WHATSAPP_ACCESS_TOKEN}
+      WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID}
+      WHATSAPP_VERIFY_TOKEN: ${WHATSAPP_VERIFY_TOKEN}
+      WHATSAPP_API_VERSION: ${WHATSAPP_API_VERSION:-v21.0}
+      REDIS_URL: redis://redis:6379
+      DJANGO_API_URL: http://web:8000/api/v1
+      SECRET_KEY: ${SECRET_KEY}
+    depends_on:
+      - redis
+      - web
     restart: always
 
   # ── Notification Service (FCM push) ──────────────────────────────────

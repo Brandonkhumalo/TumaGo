@@ -22,6 +22,7 @@ func main() {
 	djangoBackend := envOr("DJANGO_BACKEND", "web:8000")
 	locationService := envOr("LOCATION_SERVICE", "location:8001")
 	matchingService := envOr("MATCHING_SERVICE", "matching:8002")
+	whatsappService := envOr("WHATSAPP_SERVICE", "whatsapp:8004")
 	staticDir := envOr("STATIC_DIR", "")
 	secretKey = []byte(os.Getenv("SECRET_KEY"))
 
@@ -29,6 +30,7 @@ func main() {
 	djangoProxy := newReverseProxy(djangoBackend)
 	locationProxy := websocketProxy(locationService)
 	matchingProxy := newReverseProxy(matchingService)
+	whatsappProxy := newReverseProxy(whatsappService)
 
 	// ---------- rate limiters ----------
 	generalRL := newRateLimiterGroup(60, 20)   // 60/min, burst 20
@@ -45,7 +47,7 @@ func main() {
 		_, _ = w.Write([]byte(`{"status":"ok"}`))
 	})
 
-	// WhatsApp webhook verification & incoming messages.
+	// WhatsApp webhook — GET verification handled here (fast), POST proxied to WhatsApp service.
 	whatsappVerifyToken := envOr("WHATSAPP_VERIFY_TOKEN", "")
 	mux.HandleFunc("/whatsapp/webhook", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
@@ -62,11 +64,12 @@ func main() {
 			http.Error(w, "Forbidden", http.StatusForbidden)
 			return
 		}
-		// POST — incoming messages. For now, just acknowledge.
-		// TODO: proxy to WhatsApp FastAPI service once built.
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(`{"status":"ok"}`))
+		// POST — proxy to WhatsApp FastAPI service for message processing.
+		whatsappProxy.ServeHTTP(w, r)
 	})
+
+	// WhatsApp internal API — blocked from external access.
+	mux.Handle("/whatsapp/internal/", internalOnly(whatsappProxy))
 
 	// Prometheus metrics endpoint — scraped by Prometheus every 15s.
 	mux.Handle("/metrics", metricsHandler())
@@ -126,6 +129,7 @@ func main() {
 	log.Printf("  django → %s", djangoBackend)
 	log.Printf("  location → %s", locationService)
 	log.Printf("  matching → %s", matchingService)
+	log.Printf("  whatsapp → %s", whatsappService)
 
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("server error: %v", err)

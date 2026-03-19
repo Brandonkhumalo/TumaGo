@@ -11,15 +11,15 @@ import androidx.security.crypto.MasterKey;
 
 import com.techmania.tumago_driver.R;
 
-import com.google.android.material.textfield.TextInputEditText;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
 public class EmailSender extends AppCompatActivity {
     Button ConfirmEmail;
-    TextInputEditText emailReg;
+    EditText emailReg;
     LinearLayout goToLogin;
 
     @Override
