@@ -58,7 +58,6 @@ android {
     productFlavors {
         create("dev") {
             dimension = "environment"
-            applicationIdSuffix = ".dev"
             versionNameSuffix = "-dev"
             buildConfigField("String", "BASE_URL",
                 "\"${localProperties["DEV_BASE_URL"] ?: localProperties["BASE_URL"] ?: "http://10.0.2.2"}\"")
@@ -73,7 +72,7 @@ android {
         create("prod") {
             dimension = "environment"
             buildConfigField("String", "BASE_URL",
-                "\"${localProperties["PROD_BASE_URL"] ?: "https://api.tumago.co.zw"}\"")
+                "\"${localProperties["PROD_BASE_URL"] ?: "http://13.247.19.74"}\"")
         }
     }
 

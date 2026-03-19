@@ -45,6 +45,29 @@ func main() {
 		_, _ = w.Write([]byte(`{"status":"ok"}`))
 	})
 
+	// WhatsApp webhook verification & incoming messages.
+	whatsappVerifyToken := envOr("WHATSAPP_VERIFY_TOKEN", "")
+	mux.HandleFunc("/whatsapp/webhook", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			// Meta verification challenge — echo back hub.challenge if token matches.
+			mode := r.URL.Query().Get("hub.mode")
+			token := r.URL.Query().Get("hub.verify_token")
+			challenge := r.URL.Query().Get("hub.challenge")
+			if mode == "subscribe" && token == whatsappVerifyToken {
+				w.WriteHeader(http.StatusOK)
+				_, _ = w.Write([]byte(challenge))
+				log.Printf("whatsapp webhook verified")
+				return
+			}
+			http.Error(w, "Forbidden", http.StatusForbidden)
+			return
+		}
+		// POST — incoming messages. For now, just acknowledge.
+		// TODO: proxy to WhatsApp FastAPI service once built.
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"status":"ok"}`))
+	})
+
 	// Prometheus metrics endpoint — scraped by Prometheus every 15s.
 	mux.Handle("/metrics", metricsHandler())
 
@@ -155,6 +178,8 @@ func (rh *routingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case strings.HasPrefix(path, "/api/v1/driver/signup/"):
 		rh.mux.ServeHTTP(w, r)
 	case strings.HasPrefix(path, "/api/v1/delivery/request/"):
+		rh.mux.ServeHTTP(w, r)
+	case strings.HasPrefix(path, "/whatsapp/"):
 		rh.mux.ServeHTTP(w, r)
 	default:
 		// General rate-limited Django proxy.
