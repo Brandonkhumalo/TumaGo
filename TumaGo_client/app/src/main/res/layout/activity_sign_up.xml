@@ -66,7 +66,7 @@
 
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Phone Number" android:textSize="13sp" android:textColor="@color/blackish" android:fontFamily="sans-serif-medium" android:layout_marginBottom="6dp"/>
             <LinearLayout android:layout_width="match_parent" android:layout_height="52dp" android:orientation="horizontal" android:background="@drawable/background_input" android:layout_marginBottom="14dp">
-                <Spinner android:id="@+id/spinnerCountryCode" android:layout_width="80dp" android:layout_height="match_parent" android:paddingStart="8dp"/>
+                <Spinner android:id="@+id/spinnerCountryCode" android:layout_width="wrap_content" android:layout_height="match_parent" android:paddingStart="4dp" android:paddingEnd="4dp"/>
                 <View android:layout_width="1dp" android:layout_height="match_parent" android:background="@color/input_border"/>
                 <EditText android:id="@+id/phoneNumberInput" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:hint="Phone number" android:background="@null" android:paddingHorizontal="12dp" android:textColorHint="@color/hint_text" android:inputType="phone" android:textColor="@color/blackish" android:textSize="15sp"/>
             </LinearLayout>
@@ -129,13 +129,13 @@
 
             <Button
                 android:id="@+id/prevPage"
+                style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="0dp"
                 android:layout_height="52dp"
                 android:layout_weight="1"
                 android:text="Back"
                 android:textColor="@color/light_blue"
                 android:textSize="15sp"
-                android:background="@null"
                 android:visibility="gone"
                 android:layout_marginEnd="8dp"/>
 

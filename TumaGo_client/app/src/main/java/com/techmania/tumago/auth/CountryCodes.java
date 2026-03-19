@@ -1,38 +1,60 @@
 package com.techmania.tumago.auth;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 public class CountryCodes {
-    private static final HashMap<String, String> sadcCountries = new HashMap<>();
 
-    static {
-        sadcCountries.put("🇿🇦 South Africa", "+27");
-        sadcCountries.put("🇧🇼 Botswana", "+267");
-        sadcCountries.put("🇲🇿 Mozambique", "+258");
-        sadcCountries.put("🇳🇦 Namibia", "+264");
-        sadcCountries.put("🇿🇲 Zambia", "+260");
-        sadcCountries.put("🇿🇼 Zimbabwe", "+263");
-        sadcCountries.put("🇱🇸 Lesotho", "+266");
-        sadcCountries.put("🇲🇼 Malawi", "+265");
-        sadcCountries.put("🇲🇺 Mauritius", "+230");
-        sadcCountries.put("🇸🇿 Eswatini", "+268");
-        sadcCountries.put("🇦🇴 Angola", "+244");
-        sadcCountries.put("🇨🇩 DRC", "+243");
-        sadcCountries.put("🇸🇨 Seychelles", "+248");
-        sadcCountries.put("🇹🇿 Tanzania", "+255");
+    // Each entry: { displayName, dialCode, isoCode }
+    // Sorted alphabetically. isoCode used as fallback label when emoji flags don't render.
+    private static final String[][] COUNTRIES = {
+        {"Angola",        "+244", "AO"},
+        {"Botswana",      "+267", "BW"},
+        {"DRC",           "+243", "CD"},
+        {"Eswatini",      "+268", "SZ"},
+        {"Lesotho",       "+266", "LS"},
+        {"Malawi",        "+265", "MW"},
+        {"Mauritius",     "+230", "MU"},
+        {"Mozambique",    "+258", "MZ"},
+        {"Namibia",       "+264", "NA"},
+        {"Seychelles",    "+248", "SC"},
+        {"South Africa",  "+27",  "ZA"},
+        {"Tanzania",      "+255", "TZ"},
+        {"Zambia",        "+260", "ZM"},
+        {"Zimbabwe",      "+263", "ZW"},
+    };
+
+    // Returns a list of display names for the dropdown: "ZW  Zimbabwe (+263)"
+    public static List<String> getDropdownNames() {
+        List<String> names = new ArrayList<>();
+        for (String[] c : COUNTRIES) {
+            names.add(c[2] + "  " + c[0] + " (" + c[1] + ")");
+        }
+        return names;
     }
 
-    public static HashMap<String, String> getCountryCodes() {
-        return sadcCountries;
+    // Returns the short label for the collapsed spinner: "ZW +263"
+    public static List<String> getShortLabels() {
+        List<String> labels = new ArrayList<>();
+        for (String[] c : COUNTRIES) {
+            labels.add(c[2] + " " + c[1]);
+        }
+        return labels;
     }
 
-    public static List<String> getCountryNames() {
-        return new ArrayList<>(sadcCountries.keySet());
+    // Returns the dial code for a given dropdown position
+    public static String getCodeByPosition(int position) {
+        if (position >= 0 && position < COUNTRIES.length) {
+            return COUNTRIES[position][1];
+        }
+        return "+263"; // Default to Zimbabwe
     }
 
-    public static String getCode(String countryName) {
-        return sadcCountries.getOrDefault(countryName, "+263"); // Default to ZW
+    // Returns the position index of Zimbabwe (default country)
+    public static int getDefaultPosition() {
+        for (int i = 0; i < COUNTRIES.length; i++) {
+            if ("ZW".equals(COUNTRIES[i][2])) return i;
+        }
+        return 0;
     }
 }

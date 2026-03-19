@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.text.InputType;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Button;
@@ -31,12 +30,11 @@ import retrofit2.Response;
 public class SignUp extends AppCompatActivity {
     TextView signin;
     Button btnLayout, nextPage, prevPage;
-    EditText email, password;
+    EditText email, password, usernameInput, surnameInput;
     ProgressBar progressBar;
     private Spinner spinnerCountryCode;
     private EditText phoneNumberInput;
     String countryCode;
-    private final String DEFAULT_COUNTRY = "🇿🇼 Zimbabwe";
 
     // Page containers
     LinearLayout infoRegister, dataForm;
@@ -54,6 +52,8 @@ public class SignUp extends AppCompatActivity {
         prevPage = findViewById(R.id.prevPage);
         email = findViewById(R.id.emailInput);
         password = findViewById(R.id.passwordInput);
+        usernameInput = findViewById(R.id.usernameInput);
+        surnameInput = findViewById(R.id.surnameInput);
         progressBar = findViewById(R.id.progressSign);
         spinnerCountryCode = findViewById(R.id.spinnerCountryCode);
         phoneNumberInput = findViewById(R.id.phoneNumberInput);
@@ -96,27 +96,20 @@ public class SignUp extends AppCompatActivity {
             }
         });
 
-        //PHONE NUMBER
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item
-                ,CountryCodes.getCountryNames());
+        // PHONE NUMBER — custom adapter shows "ZW +263" collapsed, full name in dropdown
+        CountrySpinnerAdapter adapter = new CountrySpinnerAdapter(
+                this, CountryCodes.getShortLabels(), CountryCodes.getDropdownNames());
         spinnerCountryCode.setAdapter(adapter);
 
-        int defaultPosition = CountryCodes.getCountryNames().indexOf(DEFAULT_COUNTRY);
-        spinnerCountryCode.setSelection(defaultPosition);
-        phoneNumberInput.setText(CountryCodes.getCode(DEFAULT_COUNTRY) + " ");
-        phoneNumberInput.setSelection(phoneNumberInput.getText().length());
+        int defaultPos = CountryCodes.getDefaultPosition();
+        spinnerCountryCode.setSelection(defaultPos);
+        countryCode = CountryCodes.getCodeByPosition(defaultPos);
 
         // Handle Country Selection
         spinnerCountryCode.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                String selectedCountry = parent.getItemAtPosition(position).toString();
-                countryCode = CountryCodes.getCode(selectedCountry);
-
-                if (countryCode != null) {
-                    phoneNumberInput.setText(countryCode + " ");
-                    phoneNumberInput.setSelection(phoneNumberInput.getText().length());
-                }
+                countryCode = CountryCodes.getCodeByPosition(position);
             }
             @Override
             public void onNothingSelected(AdapterView<?> parent) {}
@@ -125,8 +118,19 @@ public class SignUp extends AppCompatActivity {
         // Page navigation
         nextPage.setOnClickListener(v -> {
             if (currentPage == 1) {
-                // Validate page 1 fields
-                if (getRawPhoneNumber().isEmpty()) {
+                String firstName = usernameInput.getText().toString().trim();
+                String surname = surnameInput.getText().toString().trim();
+                String phone = phoneNumberInput.getText().toString().trim();
+
+                if (firstName.isEmpty()) {
+                    Toast.makeText(this, "Please enter your first name", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if (surname.isEmpty()) {
+                    Toast.makeText(this, "Please enter your surname", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if (phone.isEmpty()) {
                     Toast.makeText(this, "Please enter your phone number", Toast.LENGTH_SHORT).show();
                     return;
                 }
@@ -172,25 +176,28 @@ public class SignUp extends AppCompatActivity {
     }
 
     public void RegisterUser(){
-        String email = this.email.getText().toString();
-        String password = this.password.getText().toString();
+        String emailText = email.getText().toString().trim();
+        String passwordText = password.getText().toString().trim();
+        String firstName = usernameInput.getText().toString().trim();
+        String surname = surnameInput.getText().toString().trim();
+        String phone = getFullPhoneNumber();
 
         progressBar.setVisibility(View.VISIBLE);
 
-        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(emailText).matches()) {
             progressBar.setVisibility(View.GONE);
             Toast.makeText(SignUp.this, "Please enter a valid email address", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        if (password.length() < 6) {
+        if (passwordText.length() < 6) {
             progressBar.setVisibility(View.GONE);
             Toast.makeText(SignUp.this, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        if(!email.isEmpty() && !password.isEmpty() && !getFullPhoneNumber().isEmpty()) {
-            CreateUser createUser = new CreateUser(email, password, getFullPhoneNumber());
+        if(!emailText.isEmpty() && !passwordText.isEmpty() && !phone.isEmpty()) {
+            CreateUser createUser = new CreateUser(emailText, passwordText, phone, firstName, surname);
 
             ApiService apiService = ApiClient.getClient().create(ApiService.class);
             Call<TokenResponse> call = apiService.signup(createUser);
@@ -237,8 +244,7 @@ public class SignUp extends AppCompatActivity {
     }
 
     private String getRawPhoneNumber() {
-        String text = phoneNumberInput.getText().toString();
-        String raw = text.replace(countryCode + " ", "").trim();
+        String raw = phoneNumberInput.getText().toString().trim();
 
         // Remove leading 0 if present
         if (raw.startsWith("0")) {
