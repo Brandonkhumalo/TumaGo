@@ -23,6 +23,7 @@ services:
       MATCHING_SERVICE: matching:8002
       STATIC_DIR: /static
       LISTEN_ADDR: ":80"
+      WHATSAPP_VERIFY_TOKEN: ${WHATSAPP_VERIFY_TOKEN}
     volumes:
       - django_static:/static:ro
     depends_on:
@@ -79,6 +80,7 @@ services:
       DEBUG: ${DEBUG:-False}
       ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost}
       GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY}
+      FIREBASE_CREDENTIALS: ${FIREBASE_CREDENTIALS}
       FIREBASE_CREDENTIALS_PATH: /secrets/firebase-credentials.json
     volumes:
       - django_static:/app/staticfiles
