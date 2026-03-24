@@ -146,7 +146,9 @@
                                 android:layout_height="wrap_content"
                                 android:textSize="14sp"
                                 android:textColor="@color/blackish"
-                                android:fontFamily="sans-serif-medium"/>
+                                android:fontFamily="sans-serif-medium"
+                                android:maxLines="3"
+                                android:ellipsize="end"/>
 
                         </LinearLayout>
 

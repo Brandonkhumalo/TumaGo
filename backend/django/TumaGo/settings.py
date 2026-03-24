@@ -91,6 +91,8 @@ REST_FRAMEWORK = {
         'user': '300/minute',
         'login': '10/minute',
         'signup': '5/minute',
+        'otp_send': '3/minute',
+        'otp_verify': '5/minute',
         'delivery_request': '10/minute',
     },
 }

@@ -92,6 +92,8 @@ func main() {
 	mux.Handle("/api/v1/login/", authHandler)
 	mux.Handle("/api/v1/signup/", authHandler)
 	mux.Handle("/api/v1/driver/signup/", authHandler)
+	mux.Handle("/api/v1/otp/send/", authHandler)
+	mux.Handle("/api/v1/otp/verify/", authHandler)
 
 	// Delivery request — medium rate limit (versioned API).
 	mux.Handle("/api/v1/delivery/request/", deliveryRL.limit(djangoProxy))
@@ -139,9 +141,14 @@ func main() {
 
 // maxBodySize wraps a handler to limit request body size to 10 MB.
 // WebSocket upgrades are excluded since they have their own framing.
+// Also strips the X-WhatsApp-Internal header from external requests
+// to prevent clients from spoofing internal WhatsApp service calls.
 func maxBodySize(next http.Handler) http.Handler {
 	const maxBytes = 10 << 20 // 10 MB
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Strip internal header from external requests to prevent OTP bypass.
+		r.Header.Del("X-WhatsApp-Internal")
+
 		// Skip body limit for WebSocket upgrade requests.
 		if strings.EqualFold(r.Header.Get("Upgrade"), "websocket") {
 			next.ServeHTTP(w, r)
@@ -180,6 +187,8 @@ func (rh *routingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case strings.HasPrefix(path, "/api/v1/signup/"):
 		rh.mux.ServeHTTP(w, r)
 	case strings.HasPrefix(path, "/api/v1/driver/signup/"):
+		rh.mux.ServeHTTP(w, r)
+	case strings.HasPrefix(path, "/api/v1/otp/"):
 		rh.mux.ServeHTTP(w, r)
 	case strings.HasPrefix(path, "/api/v1/delivery/request/"):
 		rh.mux.ServeHTTP(w, r)

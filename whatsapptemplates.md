@@ -10,6 +10,63 @@
 4. Click **Submit**
 5. Wait 24–48 hours for approval
 
+### Which Category to Choose
+
+When you click "Create Template", you must pick one of these 3 categories:
+
+| Category | When to pick it | Templates |
+|----------|----------------|-----------|
+| **Authentication** | OTP codes, verification codes, password resets — any message that contains a one-time code | #1 `client_otp`, #2 `driver_otp`, #3 `password_reset` |
+| **Utility** | Transactional messages the user expects — delivery updates, payment confirmations, registration steps, account status, driver notifications | #4–#41 (all delivery flow, payment, registration, driver, and account templates) |
+| **Marketing** | Promotional messages — discounts, offers, re-engagement campaigns. User must have opted in | #42 `promo_offer` |
+
+### Full List — What to Choose for Each Template
+
+| # | Template Name | Choose |
+|---|--------------|--------|
+| 1 | `client_otp` | **Authentication** |
+| 2 | `driver_otp` | **Authentication** |
+| 3 | `password_reset` | **Authentication** |
+| 4 | `delivery_vehicle_options` | **Utility** |
+| 5 | `delivery_payment_options` | **Utility** |
+| 6 | `delivery_created` | **Utility** |
+| 7 | `payment_request` | **Utility** |
+| 8 | `payment_ecocash_instructions` | **Utility** |
+| 9 | `payment_onemoney_instructions` | **Utility** |
+| 10 | `payment_confirmed` | **Utility** |
+| 11 | `payment_failed` | **Utility** |
+| 12 | `driver_found` | **Utility** |
+| 13 | `no_driver_found` | **Utility** |
+| 14 | `driver_at_pickup` | **Utility** |
+| 15 | `driver_en_route` | **Utility** |
+| 16 | `delivery_complete` | **Utility** |
+| 17 | `delivery_cancelled` | **Utility** |
+| 18 | `delivery_history` | **Utility** |
+| 19 | `driver_new_delivery` | **Utility** |
+| 20 | `driver_delivery_confirmed` | **Utility** |
+| 21 | `driver_navigate_dropoff` | **Utility** |
+| 22 | `driver_confirm_delivery` | **Utility** |
+| 23 | `driver_delivery_complete_confirm` | **Utility** |
+| 24 | `driver_go_online` | **Utility** |
+| 25 | `driver_go_offline` | **Utility** |
+| 26 | `driver_earnings_summary` | **Utility** |
+| 27 | `client_welcome` | **Utility** |
+| 28 | `client_registration_complete` | **Utility** |
+| 29 | `client_request_delivery` | **Utility** |
+| 30 | `driver_registration_start` | **Utility** |
+| 31 | `driver_vehicle_details` | **Utility** |
+| 32 | `driver_vehicle_info` | **Utility** |
+| 33 | `driver_upload_id` | **Utility** |
+| 34 | `driver_upload_license` | **Utility** |
+| 35 | `driver_upload_profile` | **Utility** |
+| 36 | `driver_registration_complete` | **Utility** |
+| 37 | `driver_approved` | **Utility** |
+| 38 | `driver_rejected` | **Utility** |
+| 39 | `driver_docs_reminder` | **Utility** |
+| 40 | `account_deactivated` | **Utility** |
+| 41 | `driver_balance_reminder` | **Utility** |
+| 42 | `promo_offer` | **Marketing** |
+
 ### Rules
 - Variables use `{{1}}`, `{{2}}`, etc. — numbered sequentially
 - Max 3 Quick Reply buttons per message
@@ -46,10 +103,12 @@
 
 ### 1. client_otp
 
+> **Android app only.** WhatsApp users do NOT receive OTP — their phone number is already verified by WhatsApp.
+
 - **Name:** `client_otp`
 - **Category:** Authentication
 - **Language:** English
-- **Body:** `Your TumaGo verification code is {{1}}. Expires in 5 minutes.`
+- **Body:** `Your TumaGo verification code is {{1}}. Expires in 10 minutes.`
 - **Buttons:** None
 - **Sample:** `{{1}}` = `482901`
 
@@ -57,16 +116,20 @@
 
 ### 2. driver_otp
 
+> **Android app only.** WhatsApp users do NOT receive OTP — their phone number is already verified by WhatsApp.
+
 - **Name:** `driver_otp`
 - **Category:** Authentication
 - **Language:** English
-- **Body:** `Your TumaGo driver verification code is {{1}}. Expires in 5 minutes.`
+- **Body:** `Your TumaGo driver verification code is {{1}}. Expires in 10 minutes.`
 - **Buttons:** None
 - **Sample:** `{{1}}` = `739205`
 
 ---
 
 ### 3. password_reset
+
+> **Android app only.** WhatsApp users do NOT need password reset — they authenticate via WhatsApp.
 
 - **Name:** `password_reset`
 - **Category:** Authentication

@@ -183,12 +183,16 @@ public class ConfirmDelivery extends AppCompatActivity {
             List<Address> addressList = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
             if (addressList != null && !addressList.isEmpty()) {
                 Address address = addressList.get(0);
-                String street = address.getThoroughfare();
-                String number = address.getSubThoroughfare();
-                String city = address.getLocality();
-
-                String streetFull = (number != null ? number + " " : "") + (street != null ? street : "");
-                String result = streetFull + ", " + (city != null ? city : "Unknown City");
+                // Use the full formatted address line so nothing is cut off
+                String result = address.getAddressLine(0);
+                if (result == null || result.isEmpty()) {
+                    // Fallback: build manually if getAddressLine returns nothing
+                    String street = address.getThoroughfare();
+                    String number = address.getSubThoroughfare();
+                    String city = address.getLocality();
+                    String streetFull = (number != null ? number + " " : "") + (street != null ? street : "");
+                    result = streetFull + ", " + (city != null ? city : "Unknown City");
+                }
 
                 if (isOrigin) {
                     pickup.setText(result);

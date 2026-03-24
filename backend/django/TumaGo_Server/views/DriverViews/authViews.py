@@ -1,3 +1,4 @@
+from django.conf import settings
 from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -5,11 +6,15 @@ from rest_framework import status
 from rest_framework.throttling import AnonRateThrottle
 from ...serializers.driverSerializer.authSerializers import RegisterSerializer, VehicleSerializer, LicenseUploadSerializer, ResetPasswordSerializer
 from ...token import JWTAuthentication
+from ...otp import is_phone_verified, clear_verification
 import logging
 from ...models import CustomUser
 from django.shortcuts import get_object_or_404
 
 logger = logging.getLogger(__name__)
+
+# Header used by the WhatsApp service for internal calls (skips OTP check)
+WHATSAPP_INTERNAL_HEADER = "HTTP_X_WHATSAPP_INTERNAL"
 
 class DriverSignupThrottle(AnonRateThrottle):
     scope = 'signup'
@@ -19,9 +24,30 @@ class DriverSignupThrottle(AnonRateThrottle):
 @permission_classes([AllowAny])
 @throttle_classes([DriverSignupThrottle])
 def driver_register(request):
+    # WhatsApp service calls include X-WhatsApp-Internal header with the
+    # shared SECRET_KEY — these skip OTP because WhatsApp already verifies
+    # the phone number. Android app registrations MUST verify OTP first.
+    internal_secret = request.META.get(WHATSAPP_INTERNAL_HEADER, "")
+    is_whatsapp_internal = internal_secret == settings.SECRET_KEY
+
+    phone = request.data.get("phone_number", "")
+
+    if not is_whatsapp_internal:
+        # Android app registration — require OTP verification
+        if not phone:
+            return Response(
+                {"detail": "phone_number is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if not is_phone_verified(phone):
+            return Response(
+                {"detail": "Phone number not verified. Complete OTP verification first."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
     # Initialize the serializer with the incoming data
     serializer = RegisterSerializer(data=request.data)
-    
+
     if serializer.is_valid():
         user = serializer.save()  # This will save the user as either 'driver' or 'user'
         payload = {
@@ -31,11 +57,15 @@ def driver_register(request):
         token = JWTAuthentication.generate_token(payload=payload)
         refresh_token = JWTAuthentication.generate_refresh_token(payload=payload)
 
+        # Clear the OTP verification flag so it can't be reused
+        if phone and not is_whatsapp_internal:
+            clear_verification(phone)
+
         return Response({
             'accessToken': token,
             'refreshToken': refresh_token
         }, status=status.HTTP_201_CREATED)
-        
+
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(["DELETE"])

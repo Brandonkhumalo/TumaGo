@@ -2,11 +2,15 @@ from django.urls import path
 
 from TumaGo import settings
 from django.conf.urls.static import static
-from .views.UserViews import views, userViews
+from .views.UserViews import views, userViews, otpViews
 from .views.DriverViews import authViews, driverViews
 from .views.PaymentViews import paymentViews
 
 urlpatterns = [
+    # OTP (Android app registrations only — WhatsApp skips OTP)
+    path('otp/send/', otpViews.send_otp, name='send_otp'),
+    path('otp/verify/', otpViews.verify_otp_view, name='verify_otp'),
+
     path('signup/', views.signup, name='signup'),
     path('update/user/profile/', views.update_profile, name='update_profile'),
     path('user/Data/', userViews.GetUserData, name='User_Data'),

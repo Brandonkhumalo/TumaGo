@@ -20,6 +20,9 @@ redis==6.2.0
 # Auth
 PyJWT==2.9.0
 
+# OTP delivery via WhatsApp Cloud API (sync HTTP from Django views)
+requests>=2.31,<3.0
+
 # Firebase (FCM push notifications)
 firebase-admin==6.8.0
 

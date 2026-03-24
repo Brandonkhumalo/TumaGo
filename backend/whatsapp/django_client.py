@@ -40,17 +40,22 @@ def _auth_header(token: str) -> dict:
 
 # ── Auth ─────────────────────────────────────────────────────────────────────
 
+def _internal_header() -> dict:
+    """Header that tells Django this is an internal WhatsApp call (skips OTP)."""
+    return {"X-WhatsApp-Internal": SECRET_KEY}
+
+
 async def signup(data: dict) -> dict:
-    """Register a new client user."""
+    """Register a new client user. Includes internal header to skip OTP."""
     client = get_client()
-    resp = await client.post("/signup/", json=data)
+    resp = await client.post("/signup/", json=data, headers=_internal_header())
     return {"status": resp.status_code, "data": resp.json()}
 
 
 async def driver_signup(data: dict) -> dict:
-    """Register a new driver."""
+    """Register a new driver. Includes internal header to skip OTP."""
     client = get_client()
-    resp = await client.post("/driver/signup/", json=data)
+    resp = await client.post("/driver/signup/", json=data, headers=_internal_header())
     return {"status": resp.status_code, "data": resp.json()}
 
 

@@ -21,7 +21,8 @@ logger = logging.getLogger(__name__)
 from TumaGo.firebase_init import initialize_firebase
 from calendar import monthrange
 from datetime import date, timedelta
-from django.db.models import Sum
+from django.db.models import Sum, Value
+from decimal import Decimal
 from .deliveryMatching.tasks import retry_trip_matching, publish_trip_accepted
 from decimal import Decimal
 from django.utils import timezone
@@ -77,12 +78,12 @@ def getDriver_Finances(request):
     last_day = monthrange(today.year, today.month)[1]
     month_end = today.replace(day=last_day)
 
-    # Shared aggregation fields
+    # Shared aggregation fields — default=0 ensures None is never returned
     agg_fields = dict(
-        earnings=Sum('earnings') or 0,
-        charges=Sum('charges') or 0,
-        profit=Sum('profit') or 0,
-        total_trips=Sum('total_trips') or 0,
+        earnings=Sum('earnings', default=Decimal('0.00')),
+        charges=Sum('charges', default=Decimal('0.00')),
+        profit=Sum('profit', default=Decimal('0.00')),
+        total_trips=Sum('total_trips', default=0),
     )
 
     # Today (exact today match)
@@ -105,12 +106,7 @@ def getDriver_Finances(request):
     ).aggregate(**agg_fields)
 
     # All time totals (no date filter)
-    all_time = DriverFinances.objects.filter(driver=user).aggregate(
-        earnings=Sum('earnings') or 0,
-        charges=Sum('charges') or 0,
-        profit=Sum('profit') or 0,
-        total_trips=Sum('total_trips') or 0,
-    )
+    all_time = DriverFinances.objects.filter(driver=user).aggregate(**agg_fields)
 
     return Response({
         "today": today_data,

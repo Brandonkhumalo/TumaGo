@@ -149,20 +149,19 @@ public class Finances extends AppCompatActivity {
                         FinanceInfo data = response.body();
 
                         AnimHelper.beginTransition((ViewGroup) findViewById(R.id.main));
-                        todayTotal.setText("$" + data.getToday().getEarnings());
-                        todayCharges.setText("$" + data.getToday().getCharges());
-                        todayProfit.setText("$" + data.getToday().getProfit());
+                        todayTotal.setText(formatMoney(data.getToday().getEarnings()));
+                        todayCharges.setText(formatMoney(data.getToday().getCharges()));
+                        todayProfit.setText(formatMoney(data.getToday().getProfit()));
 
-                        weekTotal.setText("$" + data.getWeek().getEarnings());
-                        weekProfit.setText("$" + data.getWeek().getProfit());
+                        weekTotal.setText(formatMoney(data.getWeek().getEarnings()));
+                        weekProfit.setText(formatMoney(data.getWeek().getProfit()));
 
-                        monthTotal.setText("$" + data.getMonth().getEarnings());
-                        monthProfit.setText("$" + data.getMonth().getProfit());
+                        monthTotal.setText(formatMoney(data.getMonth().getEarnings()));
+                        monthProfit.setText(formatMoney(data.getMonth().getProfit()));
 
                         // All-time summary displayed above the chart
-                        String earnings = data.getAllTime().getEarnings();
+                        allTimeEarnings.setText(formatMoney(data.getAllTime().getEarnings()));
                         int trips = data.getAllTime().getTotalTrips();
-                        allTimeEarnings.setText("$" + (earnings != null ? earnings : "0.00"));
                         allTimeTrips.setText(trips + (trips == 1 ? " delivery" : " deliveries"));
 
                         // Build the pie chart with real month data
@@ -189,6 +188,12 @@ public class Finances extends AppCompatActivity {
             startActivity(intent);
             finish();
         }
+    }
+
+    // Formats a money string for display, returning "$0.00" if null or empty
+    private String formatMoney(String value) {
+        if (value == null || value.isEmpty()) return "$0.00";
+        return "$" + value;
     }
 
     // Safely parses a money string like "12.50" to float, returns 0 on failure

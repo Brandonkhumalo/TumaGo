@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework.permissions import AllowAny, IsAuthenticated
 import logging
 from ...models import BlacklistedToken, Delivery, TermsAndConditions
+from ...otp import is_phone_verified, clear_verification, normalize_phone
 
 logger = logging.getLogger(__name__)
 from ...serializers.userSerializer.authserializers import (
@@ -23,6 +24,9 @@ from datetime import datetime
 import pytz
 import jwt
 
+# Header used by the WhatsApp service for internal calls (skips OTP check)
+WHATSAPP_INTERNAL_HEADER = "HTTP_X_WHATSAPP_INTERNAL"
+
 # Scoped throttles — rates pulled from settings.DEFAULT_THROTTLE_RATES
 class LoginThrottle(AnonRateThrottle):
     scope = 'login'
@@ -36,6 +40,27 @@ User = None
 @permission_classes([AllowAny])
 @throttle_classes([SignupThrottle])
 def signup(request):
+    # WhatsApp service calls include X-WhatsApp-Internal header with the
+    # shared SECRET_KEY — these skip OTP because WhatsApp already verifies
+    # the phone number. Android app registrations MUST verify OTP first.
+    internal_secret = request.META.get(WHATSAPP_INTERNAL_HEADER, "")
+    is_whatsapp_internal = internal_secret == settings.SECRET_KEY
+
+    phone = request.data.get("phone_number", "")
+
+    if not is_whatsapp_internal:
+        # Android app registration — require OTP verification
+        if not phone:
+            return Response(
+                {"detail": "phone_number is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if not is_phone_verified(phone):
+            return Response(
+                {"detail": "Phone number not verified. Complete OTP verification first."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
     serializer = SignupSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.save()
@@ -43,6 +68,10 @@ def signup(request):
 
         access_token = JWTAuthentication.generate_token(payload=payload)
         refresh_token = JWTAuthentication.generate_refresh_token(payload=payload)
+
+        # Clear the OTP verification flag so it can't be reused
+        if phone and not is_whatsapp_internal:
+            clear_verification(phone)
 
         return Response({
             'accessToken': access_token,
