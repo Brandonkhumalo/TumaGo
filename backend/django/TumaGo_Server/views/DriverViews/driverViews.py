@@ -140,17 +140,15 @@ def RequestDelivery(request):
         except Exception as e:
             logger.error(f"Failed to start background task: {e}")
 
-        return Response({"Looking ": "Awaiting driver"}, status=status.HTTP_200_OK)
+        return Response({"status": "Awaiting driver", "trip_id": str(trip.id)}, status=status.HTTP_200_OK)
     else:
         return Response(delivery_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def AcceptTrip(request):
-
-    logger.info("Trip %s accepted", trip_id)
-
     trip_id = request.data.get("trip_id")
+    logger.info("Trip %s accepted", trip_id)
     driver_id = request.user.id
     Driver = get_object_or_404(CustomUser, id=driver_id)
 

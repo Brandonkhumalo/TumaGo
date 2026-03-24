@@ -191,15 +191,21 @@ public class DeliveryDetails extends AppCompatActivity implements OnMapReadyCall
         try {
             List<Address> addressList = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
             if (addressList != null && !addressList.isEmpty()) {
-                //String address = addressList.get(0).getAddressLine(0); //to display address in 1 line
-
                 Address address = addressList.get(0);
                 String street = address.getThoroughfare(); // e.g., "King Street"
                 String number = address.getSubThoroughfare(); // e.g., "3"
-                String city = address.getLocality(); // e.g., "germiston"
+                String city = address.getLocality(); // e.g., "Harare"
 
                 String streetFull = (number != null ? number + " " : "") + (street != null ? street : "");
-                String result = streetFull + ", " + (city != null ? city : "Unknown City");
+
+                String result;
+                if (!streetFull.trim().isEmpty()) {
+                    result = streetFull + ", " + (city != null ? city : "Unknown City");
+                } else {
+                    // No street info — fall back to the full address line from geocoder
+                    String fullLine = address.getAddressLine(0);
+                    result = fullLine != null ? fullLine : (city != null ? city : "Unknown Location");
+                }
                 dropOff.setText(result);
             }
         } catch (IOException e) {

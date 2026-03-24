@@ -27,20 +27,20 @@ import logging
 logger = logging.getLogger(__name__)
 
 WAIT_TIMEOUT_SECONDS = 12     # How long to wait for acceptance before re-matching
-TRIP_ACCEPTED_CHANNEL = "trip_accepted:{trip_id}"
+TRIP_CHANNEL = "trip_signal:{trip_id}"
 
 
 def _get_redis():
     return redis.Redis.from_url(settings.REDIS_URL, decode_responses=True)
 
 
-def _wait_for_acceptance(trip_id: str, timeout: int) -> bool:
+def _wait_for_signal(trip_id: str, timeout: int) -> str:
     """
-    Block on a Redis pub/sub subscription until the trip is accepted or timeout.
-    Returns True if accepted, False if timed out.
+    Block on a Redis pub/sub subscription until the trip is accepted, cancelled, or timeout.
+    Returns 'accepted', 'cancelled', or 'timeout'.
     """
     r = _get_redis()
-    channel = TRIP_ACCEPTED_CHANNEL.format(trip_id=trip_id)
+    channel = TRIP_CHANNEL.format(trip_id=trip_id)
     pubsub = r.pubsub()
     pubsub.subscribe(channel)
 
@@ -49,9 +49,9 @@ def _wait_for_acceptance(trip_id: str, timeout: int) -> bool:
         while time.time() < deadline:
             message = pubsub.get_message(timeout=1)
             if message and message['type'] == 'message':
-                if message['data'] == 'accepted':
-                    return True
-        return False
+                if message['data'] in ('accepted', 'cancelled'):
+                    return message['data']
+        return 'timeout'
     finally:
         try:
             pubsub.unsubscribe(channel)
@@ -97,6 +97,10 @@ def retry_trip_matching(trip_id: str, user_id: str, delivery_data: dict):
         logger.info(f"Trip {trip_id} already accepted — task done")
         return
 
+    if trip.cancelled:
+        logger.info(f"Trip {trip_id} already cancelled — task done")
+        return
+
     try:
         user = CustomUser.objects.get(id=user_id)
     except CustomUser.DoesNotExist:
@@ -116,11 +120,15 @@ def retry_trip_matching(trip_id: str, user_id: str, delivery_data: dict):
         no_driver_found(user)
         return
 
-    # A driver was found and notified — wait for acceptance via Redis pub/sub
-    accepted = _wait_for_acceptance(trip_id, WAIT_TIMEOUT_SECONDS)
+    # A driver was found and notified — wait for acceptance or cancellation via Redis pub/sub
+    signal = _wait_for_signal(trip_id, WAIT_TIMEOUT_SECONDS)
 
-    if accepted:
+    if signal == 'accepted':
         logger.info(f"Trip {trip_id} accepted during wait — task complete")
+        return
+
+    if signal == 'cancelled':
+        logger.info(f"Trip {trip_id} cancelled during wait — task complete")
         return
 
     # Connection may have gone stale during the pub/sub wait
@@ -130,6 +138,10 @@ def retry_trip_matching(trip_id: str, user_id: str, delivery_data: dict):
     trip.refresh_from_db()
     if trip.accepted:
         logger.info(f"Trip {trip_id} accepted (DB check) — task complete")
+        return
+
+    if trip.cancelled:
+        logger.info(f"Trip {trip_id} cancelled (DB check) — task complete")
         return
 
     logger.info(f"Trip {trip_id} not accepted, re-queueing")
@@ -143,7 +155,20 @@ def publish_trip_accepted(trip_id: str):
     """
     try:
         r = _get_redis()
-        channel = TRIP_ACCEPTED_CHANNEL.format(trip_id=trip_id)
+        channel = TRIP_CHANNEL.format(trip_id=trip_id)
         r.publish(channel, "accepted")
     except Exception as e:
         logger.error(f"Failed to publish trip acceptance for {trip_id}: {e}")
+
+
+def publish_trip_cancelled(trip_id: str):
+    """
+    Called by cancel_trip_request view when the user cancels.
+    Signals the waiting retry_trip_matching task to stop.
+    """
+    try:
+        r = _get_redis()
+        channel = TRIP_CHANNEL.format(trip_id=trip_id)
+        r.publish(channel, "cancelled")
+    except Exception as e:
+        logger.error(f"Failed to publish trip cancellation for {trip_id}: {e}")

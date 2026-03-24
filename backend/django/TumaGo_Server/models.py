@@ -223,6 +223,7 @@ class DriverBalance(models.Model):
 
 class TripRequest(models.Model):
     requester = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    delivery_details = models.JSONField() 
+    delivery_details = models.JSONField()
     accepted = models.BooleanField(default=False)
+    cancelled = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)

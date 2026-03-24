@@ -129,10 +129,10 @@ def TripData(requester_data, delivery_data, trip_id):
     )
 
     if closest_driver:
-        # Single Google Maps call for ETA — only after a driver is matched
+        # Delivery distance (pickup → destination) — shown to driver alongside fare
         distance_meters = _get_distance_meters(
             requester_lat, requester_lng,
-            closest_driver_coords['latitude'], closest_driver_coords['longitude'],
+            destination_lat, destination_lng,
         )
 
         payload = {

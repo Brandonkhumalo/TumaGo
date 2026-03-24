@@ -4,7 +4,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from ...serializers.userSerializer.authserializers import UserSerializer
 from decimal import Decimal
-from ...models import Delivery, CustomUser
+from ...models import Delivery, CustomUser, TripRequest
 from firebase_admin import messaging
 from TumaGo.firebase_init import initialize_firebase
 from django.shortcuts import get_object_or_404
@@ -103,6 +103,34 @@ def update_driver_delivery_cancelled(driver, name, surname):
         logger.error(f"FCM cancellation error for driver {driver.id}: {e}")
         return False
     
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def cancel_trip_request(request):
+    """Cancel a pending trip request before a driver accepts it."""
+    from ..DriverViews.deliveryMatching.tasks import publish_trip_cancelled
+
+    trip_id = request.data.get("trip_id")
+    if not trip_id:
+        return Response({"error": "trip_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        trip = TripRequest.objects.get(id=trip_id, requester=request.user)
+    except TripRequest.DoesNotExist:
+        return Response({"error": "Trip request not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    if trip.accepted:
+        return Response({"error": "Trip already accepted — use cancel delivery instead."},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+    trip.cancelled = True
+    trip.save()
+
+    # Signal the background matching task to stop immediately
+    publish_trip_cancelled(str(trip.id))
+
+    logger.info("Trip request %s cancelled by user %s", trip_id, request.user.id)
+    return Response({"message": "Trip request cancelled."}, status=status.HTTP_200_OK)
+
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def track_delivery(request):

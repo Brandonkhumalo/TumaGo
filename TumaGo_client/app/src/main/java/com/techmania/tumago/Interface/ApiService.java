@@ -79,6 +79,12 @@ public interface ApiService {
             @Query("delivery_id") String delivery_id
     );
 
+    @POST("api/v1/cancel/trip/")
+    Call<ResponseBody> cancelTripRequest(
+            @Header("Authorization") String authHeader,
+            @Body java.util.Map<String, String> body
+    );
+
     @POST("api/v1/rate/driver/")
     Call<ResponseBody> rateTrip(
             @Header("Authorization") String authHeader,

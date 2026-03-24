@@ -405,8 +405,21 @@ public class ConfirmDelivery extends AppCompatActivity {
                 resetRequestState();
 
                 if (response.isSuccessful() && response.body() != null) {
+                    // Parse trip_id from response so it can be cancelled later
+                    String tripId = null;
+                    try {
+                        String responseStr = response.body().string();
+                        org.json.JSONObject json = new org.json.JSONObject(responseStr);
+                        tripId = json.optString("trip_id", null);
+                    } catch (Exception e) {
+                        Log.e(TAG, "Failed to parse trip_id from response", e);
+                    }
+
                     Intent searchIntent = new Intent(ConfirmDelivery.this, SearchingForDriver.class);
                     searchIntent.putExtra("transportImage", getIntent().getStringExtra("transportImage"));
+                    if (tripId != null) {
+                        searchIntent.putExtra("trip_id", tripId);
+                    }
                     startActivity(searchIntent);
                     overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
                     finish();
