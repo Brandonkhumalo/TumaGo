@@ -193,9 +193,11 @@ def rate_driver(request):
                         status=status.HTTP_400_BAD_REQUEST)
     
     try:
-        rating = Decimal(str(rating))
+        rating = Decimal(str(rating_received))
+        if rating < Decimal('0.5') or rating > Decimal('5.0'):
+            return Response({"error": "Rating must be between 0.5 and 5.0"}, status=status.HTTP_400_BAD_REQUEST)
 
-        driver = CustomUser.objects.get(id=driver_id, role=CustomUser.USER)
+        driver = CustomUser.objects.get(id=driver_id, role=CustomUser.DRIVER)
 
         # Update the driver's rating by adding
         if not hasattr(driver, 'rating_count') or driver.rating_count is None:

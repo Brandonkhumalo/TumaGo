@@ -174,14 +174,27 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # ---------------------------------------------------------------------------
+# Production security headers — only enforced when DEBUG=False
+# ---------------------------------------------------------------------------
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_BROWSER_XSS_FILTER = True
+
+# ---------------------------------------------------------------------------
 # CORS
 # ---------------------------------------------------------------------------
 _cors_origins = config('CORS_ALLOWED_ORIGINS', default='')
-if DEBUG or _cors_origins == '*':
+if DEBUG:
     CORS_ALLOW_ALL_ORIGINS = True
 else:
     CORS_ALLOWED_ORIGINS = [
-        o.strip() for o in (_cors_origins or 'https://api.tumago.com').split(',') if o.strip()
+        o.strip() for o in (_cors_origins or 'https://tumago.co.zw,https://www.tumago.co.zw').split(',') if o.strip()
     ]
 
 # ---------------------------------------------------------------------------

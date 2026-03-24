@@ -260,7 +260,9 @@ def end_trip(request):
 
     try:
         driver_vehicle = delivery.vehicle
-        rating = Decimal(str(rating))
+        rating = Decimal(str(rating_received))
+        if rating < Decimal('0.5') or rating > Decimal('5.0'):
+            return Response({"error": "Rating must be between 0.5 and 5.0"}, status=status.HTTP_400_BAD_REQUEST)
 
         client = CustomUser.objects.get(id=client_id, role=CustomUser.USER)
 
@@ -353,7 +355,7 @@ def get_deliveries(request):
     user = request.user
 
     # Get successful deliveries related to the user (as client or driver)
-    deliveries = Delivery.objects.filter(
+    deliveries = Delivery.objects.select_related('driver', 'client').filter(
     Q(client=user) | Q(driver=user), successful=True).order_by('-start_time')
 
     # Paginate

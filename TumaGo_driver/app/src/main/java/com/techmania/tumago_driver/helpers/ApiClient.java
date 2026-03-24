@@ -5,6 +5,7 @@ import com.techmania.tumago_driver.BuildConfig;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
+import okhttp3.CertificatePinner;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -49,13 +50,26 @@ public class ApiClient {
             logging.setLevel(HttpLoggingInterceptor.Level.NONE);
         }
 
-        return new OkHttpClient.Builder()
+        OkHttpClient.Builder builder = new OkHttpClient.Builder()
                 .connectTimeout(CONNECT_TIMEOUT_S, TimeUnit.SECONDS)
                 .readTimeout(READ_TIMEOUT_S, TimeUnit.SECONDS)
                 .writeTimeout(WRITE_TIMEOUT_S, TimeUnit.SECONDS)
                 .addInterceptor(logging)
-                .addInterceptor(new RetryInterceptor(MAX_RETRIES))
-                .build();
+                .addInterceptor(new RetryInterceptor(MAX_RETRIES));
+
+        // Pin Let's Encrypt ISRG Root X1 + R3 intermediate — prevents MITM
+        // with compromised CAs. Skip in debug so emulator/localhost still works.
+        if (!BuildConfig.DEBUG) {
+            CertificatePinner certPinner = new CertificatePinner.Builder()
+                    .add("tumago.co.zw",
+                            "sha256/C5+lpZ7tcVwmwQIMcRtPbsQtWLABXhQzejna0wHFr8M=")  // ISRG Root X1
+                    .add("tumago.co.zw",
+                            "sha256/jQJTbIh0grw0/1TkHSumWb+Fs0Ggogr621gT3PvPKG0=")  // Let's Encrypt R3
+                    .build();
+            builder.certificatePinner(certPinner);
+        }
+
+        return builder.build();
     }
 
     /**

@@ -6,6 +6,7 @@ from paynow import Paynow
 from django.conf import settings
 from django.utils import timezone
 from decimal import Decimal
+import hashlib
 import logging
 
 from ...models import Payment, DriverBalance, CustomUser
@@ -46,12 +47,16 @@ def initiate_payment(request):
     # --- validation ---
     if not amount:
         return Response({"error": "amount is required"}, status=status.HTTP_400_BAD_REQUEST)
+    MAX_PAYMENT_AMOUNT = Decimal('10000.00')
     try:
         amount = Decimal(str(amount))
-        if amount <= 0:
+        if amount <= 0 or amount > MAX_PAYMENT_AMOUNT:
             raise ValueError
     except (ValueError, TypeError):
-        return Response({"error": "Invalid amount"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {"error": f"Amount must be between 0.01 and {MAX_PAYMENT_AMOUNT}"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
     if payment_method not in ('card', 'ecocash', 'onemoney'):
         return Response(
@@ -183,8 +188,31 @@ def paynow_callback(request):
     Paynow sends form-encoded data with fields like:
     reference, paynowreference, amount, status, pollurl, hash
     """
-    reference = request.data.get("reference", "") or request.POST.get("reference", "")
-    paynow_status = request.data.get("status", "") or request.POST.get("status", "")
+    # Paynow sends form-encoded data — try both request.data and request.POST
+    data = request.POST.copy() if request.POST else request.data.copy()
+
+    # Verify Paynow HMAC-SHA512 signature to prevent forged callbacks.
+    # Paynow includes a 'hash' field — the SHA512 of all other values
+    # concatenated together, plus the integration key.
+    received_hash = data.get("hash", "")
+    if not received_hash:
+        logger.warning("Paynow callback missing hash — rejected")
+        return Response({"error": "Missing signature"}, status=status.HTTP_403_FORBIDDEN)
+
+    # Build the hash input: concatenate all values EXCEPT 'hash' in the order received
+    hash_values = "".join(
+        str(v) for k, v in data.items() if k.lower() != "hash"
+    )
+    expected_hash = hashlib.sha512(
+        (hash_values + settings.PAYNOW_INTEGRATION_KEY).encode()
+    ).hexdigest().upper()
+
+    if received_hash.upper() != expected_hash:
+        logger.warning("Paynow callback hash mismatch — possible forgery")
+        return Response({"error": "Invalid signature"}, status=status.HTTP_403_FORBIDDEN)
+
+    reference = data.get("reference", "")
+    paynow_status = data.get("status", "")
 
     if not reference:
         return Response({"error": "Missing reference"}, status=status.HTTP_400_BAD_REQUEST)

@@ -132,6 +132,41 @@ def logout(request):
         return Response({"detail": f"Invalid token: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(["POST"])
+@permission_classes([AllowAny])
+def refresh_token(request):
+    """Exchange a valid refresh token for a new access token."""
+    refresh = request.data.get("refreshToken")
+    if not refresh:
+        return Response({"detail": "refreshToken is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        payload = jwt.decode(refresh, settings.SECRET_KEY, algorithms=['HS256'])
+
+        if payload.get("type") != "refresh_token":
+            return Response({"detail": "Invalid token type."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if BlacklistedToken.objects.filter(token=refresh).exists():
+            return Response({"detail": "Token has been revoked."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        user_id = payload.get("id")
+        if not user_id:
+            return Response({"detail": "Invalid token."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # Verify user still exists
+        from django.contrib.auth import get_user_model
+        User_model = get_user_model()
+        User_model.objects.get(id=user_id)
+
+        new_access = JWTAuthentication.generate_token({"id": user_id})
+        return Response({"accessToken": new_access}, status=status.HTTP_200_OK)
+
+    except (InvalidTokenError, ExpiredSignatureError, jwt.DecodeError) as e:
+        return Response({"detail": f"Invalid refresh token: {str(e)}"}, status=status.HTTP_401_UNAUTHORIZED)
+    except User_model.DoesNotExist:
+        return Response({"detail": "User no longer exists."}, status=status.HTTP_401_UNAUTHORIZED)
+
+
+@api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def VerifyToken(request):
     return Response(status=status.HTTP_200_OK)
@@ -164,13 +199,40 @@ def get_all_users(request):
     global User
     if User is None:
         User = get_user_model()
-    users = User.objects.all()
+
+    try:
+        page = max(int(request.query_params.get('page', 1)), 1)
+    except (ValueError, TypeError):
+        page = 1
+    page_size = 20
+    total = User.objects.count()
+    start = (page - 1) * page_size
+
+    users = User.objects.all()[start:start + page_size]
     serializer = UserSerializer(users, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response({
+        'count': total,
+        'page': page,
+        'page_size': page_size,
+        'results': serializer.data,
+    }, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated, IsAdminUser])
 def get_all_deliveries(request):
-    deliveries = Delivery.objects.all()
+    try:
+        page = max(int(request.query_params.get('page', 1)), 1)
+    except (ValueError, TypeError):
+        page = 1
+    page_size = 20
+    total = Delivery.objects.count()
+    start = (page - 1) * page_size
+
+    deliveries = Delivery.objects.select_related('driver', 'client').all()[start:start + page_size]
     serializer = DeliverySerializer(deliveries, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response({
+        'count': total,
+        'page': page,
+        'page_size': page_size,
+        'results': serializer.data,
+    }, status=status.HTTP_200_OK)

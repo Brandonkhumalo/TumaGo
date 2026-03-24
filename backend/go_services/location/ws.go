@@ -146,18 +146,26 @@ func handleDriverWS(rdb *redis.Client) http.HandlerFunc {
 		})
 
 		// Start a goroutine to send periodic pings so idle connections
-		// are detected promptly.
+		// are detected promptly. Close after 3 consecutive failures.
 		done := make(chan struct{})
 		defer close(done)
 		go func() {
 			ticker := time.NewTicker(30 * time.Second)
 			defer ticker.Stop()
+			consecutiveFailures := 0
 			for {
 				select {
 				case <-ticker.C:
 					_ = conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
 					if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-						return
+						consecutiveFailures++
+						if consecutiveFailures >= 3 {
+							log.Printf("driver %s: 3 consecutive ping failures, closing", driverID)
+							conn.Close()
+							return
+						}
+					} else {
+						consecutiveFailures = 0
 					}
 				case <-done:
 					return

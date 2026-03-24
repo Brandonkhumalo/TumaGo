@@ -3,6 +3,8 @@ package com.techmania.tumago_driver.adapters;
 import android.content.Context;
 import android.location.Address;
 import android.location.Geocoder;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,11 +24,18 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import androidx.recyclerview.widget.DiffUtil;
 
 public class DeliveryAdapter extends RecyclerView.Adapter<DeliveryAdapter.cardviewholder> {
 
     ArrayList<Deliveries> arrayList;
     Context context;
+    private static final ExecutorService geocodeExecutor = Executors.newSingleThreadExecutor();
+    private static final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     public DeliveryAdapter(ArrayList<Deliveries> arrayList, Context context) {
         this.arrayList = arrayList;
@@ -64,30 +73,31 @@ public class DeliveryAdapter extends RecyclerView.Adapter<DeliveryAdapter.cardvi
             holder.date.setText(item.getDate() != null ? item.getDate() : "");
         }
 
-        // Reverse geocode destination coordinates to a readable address
-        Geocoder geocoder = new Geocoder(holder.itemView.getContext(), Locale.getDefault());
+        // Reverse geocode destination coordinates on background thread
         double lat = item.getDestination_lat();
         double lng = item.getDestination_lng();
+        holder.destination.setText("Loading...");
 
-        try {
-            List<Address> addresses = geocoder.getFromLocation(lat, lng, 1);
-            if (addresses != null && !addresses.isEmpty()) {
-                Address address = addresses.get(0);
-
-                String streetNumber = address.getSubThoroughfare();
-                String streetName = address.getThoroughfare();
-                String city = address.getLocality();
-
-                String streetFull = (streetNumber != null ? streetNumber + " " : "") + (streetName != null ? streetName : "");
-                String formattedAddress = streetFull + (city != null ? ", " + city : "");
-                holder.destination.setText(formattedAddress.isEmpty() ? "Unknown location" : formattedAddress);
-            } else {
-                holder.destination.setText("Unknown location");
+        geocodeExecutor.execute(() -> {
+            try {
+                Geocoder geocoder = new Geocoder(holder.itemView.getContext(), Locale.getDefault());
+                List<Address> addresses = geocoder.getFromLocation(lat, lng, 1);
+                if (addresses != null && !addresses.isEmpty()) {
+                    Address address = addresses.get(0);
+                    String streetNumber = address.getSubThoroughfare();
+                    String streetName = address.getThoroughfare();
+                    String city = address.getLocality();
+                    String streetFull = (streetNumber != null ? streetNumber + " " : "") + (streetName != null ? streetName : "");
+                    String formattedAddress = streetFull + (city != null ? ", " + city : "");
+                    mainHandler.post(() -> holder.destination.setText(
+                            formattedAddress.isEmpty() ? "Unknown location" : formattedAddress));
+                } else {
+                    mainHandler.post(() -> holder.destination.setText("Unknown location"));
+                }
+            } catch (IOException e) {
+                mainHandler.post(() -> holder.destination.setText("Error loading address"));
             }
-        } catch (IOException e) {
-            holder.destination.setText("Error loading address");
-            e.printStackTrace();
-        }
+        });
 
         // Set image based on vehicle type
         String vehicleType = arrayList.get(position).getVehicle().toLowerCase();
@@ -111,6 +121,29 @@ public class DeliveryAdapter extends RecyclerView.Adapter<DeliveryAdapter.cardvi
     @Override
     public int getItemCount() {
         return arrayList.size();
+    }
+
+    public void submitList(ArrayList<Deliveries> newList) {
+        DiffUtil.DiffResult result = DiffUtil.calculateDiff(new DiffUtil.Callback() {
+            @Override public int getOldListSize() { return arrayList.size(); }
+            @Override public int getNewListSize() { return newList.size(); }
+            @Override
+            public boolean areItemsTheSame(int oldPos, int newPos) {
+                return Objects.equals(arrayList.get(oldPos).getDelivery_id(),
+                        newList.get(newPos).getDelivery_id());
+            }
+            @Override
+            public boolean areContentsTheSame(int oldPos, int newPos) {
+                Deliveries o = arrayList.get(oldPos), n = newList.get(newPos);
+                return Objects.equals(o.getDelivery_id(), n.getDelivery_id())
+                        && o.getFare() == n.getFare()
+                        && o.getDestination_lat() == n.getDestination_lat()
+                        && o.getDestination_lng() == n.getDestination_lng();
+            }
+        });
+        arrayList.clear();
+        arrayList.addAll(newList);
+        result.dispatchUpdatesTo(this);
     }
 
     public class cardviewholder extends RecyclerView.ViewHolder {

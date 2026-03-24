@@ -21,6 +21,7 @@ import com.techmania.tumago_driver.Interface.ApiService;
 import com.techmania.tumago_driver.R;
 import com.techmania.tumago_driver.activities.MainActivity;
 import com.techmania.tumago_driver.helpers.ApiClient;
+import com.techmania.tumago_driver.helpers.BiometricHelper;
 import com.techmania.tumago_driver.helpers.ThemeHelper;
 
 import okhttp3.ResponseBody;
@@ -28,7 +29,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class splash_screen extends AppCompatActivity {
+public class splash_screen extends androidx.fragment.app.FragmentActivity {
     ImageView imageSplash;
 
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 100;
@@ -121,6 +122,19 @@ public class splash_screen extends AppCompatActivity {
                 @Override
                 public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                     if (response.isSuccessful()) {
+                        if (BiometricHelper.isEnabled(splash_screen.this)
+                                && BiometricHelper.isDeviceSupported(splash_screen.this)) {
+                            BiometricHelper.authenticate(splash_screen.this,
+                                    () -> {
+                                        startActivity(new Intent(splash_screen.this, MainActivity.class));
+                                        finish();
+                                    },
+                                    () -> {
+                                        startActivity(new Intent(splash_screen.this, Login.class));
+                                        finish();
+                                    });
+                            return;
+                        }
                         Intent mainActivity = new Intent(splash_screen.this, MainActivity.class);
                         startActivity(mainActivity);
                         finish();

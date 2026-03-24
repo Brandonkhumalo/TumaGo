@@ -18,10 +18,10 @@ metadata:
 spec:
   tls:
     - hosts:
-        - api.tumago.com
+        - tumago.co.zw
       secretName: tumago-tls
   rules:
-    - host: api.tumago.com
+    - host: tumago.co.zw
       http:
         paths:
           # All traffic goes through the Go API Gateway

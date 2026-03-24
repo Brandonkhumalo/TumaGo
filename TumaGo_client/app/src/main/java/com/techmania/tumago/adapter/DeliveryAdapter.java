@@ -20,10 +20,13 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
 import android.os.Handler;
 import android.os.Looper;
+
+import androidx.recyclerview.widget.DiffUtil;
 
 public class DeliveryAdapter extends RecyclerView.Adapter<DeliveryAdapter.cardviewholder> {
 
@@ -98,6 +101,29 @@ public class DeliveryAdapter extends RecyclerView.Adapter<DeliveryAdapter.cardvi
     @Override
     public int getItemCount() {
         return arrayList.size();
+    }
+
+    public void submitList(ArrayList<Deliveries> newList) {
+        DiffUtil.DiffResult result = DiffUtil.calculateDiff(new DiffUtil.Callback() {
+            @Override public int getOldListSize() { return arrayList.size(); }
+            @Override public int getNewListSize() { return newList.size(); }
+            @Override
+            public boolean areItemsTheSame(int oldPos, int newPos) {
+                return Objects.equals(arrayList.get(oldPos).getDelivery_id(),
+                        newList.get(newPos).getDelivery_id());
+            }
+            @Override
+            public boolean areContentsTheSame(int oldPos, int newPos) {
+                Deliveries o = arrayList.get(oldPos), n = newList.get(newPos);
+                return Objects.equals(o.getDelivery_id(), n.getDelivery_id())
+                        && o.getFare() == n.getFare()
+                        && o.getDestination_lat() == n.getDestination_lat()
+                        && o.getDestination_lng() == n.getDestination_lng();
+            }
+        });
+        arrayList.clear();
+        arrayList.addAll(newList);
+        result.dispatchUpdatesTo(this);
     }
 
     public class cardviewholder extends RecyclerView.ViewHolder {
