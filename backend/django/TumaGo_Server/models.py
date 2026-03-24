@@ -62,6 +62,11 @@ class CustomUser(AbstractUser):
     driver_online = models.BooleanField(default=False, db_index=True)
     driver_available = models.BooleanField(default=False, db_index=True)
 
+    # Admin ban fields
+    is_banned = models.BooleanField(default=False, db_index=True)
+    banned_until = models.DateTimeField(null=True, blank=True)
+    ban_reason = models.TextField(blank=True, default='')
+
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['name', 'surname', 'phone_number']
 
@@ -227,3 +232,129 @@ class TripRequest(models.Model):
     accepted = models.BooleanField(default=False)
     cancelled = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class PartnerCompany(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=200)
+    api_key = models.CharField(max_length=64, unique=True, db_index=True)
+    api_secret = models.CharField(max_length=128)
+    webhook_url = models.URLField(blank=True)
+    is_active = models.BooleanField(default=True)
+    rate_limit = models.IntegerField(default=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+    contact_email = models.EmailField()
+
+    # Balance system — partners pre-deposit funds and deliveries deduct from balance
+    balance = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    setup_fee_paid = models.BooleanField(default=False)
+
+    # Commission rate — percentage the platform keeps (e.g. 20 = 20%)
+    commission_rate = models.DecimalField(max_digits=5, decimal_places=2, default=20.00)
+
+    def __str__(self):
+        return self.name
+
+
+class PartnerDeliveryRequest(models.Model):
+    STATUSES = [
+        ('pending', 'Pending'),
+        ('matching', 'Matching'),
+        ('driver_assigned', 'Driver Assigned'),
+        ('picked_up', 'Picked Up'),
+        ('delivered', 'Delivered'),
+        ('cancelled', 'Cancelled'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    partner = models.ForeignKey(PartnerCompany, on_delete=models.CASCADE, related_name='delivery_requests')
+    partner_reference = models.CharField(max_length=200)
+    trip_request = models.ForeignKey(TripRequest, null=True, blank=True, on_delete=models.SET_NULL, related_name='partner_delivery')
+    delivery = models.ForeignKey(Delivery, null=True, blank=True, on_delete=models.SET_NULL, related_name='partner_delivery')
+    status = models.CharField(max_length=30, choices=STATUSES, default='pending')
+    pickup_contact = models.CharField(max_length=20, blank=True)
+    dropoff_contact = models.CharField(max_length=20, blank=True)
+    package_description = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['partner', 'status'], name='idx_partner_delivery_status'),
+            models.Index(fields=['partner', 'partner_reference'], name='idx_partner_ref'),
+        ]
+
+    def __str__(self):
+        return f"{self.partner.name} — {self.partner_reference} ({self.status})"
+
+
+class PartnerTransaction(models.Model):
+    """Audit trail for partner balance changes — deposits, delivery charges, refunds, fees."""
+    DEPOSIT = 'deposit'
+    DELIVERY_CHARGE = 'delivery_charge'
+    REFUND = 'refund'
+    SETUP_FEE = 'setup_fee'
+    ADJUSTMENT = 'adjustment'
+
+    TYPE_CHOICES = [
+        (DEPOSIT, 'Deposit'),
+        (DELIVERY_CHARGE, 'Delivery Charge'),
+        (REFUND, 'Refund'),
+        (SETUP_FEE, 'Setup Fee'),
+        (ADJUSTMENT, 'Adjustment'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    partner = models.ForeignKey(PartnerCompany, on_delete=models.CASCADE, related_name='transactions')
+    transaction_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    balance_after = models.DecimalField(max_digits=12, decimal_places=2)
+    description = models.TextField(blank=True)
+    # Link to specific delivery if this is a delivery charge or refund
+    delivery_request = models.ForeignKey(
+        PartnerDeliveryRequest, null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='transactions',
+    )
+    # Financial split details for delivery charges
+    fare = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    system_commission = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    driver_share = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    driver = models.ForeignKey(
+        CustomUser, null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='partner_earnings',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['partner', 'transaction_type'], name='idx_partner_txn_type'),
+        ]
+
+    def __str__(self):
+        sign = '+' if self.amount > 0 else ''
+        return f"{self.partner.name} {sign}{self.amount} ({self.transaction_type})"
+
+
+class SESSuppressionList(models.Model):
+    """Emails that bounced or were complained about — never send to these again.
+    SES suspends accounts above 5% bounce rate or 0.1% complaint rate."""
+
+    BOUNCE = 'bounce'
+    COMPLAINT = 'complaint'
+    TYPE_CHOICES = [
+        (BOUNCE, 'Bounce'),
+        (COMPLAINT, 'Complaint'),
+    ]
+
+    email = models.EmailField(unique=True, db_index=True)
+    reason = models.CharField(max_length=10, choices=TYPE_CHOICES)
+    bounce_type = models.CharField(max_length=50, blank=True)  # "Permanent", "Transient", etc.
+    diagnostic = models.TextField(blank=True)  # Raw diagnostic from SES
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'SES Suppression Entry'
+        verbose_name_plural = 'SES Suppression List'
+
+    def __str__(self):
+        return f"{self.email} ({self.reason})"

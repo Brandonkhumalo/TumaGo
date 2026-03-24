@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
@@ -64,9 +65,10 @@ public class Navigation extends FragmentActivity implements OnMapReadyCallback {
 
     private LocationCallback locationCallback;
     private Marker driverMarker;
-    MaterialCardView startTrip, endTrip;
-    Button navigate, end;
+    MaterialCardView pickupCard, startTrip, endTrip;
+    Button navigateToPickup, navigate, end;
 
+    private boolean hasArrivedAtPickup = false;
     private boolean hasStartedTrip = false;
 
     private ImageView[] stars = new ImageView[5];
@@ -79,6 +81,11 @@ public class Navigation extends FragmentActivity implements OnMapReadyCallback {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_navigation);
 
+        // Pickup navigation card (visible immediately)
+        pickupCard = findViewById(R.id.pickupCard);
+        navigateToPickup = findViewById(R.id.navigateToPickup);
+
+        // Destination navigation card (shown when driver arrives at pickup)
         startTrip = findViewById(R.id.startTrip);
         navigate = findViewById(R.id.Navigate);
         startTrip.setVisibility(View.GONE);
@@ -119,10 +126,17 @@ public class Navigation extends FragmentActivity implements OnMapReadyCallback {
                 tts.setLanguage(Locale.US);
         });
 
+        // Open Google Maps navigation to the pickup location
+        navigateToPickup.setOnClickListener(v -> {
+            openGoogleMapsNavigation(userLatLng);
+        });
+
+        // Driver arrived at pickup — now navigate to the destination
         navigate.setOnClickListener(v -> {
             hasStartedTrip = true;
             AnimHelper.slideDown(startTrip);
             drawRoute(driverLatLng, destination);
+            openGoogleMapsNavigation(destination);
         });
 
         end.setOnClickListener( v -> {
@@ -179,7 +193,16 @@ public class Navigation extends FragmentActivity implements OnMapReadyCallback {
         fusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
             if (location != null) {
                 driverLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-                drawRoute(driverLatLng, userLatLng); // Initial route to user
+
+                // Check if driver is already at the pickup location
+                checkIfDriverArrived(location);
+
+                if (!hasArrivedAtPickup) {
+                    drawRoute(driverLatLng, userLatLng); // Route to pickup
+                } else {
+                    drawRoute(driverLatLng, destination); // Already at pickup, route to destination
+                }
+
                 startLocationUpdates();
             } else {
                 Toast.makeText(this, "Couldn't get current location", Toast.LENGTH_SHORT).show();
@@ -304,7 +327,7 @@ public class Navigation extends FragmentActivity implements OnMapReadyCallback {
     }
 
     private void checkIfDriverArrived(Location driverLocation) {
-        if (userLatLng == null || driverLocation == null) return;
+        if (userLatLng == null || driverLocation == null || hasArrivedAtPickup) return;
 
         float[] results = new float[1];
         Location.distanceBetween(
@@ -317,6 +340,9 @@ public class Navigation extends FragmentActivity implements OnMapReadyCallback {
 
         float distanceInMeters = results[0];
         if (distanceInMeters <= 50) {
+            hasArrivedAtPickup = true;
+            // Hide the "Navigate to Pickup" card, show "Navigate to Destination" card
+            AnimHelper.slideDown(pickupCard);
             AnimHelper.slideUp(startTrip);
         }
     }
@@ -402,6 +428,17 @@ public class Navigation extends FragmentActivity implements OnMapReadyCallback {
             Intent i = new Intent(Navigation.this, Login.class);
             startActivity(i);
             finish();
+        }
+    }
+
+    private void openGoogleMapsNavigation(LatLng target) {
+        Uri gmmIntentUri = Uri.parse("google.navigation:q=" + target.latitude + "," + target.longitude + "&mode=d");
+        Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+        mapIntent.setPackage("com.google.android.apps.maps");
+        if (mapIntent.resolveActivity(getPackageManager()) != null) {
+            startActivity(mapIntent);
+        } else {
+            Toast.makeText(this, "Google Maps is not installed", Toast.LENGTH_SHORT).show();
         }
     }
 

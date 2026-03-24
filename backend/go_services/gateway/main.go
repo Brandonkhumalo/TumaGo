@@ -71,9 +71,6 @@ func main() {
 	// WhatsApp internal API — blocked from external access.
 	mux.Handle("/whatsapp/internal/", internalOnly(whatsappProxy))
 
-	// Prometheus metrics endpoint — scraped by Prometheus every 15s.
-	mux.Handle("/metrics", metricsHandler())
-
 	// Static files.
 	if staticDir != "" {
 		mux.Handle("/static/", staticFileHandler(staticDir))
@@ -98,6 +95,10 @@ func main() {
 	// Delivery request — medium rate limit (versioned API).
 	mux.Handle("/api/v1/delivery/request/", deliveryRL.limit(djangoProxy))
 
+	// B2B Partner API — general rate limit, routed to Django.
+	partnerHandler := generalRL.limit(djangoProxy)
+	mux.Handle("/api/v1/partner/", partnerHandler)
+
 	// Wrap the entire mux: for paths not matched by specific patterns above,
 	// apply the general rate limiter to the Django proxy.
 	rootHandler := &routingHandler{
@@ -109,7 +110,7 @@ func main() {
 	// ---------- server ----------
 	srv := &http.Server{
 		Addr:              listenAddr,
-		Handler:           instrumentHandler(requestLogger(maxBodySize(rootHandler))),
+		Handler:           requestLogger(maxBodySize(rootHandler)),
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       30 * time.Second,
 		IdleTimeout:       120 * time.Second,
@@ -174,8 +175,6 @@ func (rh *routingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case path == "/health":
 		rh.mux.ServeHTTP(w, r)
-	case path == "/metrics":
-		rh.mux.ServeHTTP(w, r)
 	case strings.HasPrefix(path, "/static/"):
 		rh.mux.ServeHTTP(w, r)
 	case strings.HasPrefix(path, "/ws/driver_location"):
@@ -191,6 +190,8 @@ func (rh *routingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case strings.HasPrefix(path, "/api/v1/otp/"):
 		rh.mux.ServeHTTP(w, r)
 	case strings.HasPrefix(path, "/api/v1/delivery/request/"):
+		rh.mux.ServeHTTP(w, r)
+	case strings.HasPrefix(path, "/api/v1/partner/"):
 		rh.mux.ServeHTTP(w, r)
 	case strings.HasPrefix(path, "/whatsapp/"):
 		rh.mux.ServeHTTP(w, r)

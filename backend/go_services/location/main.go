@@ -58,7 +58,6 @@ func main() {
 		_, _ = w.Write([]byte(`{"status":"ok"}`))
 	})
 
-	mux.Handle("/metrics", metricsHandler())
 	mux.HandleFunc("/ws/driver_location", handleDriverWS(rdb))
 	mux.HandleFunc("/ws/driver_location/", handleDriverWS(rdb))
 

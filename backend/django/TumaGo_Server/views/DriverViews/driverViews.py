@@ -11,7 +11,7 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from ...serializers.driverSerializer.authSerializers import UserSerializer
 from ...serializers.driverSerializer.rideSerializers import DeliverySerializer
-from ...models import DriverFinances, DriverVehicle, TripRequest, Delivery, CustomUser, Payment, DriverBalance
+from ...models import DriverFinances, DriverVehicle, TripRequest, Delivery, CustomUser, Payment, DriverBalance, PartnerDeliveryRequest
 from .deliveryMatching.delivery import driver_found
 import googlemaps
 import logging
@@ -21,13 +21,10 @@ logger = logging.getLogger(__name__)
 from TumaGo.firebase_init import initialize_firebase
 from calendar import monthrange
 from datetime import date, timedelta
-from django.db.models import Sum, Value
+from django.db.models import Sum
 from decimal import Decimal
 from .deliveryMatching.tasks import retry_trip_matching, publish_trip_accepted
-from decimal import Decimal
 from django.utils import timezone
-import logging
-logger = logging.getLogger(__name__)
 initialize_firebase()
 
 gmaps = googlemaps.Client(key=settings.GOOGLE_MAPS_API_KEY)
@@ -204,7 +201,7 @@ def AcceptTrip(request):
             "fare": fare,
             "payment_method": payment_method,
             "vehicle_type": vehicle,
-            "date": str(delivery.start_time),
+            "date": str(timezone.localtime(delivery.start_time)),
             "origin_lat": origin_lat,
             "origin_lng": origin_lng,
             "destination_lat": destination_lat,
@@ -213,6 +210,15 @@ def AcceptTrip(request):
 
         driver_found(client, deliveryData, str(delivery.delivery_id))
         logger.info("Delivery details sent to client")
+
+        # B2B: If this trip is linked to a partner, update status + fire webhook
+        partner_req = PartnerDeliveryRequest.objects.filter(trip_request=trip).first()
+        if partner_req:
+            partner_req.status = "driver_assigned"
+            partner_req.delivery = delivery
+            partner_req.save()
+            from ..PartnerViews.webhooks import send_partner_webhook
+            send_partner_webhook.send(str(partner_req.id), "driver_assigned")
 
         # Ensure the user is a driver before updating availability
         if Driver.role == CustomUser.DRIVER:
@@ -303,13 +309,38 @@ def end_trip(request):
                 delivery__isnull=True,
             ).order_by('-created_at').update(delivery=delivery)
 
+        # B2B: If this delivery is linked to a partner, update status + fire webhook
+        partner_req = PartnerDeliveryRequest.objects.filter(delivery=delivery).first()
+        if partner_req:
+            partner_req.status = "delivered"
+            partner_req.save()
+            from ..PartnerViews.webhooks import send_partner_webhook
+            send_partner_webhook.send(str(partner_req.id), "delivered")
+
+            # Record financial split on the delivery charge transaction
+            from ...models import PartnerTransaction
+            partner = partner_req.partner
+            commission = earnings * (partner.commission_rate / Decimal('100'))
+            driver_payout = earnings - commission
+
+            # Update the delivery_charge transaction with split details
+            PartnerTransaction.objects.filter(
+                delivery_request=partner_req,
+                transaction_type='delivery_charge',
+            ).update(
+                system_commission=commission,
+                driver_share=driver_payout,
+                driver=driver,
+                description=f"Delivery completed by {driver.name} {driver.surname}",
+            )
+
         if Driver.role == CustomUser.DRIVER:
             Driver.driver_available = True
             Driver.save()
             return Response({"message": "Trip ended successfully"}, status=status.HTTP_200_OK)
         else:
             return Response({'error': 'User is not a driver'}, status=status.HTTP_400_BAD_REQUEST)
-    
+
     except Delivery.DoesNotExist:
         return Response({"error": "Delivery not found"}, status=status.HTTP_404_NOT_FOUND)
     

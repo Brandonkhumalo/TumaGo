@@ -60,10 +60,7 @@ func matchHandler(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusInternalServerError, errorResponse{Detail: "search failed"})
 		return
 	}
-	matchDriversFound.Observe(float64(len(nearby)))
-
 	if len(nearby) == 0 {
-		matchNoDriverTotal.Inc()
 		writeJSON(w, http.StatusNotFound, errorResponse{Detail: "no drivers in radius"})
 		return
 	}
@@ -101,12 +98,10 @@ func matchHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		log.Printf("matched driver %s (%s) at %.0fm for trip %s",
 			d.ID, resp.DriverName, resp.DistanceMeters, req.TripID)
-		matchSuccessTotal.Inc()
 		writeJSON(w, http.StatusOK, resp)
 		return
 	}
 
-	matchNoDriverTotal.Inc()
 	writeJSON(w, http.StatusNotFound, errorResponse{Detail: "no available drivers with that vehicle type"})
 }
 

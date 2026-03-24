@@ -44,5 +44,8 @@ drf-yasg==1.21.10
 # Payments (Paynow Zimbabwe)
 paynow==1.0.8
 
+# AWS SES (email sending)
+boto3>=1.35,<2.0
+
 # Timezone
 pytz==2025.2

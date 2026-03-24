@@ -57,10 +57,10 @@ public class HomeActivity extends AppCompatActivity {
     private static boolean userDataFetched = false;
 
     // Keep fragment instances to avoid recreating them on tab switch
-    private final HomeFragment homeFragment = new HomeFragment();
-    private final DeliveryFragment deliveryFragment = new DeliveryFragment();
-    private final ParcelsFragment parcelsFragment = new ParcelsFragment();
-    private final SettingsFragment settingsFragment = new SettingsFragment();
+    private HomeFragment homeFragment;
+    private DeliveryFragment deliveryFragment;
+    private ParcelsFragment parcelsFragment;
+    private SettingsFragment settingsFragment;
     private Fragment activeFragment;
 
     @Override
@@ -71,8 +71,13 @@ public class HomeActivity extends AppCompatActivity {
 
         bottomNav = findViewById(R.id.bottom_nav);
 
-        // Add all fragments but only show Home initially
         if (savedInstanceState == null) {
+            // Fresh start — create and add all fragments, show Home initially
+            homeFragment = new HomeFragment();
+            deliveryFragment = new DeliveryFragment();
+            parcelsFragment = new ParcelsFragment();
+            settingsFragment = new SettingsFragment();
+
             getSupportFragmentManager().beginTransaction()
                     .add(R.id.fragment_container, settingsFragment, "settings").hide(settingsFragment)
                     .add(R.id.fragment_container, parcelsFragment, "parcels").hide(parcelsFragment)
@@ -80,6 +85,23 @@ public class HomeActivity extends AppCompatActivity {
                     .add(R.id.fragment_container, homeFragment, "home")
                     .commit();
             activeFragment = homeFragment;
+        } else {
+            // Recreated (e.g. theme change) — recover restored fragments from FragmentManager
+            homeFragment = (HomeFragment) getSupportFragmentManager().findFragmentByTag("home");
+            deliveryFragment = (DeliveryFragment) getSupportFragmentManager().findFragmentByTag("delivery");
+            parcelsFragment = (ParcelsFragment) getSupportFragmentManager().findFragmentByTag("parcels");
+            settingsFragment = (SettingsFragment) getSupportFragmentManager().findFragmentByTag("settings");
+
+            // Find which fragment is currently visible
+            if (settingsFragment != null && settingsFragment.isVisible()) {
+                activeFragment = settingsFragment;
+            } else if (deliveryFragment != null && deliveryFragment.isVisible()) {
+                activeFragment = deliveryFragment;
+            } else if (parcelsFragment != null && parcelsFragment.isVisible()) {
+                activeFragment = parcelsFragment;
+            } else {
+                activeFragment = homeFragment;
+            }
         }
 
         bottomNav.setOnItemSelectedListener(item -> {
@@ -97,7 +119,7 @@ public class HomeActivity extends AppCompatActivity {
                 return false;
             }
 
-            if (selected != activeFragment) {
+            if (selected != null && selected != activeFragment) {
                 getSupportFragmentManager().beginTransaction()
                         .setCustomAnimations(R.anim.fade_in, R.anim.fade_out)
                         .hide(activeFragment)
@@ -108,8 +130,16 @@ public class HomeActivity extends AppCompatActivity {
             return true;
         });
 
-        // Default to Home tab
-        bottomNav.setSelectedItemId(R.id.nav_home);
+        // Select the correct tab — matches whichever fragment is active
+        if (activeFragment == settingsFragment) {
+            bottomNav.setSelectedItemId(R.id.nav_settings);
+        } else if (activeFragment == deliveryFragment) {
+            bottomNav.setSelectedItemId(R.id.nav_delivery);
+        } else if (activeFragment == parcelsFragment) {
+            bottomNav.setSelectedItemId(R.id.nav_parcels);
+        } else {
+            bottomNav.setSelectedItemId(R.id.nav_home);
+        }
 
         checkUserTerms();
         checkForAppUpdate();

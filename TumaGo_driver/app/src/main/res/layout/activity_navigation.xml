@@ -21,7 +21,46 @@
             android:layout_height="0dp"
             android:layout_weight="1"/>
 
-        <!-- Start delivery button card -->
+        <!-- Navigate to pickup card (shown immediately after accepting) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/pickupCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardBackgroundColor="@color/card_bg"
+            app:cardElevation="8dp"
+            app:strokeWidth="0dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Head to pickup location"
+                    android:textSize="14sp"
+                    android:fontFamily="sans-serif"
+                    android:textColor="@color/secondary_text"
+                    android:gravity="center"
+                    android:layout_marginBottom="8dp"/>
+
+                <Button
+                    android:id="@+id/navigateToPickup"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:text="Navigate to Pickup"
+                    android:fontFamily="sans-serif-medium"
+                    android:textSize="16sp"
+                    android:textColor="@color/white"
+                    android:backgroundTint="@color/primary"/>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Navigate to destination card (shown when driver arrives at pickup) -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/startTrip"
             android:layout_width="match_parent"
@@ -40,7 +79,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Ready to navigate?"
+                    android:text="Arrived at pickup!"
                     android:textSize="14sp"
                     android:fontFamily="sans-serif"
                     android:textColor="@color/secondary_text"
@@ -51,7 +90,7 @@
                     android:id="@+id/Navigate"
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
-                    android:text="Start Delivery"
+                    android:text="Navigate to Destination"
                     android:fontFamily="sans-serif-medium"
                     android:textSize="16sp"
                     android:textColor="@color/white"

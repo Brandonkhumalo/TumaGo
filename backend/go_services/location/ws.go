@@ -122,19 +122,15 @@ func handleDriverWS(rdb *redis.Client) http.HandlerFunc {
 		driverID, err := validateToken(auth.Token)
 		if err != nil {
 			log.Printf("auth failed: %v", err)
-			wsAuthFailures.Inc()
 			conn.WriteMessage(websocket.CloseMessage,
 				websocket.FormatCloseMessage(websocket.ClosePolicyViolation, "authentication failed"))
 			return
 		}
 
 		log.Printf("driver %s connected", driverID)
-		wsConnectionsTotal.Inc()
-		wsConnectionsActive.Inc()
 
 		// Ensure cleanup on disconnect.
 		defer func() {
-			wsConnectionsActive.Dec()
 			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 			defer cancel()
 			rdb.ZRem(ctx, driverGeoKey, driverID)
@@ -189,8 +185,6 @@ func handleDriverWS(rdb *redis.Client) http.HandlerFunc {
 				continue
 			}
 
-			wsMessagesReceived.Inc()
-
 			ctx := context.Background()
 
 			// 1. Update Redis GEO set.
@@ -199,12 +193,10 @@ func handleDriverWS(rdb *redis.Client) http.HandlerFunc {
 				Longitude: msg.Longitude,
 				Latitude:  msg.Latitude,
 			})
-			redisGeoUpdates.Inc()
 
 			// 2. Upsert DB row (runs synchronously in the goroutine —
 			//    pgx pool handles concurrency).
 			upsertDriverLocation(ctx, driverID, msg.Latitude, msg.Longitude)
-			dbUpserts.Inc()
 		}
 	}
 }

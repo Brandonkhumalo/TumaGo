@@ -5,10 +5,10 @@ from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.throttling import AnonRateThrottle
 from django.shortcuts import get_object_or_404
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 import logging
 from ...models import BlacklistedToken, Delivery, TermsAndConditions
-from ...otp import is_phone_verified, clear_verification, normalize_phone
+from ...otp import is_phone_verified, clear_verification
 
 logger = logging.getLogger(__name__)
 from ...serializers.userSerializer.authserializers import (
@@ -20,8 +20,6 @@ from ...serializers.userSerializer.authserializers import (
 from ...serializers.driverSerializer.rideSerializers import DeliverySerializer
 from ...token import JWTAuthentication
 from jwt.exceptions import InvalidTokenError, ExpiredSignatureError
-from datetime import datetime
-import pytz
 import jwt
 
 # Header used by the WhatsApp service for internal calls (skips OTP check)
@@ -139,12 +137,6 @@ def VerifyToken(request):
     return Response(status=status.HTTP_200_OK)
 
 @api_view(["GET"])
-@permission_classes([AllowAny])
-def sync_time(request):
-    utc_now = datetime.utcnow().replace(tzinfo=pytz.UTC)
-    return Response({"utc_time": utc_now.isoformat()})
-
-@api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def check_terms(request):
     user = request.user
@@ -165,9 +157,9 @@ def accept_terms(request):
 
     return Response({"message": "Successfully agreed to the terms and conditions"}, status=status.HTTP_202_ACCEPTED)
 
-# Admin/dev utilities
+# Admin-only endpoints — require authenticated staff user
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated, IsAdminUser])
 def get_all_users(request):
     global User
     if User is None:
@@ -177,17 +169,8 @@ def get_all_users(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated, IsAdminUser])
 def get_all_deliveries(request):
     deliveries = Delivery.objects.all()
     serializer = DeliverySerializer(deliveries, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
-
-@api_view(['DELETE'])
-@permission_classes([AllowAny])
-def delete_all_users(request):
-    global User
-    if User is None:
-        User = get_user_model()
-    User.objects.all().delete()
-    return Response({"message": "All users deleted."}, status=status.HTTP_200_OK)

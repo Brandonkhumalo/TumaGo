@@ -84,6 +84,10 @@ services:
       GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY}
       FIREBASE_CREDENTIALS: ${FIREBASE_CREDENTIALS}
       FIREBASE_CREDENTIALS_PATH: /secrets/firebase-credentials.json
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_SES_REGION: ${AWS_SES_REGION:-af-south-1}
+      SES_FROM_EMAIL: ${SES_FROM_EMAIL:-noreply@tishanyq.co.zw}
     volumes:
       - django_static:/app/staticfiles
       - ${FIREBASE_CREDENTIALS_FILE:-./notification/firebase-credentials.json}:/secrets/firebase-credentials.json:ro
@@ -107,6 +111,10 @@ services:
       DEBUG: "False"
       GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY}
       FIREBASE_CREDENTIALS: ${FIREBASE_CREDENTIALS}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_SES_REGION: ${AWS_SES_REGION:-af-south-1}
+      SES_FROM_EMAIL: ${SES_FROM_EMAIL:-noreply@tishanyq.co.zw}
     depends_on:
       - redis
       - pgbouncer

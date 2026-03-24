@@ -4,7 +4,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from ...serializers.userSerializer.authserializers import UserSerializer
 from decimal import Decimal
-from ...models import Delivery, CustomUser, TripRequest
+from ...models import Delivery, CustomUser, TripRequest, PartnerDeliveryRequest
 from firebase_admin import messaging
 from TumaGo.firebase_init import initialize_firebase
 from django.shortcuts import get_object_or_404
@@ -75,6 +75,14 @@ def cancel_delivery(request):
         client_surname = client.surname
 
         update_driver_delivery_cancelled(driver, client_name, client_surname)
+
+        # B2B: If this delivery is linked to a partner, update status + fire webhook
+        partner_req = PartnerDeliveryRequest.objects.filter(delivery=delivery).first()
+        if partner_req:
+            partner_req.status = "cancelled"
+            partner_req.save()
+            from ..PartnerViews.webhooks import send_partner_webhook
+            send_partner_webhook.send(str(partner_req.id), "cancelled", {"reason": "driver_cancelled"})
 
         return Response({"message": "Delivery cancelled."}, status=status.HTTP_200_OK)
     except Delivery.DoesNotExist:

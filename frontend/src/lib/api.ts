@@ -1,0 +1,87 @@
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:80/api/v1";
+
+async function fetchAPI(
+  endpoint: string,
+  options?: RequestInit & { token?: string }
+) {
+  const { token, ...fetchOptions } = options || {};
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...fetchOptions.headers,
+  };
+
+  const res = await fetch(`${API_URL}${endpoint}`, {
+    ...fetchOptions,
+    headers,
+  });
+
+  if (!res.ok) {
+    const error = await res
+      .json()
+      .catch(() => ({ detail: "Request failed" }));
+    throw new Error(error.detail || `HTTP ${res.status}`);
+  }
+
+  return res.json();
+}
+
+export const adminAPI = {
+  login: (email: string, password: string) =>
+    fetchAPI("/admin/login/", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    }),
+  overview: (token: string) => fetchAPI("/admin/overview/", { token }),
+  deliveryMetrics: (token: string, params?: string) =>
+    fetchAPI(
+      `/admin/deliveries/metrics/${params ? "?" + params : ""}`,
+      { token }
+    ),
+  financialMetrics: (token: string, params?: string) =>
+    fetchAPI(
+      `/admin/financial/metrics/${params ? "?" + params : ""}`,
+      { token }
+    ),
+  driverMetrics: (token: string) =>
+    fetchAPI("/admin/drivers/metrics/", { token }),
+  userMetrics: (token: string) =>
+    fetchAPI("/admin/users/metrics/", { token }),
+  partnerMetrics: (token: string) =>
+    fetchAPI("/admin/partners/metrics/", { token }),
+  systemHealth: (token: string) =>
+    fetchAPI("/admin/system/health/", { token }),
+  usersList: (token: string, params?: string) =>
+    fetchAPI(`/admin/users/list/${params ? "?" + params : ""}`, {
+      token,
+    }),
+  deliveriesList: (token: string, params?: string) =>
+    fetchAPI(`/admin/deliveries/list/${params ? "?" + params : ""}`, {
+      token,
+    }),
+  paymentsList: (token: string, params?: string) =>
+    fetchAPI(`/admin/payments/list/${params ? "?" + params : ""}`, {
+      token,
+    }),
+
+  // Partner management
+  createPartner: (token: string, data: { name: string; contact_email: string; webhook_url?: string; rate_limit?: number }) =>
+    fetchAPI('/admin/partners/create/', { method: 'POST', token, body: JSON.stringify(data) }),
+  togglePartner: (token: string, partnerId: string) =>
+    fetchAPI(`/admin/partners/${partnerId}/toggle/`, { method: 'POST', token }),
+  partnerDeposit: (token: string, partnerId: string, data: { amount: number; description?: string }) =>
+    fetchAPI(`/admin/partners/${partnerId}/deposit/`, { method: 'POST', token, body: JSON.stringify(data) }),
+  partnerTransactions: (token: string, partnerId: string, params?: string) =>
+    fetchAPI(`/admin/partners/${partnerId}/transactions/${params ? '?' + params : ''}`, { token }),
+
+  // User management
+  userDetail: (token: string, userId: string) =>
+    fetchAPI(`/admin/users/${userId}/detail/`, { token }),
+  banUser: (token: string, userId: string, data: { reason: string; duration: string; custom_until?: string }) =>
+    fetchAPI(`/admin/users/${userId}/ban/`, { method: 'POST', token, body: JSON.stringify(data) }),
+  unbanUser: (token: string, userId: string) =>
+    fetchAPI(`/admin/users/${userId}/unban/`, { method: 'POST', token }),
+};
+
+export { fetchAPI };
