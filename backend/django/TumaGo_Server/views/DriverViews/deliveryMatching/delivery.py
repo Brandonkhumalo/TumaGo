@@ -157,18 +157,48 @@ def TripData(requester_data, delivery_data, trip_id):
 
 
 def _get_distance_meters(origin_lat, origin_lng, dest_lat, dest_lng):
-    """One Google Maps call after matching — for accurate driving ETA."""
+    """One Google Maps call after matching — for accurate driving distance.
+
+    Results are cached in Redis for 24 hours keyed by rounded lat/lng (4 decimal
+    places ≈ 11m accuracy) so repeat deliveries on similar routes skip the API.
+    """
+    # Round to 4 decimal places — same street-level accuracy, far fewer cache misses
+    o_lat = round(float(origin_lat), 4)
+    o_lng = round(float(origin_lng), 4)
+    d_lat = round(float(dest_lat), 4)
+    d_lng = round(float(dest_lng), 4)
+
+    cache_key = f"gmaps:dist:{o_lat},{o_lng}:{d_lat},{d_lng}"
+
+    # Check Redis cache first
+    try:
+        r = get_sync_redis()
+        cached = r.get(cache_key)
+        if cached is not None:
+            logger.debug("Google Maps cache hit: %s → %s meters", cache_key, cached)
+            return int(cached)
+    except Exception as e:
+        logger.warning("Redis cache read failed (proceeding to API): %s", e)
+
+    # Cache miss — call Google Maps
     try:
         result = gmaps.distance_matrix(
-            origins=[f"{origin_lat},{origin_lng}"],
-            destinations=[f"{dest_lat},{dest_lng}"],
+            origins=[f"{o_lat},{o_lng}"],
+            destinations=[f"{d_lat},{d_lng}"],
             mode='driving',
         )
         element = result['rows'][0]['elements'][0]
         if element['status'] == 'OK':
-            return element['distance']['value']
+            meters = element['distance']['value']
+            # Cache for 24 hours
+            try:
+                r = get_sync_redis()
+                r.set(cache_key, meters, ex=86400)
+            except Exception as e:
+                logger.warning("Redis cache write failed: %s", e)
+            return meters
     except Exception as e:
-        logger.error(f"Google Maps distance error: {e}")
+        logger.error("Google Maps distance error: %s", e)
     return 0
 
 
