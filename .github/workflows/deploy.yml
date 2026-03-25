@@ -15,19 +15,40 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script_stop: true
+          command_timeout: 30m
           script: |
             cd ~/TumaGo
 
             # Pull latest code
             git pull origin main
 
-            # Build and deploy all services (backend + frontend)
-            cd backend
-            docker compose -f docker-compose.prod.yml up -d --build
+            # Ensure swap exists (prevents OOM during builds on t3.small)
+            if [ ! -f /swapfile ]; then
+                sudo fallocate -l 2G /swapfile
+                sudo chmod 600 /swapfile
+                sudo mkswap /swapfile
+                sudo swapon /swapfile
+                echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+            fi
+            sudo swapon /swapfile 2>/dev/null || true
 
-            # Run database migrations (safe — only applies new changes, never erases data)
+            cd backend
+
+            # Build services one at a time to avoid OOM on t3.small (2GB RAM)
+            docker compose -f docker-compose.prod.yml build web
+            docker compose -f docker-compose.prod.yml build gateway
+            docker compose -f docker-compose.prod.yml build location
+            docker compose -f docker-compose.prod.yml build matching
+            docker compose -f docker-compose.prod.yml build notification_service
+            docker compose -f docker-compose.prod.yml build frontend
+
+            # Start all services (images already built)
+            docker compose -f docker-compose.prod.yml up -d
+
+            # Run database migrations
             docker compose -f docker-compose.prod.yml run --rm web python manage.py migrate --noinput
 
+            # Clean up old images
             docker image prune -f
 
             # Update nginx config (auto-selects HTTP or HTTPS based on SSL cert existence)
