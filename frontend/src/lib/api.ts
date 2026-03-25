@@ -84,4 +84,66 @@ export const adminAPI = {
     fetchAPI(`/admin/users/${userId}/unban/`, { method: 'POST', token }),
 };
 
+// ---------------------------------------------------------------------------
+// Partner Portal API
+// ---------------------------------------------------------------------------
+
+export const partnerAPI = {
+  register: (data: { name: string; email: string; password: string; phone: string }) =>
+    fetchAPI("/partner/portal/register/", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  paySetup: (data: {
+    partner_id: string;
+    email: string;
+    payment_method: string;
+    phone?: string;
+  }) =>
+    fetchAPI("/partner/portal/pay-setup/", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  paySetupStatus: (partnerId: string, email: string) =>
+    fetchAPI(
+      `/partner/portal/pay-setup/status/?partner_id=${partnerId}&email=${encodeURIComponent(email)}`
+    ),
+
+  login: (email: string, password: string) =>
+    fetchAPI("/partner/portal/login/", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    }),
+
+  account: (token: string) =>
+    fetchAPI("/partner/portal/account/", { token }),
+
+  createDevice: (
+    token: string,
+    data: { label: string; email: string; password: string }
+  ) =>
+    fetchAPI("/partner/portal/devices/", {
+      method: "POST",
+      token,
+      body: JSON.stringify(data),
+    }),
+
+  listDevices: (token: string) =>
+    fetchAPI("/partner/portal/devices/list/", { token }),
+
+  toggleDevice: (token: string, deviceId: string) =>
+    fetchAPI(`/partner/portal/devices/${deviceId}/toggle/`, {
+      method: "POST",
+      token,
+    }),
+
+  purchaseDeviceSlots: (token: string) =>
+    fetchAPI("/partner/portal/devices/purchase/", {
+      method: "POST",
+      token,
+    }),
+};
+
 export { fetchAPI };

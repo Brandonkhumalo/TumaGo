@@ -250,11 +250,26 @@ class PartnerCompany(models.Model):
     is_active = models.BooleanField(default=True)
     rate_limit = models.IntegerField(default=100)
     created_at = models.DateTimeField(auto_now_add=True)
-    contact_email = models.EmailField()
+    contact_email = models.EmailField(unique=True)
+
+    # Self-service registration fields
+    password = models.CharField(max_length=128, blank=True)  # hashed via make_password
+    phone_number = models.CharField(max_length=20, blank=True)
+
+    # Business information — collected during registration
+    description = models.TextField(blank=True)  # What the business does
+    address = models.CharField(max_length=300, blank=True)  # Physical address
+    city = models.CharField(max_length=100, blank=True)
+    contact_person_name = models.CharField(max_length=200, blank=True)  # Person registering
+    contact_person_role = models.CharField(max_length=100, blank=True)  # Their role in the company
+
+    # Device credential slots — partners get 10 on signup, can buy more
+    max_device_slots = models.IntegerField(default=10)
 
     # Balance system — partners pre-deposit funds and deliveries deduct from balance
     balance = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     setup_fee_paid = models.BooleanField(default=False)
+    setup_poll_url = models.URLField(max_length=500, blank=True)  # Paynow poll URL during registration
 
     # Commission rate — percentage the platform keeps (e.g. 20 = 20%)
     commission_rate = models.DecimalField(max_digits=5, decimal_places=2, default=20.00)
@@ -300,6 +315,7 @@ class PartnerTransaction(models.Model):
     DELIVERY_CHARGE = 'delivery_charge'
     REFUND = 'refund'
     SETUP_FEE = 'setup_fee'
+    DEVICE_PURCHASE = 'device_purchase'
     ADJUSTMENT = 'adjustment'
 
     TYPE_CHOICES = [
@@ -307,6 +323,7 @@ class PartnerTransaction(models.Model):
         (DELIVERY_CHARGE, 'Delivery Charge'),
         (REFUND, 'Refund'),
         (SETUP_FEE, 'Setup Fee'),
+        (DEVICE_PURCHASE, 'Device Slot Purchase'),
         (ADJUSTMENT, 'Adjustment'),
     ]
 
@@ -340,6 +357,29 @@ class PartnerTransaction(models.Model):
     def __str__(self):
         sign = '+' if self.amount > 0 else ''
         return f"{self.partner.name} {sign}{self.amount} ({self.transaction_type})"
+
+
+class PartnerDevice(models.Model):
+    """A device login credential created by a partner for their staff/devices.
+
+    Each device is a real CustomUser (role=user) that can log into the
+    TumaGo sender app. Deliveries made by these users are billed to the
+    partner's balance instead of requiring individual payment.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    partner = models.ForeignKey(PartnerCompany, on_delete=models.CASCADE, related_name='devices')
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='partner_device')
+    label = models.CharField(max_length=100)  # e.g. "Warehouse Device 1"
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['partner', 'is_active'], name='idx_partner_device_active'),
+        ]
+
+    def __str__(self):
+        return f"{self.partner.name} — {self.label} ({self.user.email})"
 
 
 class SESSuppressionList(models.Model):

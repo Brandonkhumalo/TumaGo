@@ -1,6 +1,6 @@
 import secrets
 from django.contrib import admin
-from .models import PartnerCompany, PartnerDeliveryRequest
+from .models import PartnerCompany, PartnerDeliveryRequest, PartnerDevice
 
 
 @admin.register(PartnerCompany)
@@ -23,4 +23,12 @@ class PartnerDeliveryRequestAdmin(admin.ModelAdmin):
     list_display = ("partner", "partner_reference", "status", "created_at")
     list_filter = ("status", "partner")
     search_fields = ("partner_reference",)
+    readonly_fields = ("id", "created_at")
+
+
+@admin.register(PartnerDevice)
+class PartnerDeviceAdmin(admin.ModelAdmin):
+    list_display = ("label", "partner", "user", "is_active", "created_at")
+    list_filter = ("is_active", "partner")
+    search_fields = ("label", "user__email")
     readonly_fields = ("id", "created_at")

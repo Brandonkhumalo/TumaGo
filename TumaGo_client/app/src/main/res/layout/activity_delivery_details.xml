@@ -131,14 +131,32 @@
                             android:fontFamily="sans-serif-medium"
                             android:layout_marginBottom="4dp"/>
 
-                        <TextView
-                            android:id="@+id/deliveryId"
+                        <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:textSize="13sp"
-                            android:textColor="@color/secondary_text"
-                            android:maxLines="2"
-                            android:ellipsize="end"/>
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <TextView
+                                android:id="@+id/deliveryId"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:textSize="13sp"
+                                android:textColor="@color/secondary_text"
+                                android:maxLines="2"
+                                android:ellipsize="end"/>
+
+                            <ImageView
+                                android:id="@+id/copyDeliveryId"
+                                android:layout_width="32dp"
+                                android:layout_height="32dp"
+                                android:src="@drawable/ic_copy"
+                                android:padding="4dp"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="Copy delivery ID"/>
+
+                        </LinearLayout>
 
                         <View
                             android:layout_width="match_parent"

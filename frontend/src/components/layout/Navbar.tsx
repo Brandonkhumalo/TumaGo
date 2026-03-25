@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Building2 } from "lucide-react";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -70,8 +70,15 @@ export default function Navbar() {
               </Link>
             ))}
             <Link
+              href="/partner/dashboard"
+              className="ml-3 inline-flex items-center gap-1.5 rounded-lg border border-primary/20 px-4 py-2 text-sm font-medium text-primary transition-all hover:bg-primary-light hover:border-primary/40"
+            >
+              <Building2 className="h-4 w-4" />
+              Company Login
+            </Link>
+            <Link
               href="/get-started"
-              className="ml-3 rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-orange-600 hover:shadow-lg hover:shadow-accent/25"
+              className="ml-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-orange-600 hover:shadow-lg hover:shadow-accent/25"
             >
               Get Started
             </Link>
@@ -112,8 +119,15 @@ export default function Navbar() {
               </Link>
             ))}
             <Link
+              href="/partner/dashboard"
+              className="mt-2 inline-flex items-center justify-center gap-1.5 rounded-lg border border-primary/20 px-5 py-3 text-sm font-medium text-primary transition-all hover:bg-primary-light hover:border-primary/40"
+            >
+              <Building2 className="h-4 w-4" />
+              Company Login
+            </Link>
+            <Link
               href="/get-started"
-              className="mt-2 rounded-lg bg-accent px-5 py-3 text-center text-sm font-semibold text-white transition-all hover:bg-orange-600"
+              className="mt-1 rounded-lg bg-accent px-5 py-3 text-center text-sm font-semibold text-white transition-all hover:bg-orange-600"
             >
               Get Started
             </Link>

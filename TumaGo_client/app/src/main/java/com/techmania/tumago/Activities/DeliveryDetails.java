@@ -1,6 +1,8 @@
 package com.techmania.tumago.Activities;
 
 import android.content.BroadcastReceiver;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -144,6 +146,18 @@ public class DeliveryDetails extends AppCompatActivity implements OnMapReadyCall
         carDetails.setText(vehicle_color + " ~ " + vehicle + " ~ " + vehicle_model);
 
         deliveryIdText.setText(delivery_id);
+
+        // Copy delivery ID to clipboard
+        ImageView copyDeliveryId = findViewById(R.id.copyDeliveryId);
+        copyDeliveryId.setOnClickListener(v -> {
+            if (delivery_id != null && !delivery_id.isEmpty()) {
+                ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                ClipData clip = ClipData.newPlainText("Delivery ID", delivery_id);
+                clipboard.setPrimaryClip(clip);
+                Toast.makeText(this, "Delivery ID copied", Toast.LENGTH_SHORT).show();
+            }
+        });
+
         dateText.setText(intent.getStringExtra("date"));
         vehicleText.setText(intent.getStringExtra("vehicle_type"));
         paymentText.setText(intent.getStringExtra("payment_method"));

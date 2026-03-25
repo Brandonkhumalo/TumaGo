@@ -45,9 +45,16 @@ interface Partner {
   is_active: boolean;
   created_at: string;
   contact_email: string;
+  phone_number: string;
   balance: number;
   setup_fee_paid: boolean;
   commission_rate: number;
+  description: string;
+  address: string;
+  city: string;
+  contact_person_name: string;
+  contact_person_role: string;
+  max_device_slots: number;
 }
 
 interface Transaction {
@@ -671,6 +678,120 @@ function TransactionPanel({
   );
 }
 
+// ---------- Partner Detail Panel ----------
+
+function PartnerDetailPanel({ partner, onClose }: { partner: Partner; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end">
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative z-10 w-full max-w-lg bg-white shadow-2xl overflow-y-auto">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4">
+          <div>
+            <h2 className="text-lg font-bold text-text-dark">{partner.name}</h2>
+            <p className="text-sm text-text-muted">Partner Details</p>
+          </div>
+          <button onClick={onClose} className="rounded-lg p-1 text-text-muted transition-colors hover:bg-gray-100 hover:text-text-dark">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="p-6 space-y-6">
+          {/* Status */}
+          <div className="flex items-center gap-3">
+            <StatusBadge status={partner.is_active ? "Active" : "Inactive"} variant={partner.is_active ? "success" : "danger"} />
+            <StatusBadge status={partner.setup_fee_paid ? "Setup Paid" : "Setup Pending"} variant={partner.setup_fee_paid ? "success" : "warning"} />
+          </div>
+
+          {/* Contact Person */}
+          {partner.contact_person_name && (
+            <div className="rounded-lg border border-gray-200 p-4">
+              <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3">
+                Registered By
+              </h3>
+              <p className="text-sm font-semibold text-text-dark">{partner.contact_person_name}</p>
+              {partner.contact_person_role && (
+                <p className="text-xs text-text-muted mt-0.5">{partner.contact_person_role}</p>
+              )}
+            </div>
+          )}
+
+          {/* Business Info */}
+          <div className="rounded-lg border border-gray-200 p-4 space-y-3">
+            <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider">
+              Business Information
+            </h3>
+            {partner.description && (
+              <div>
+                <p className="text-xs text-text-muted">Description</p>
+                <p className="text-sm text-text-dark mt-0.5">{partner.description}</p>
+              </div>
+            )}
+            {(partner.address || partner.city) && (
+              <div>
+                <p className="text-xs text-text-muted">Address</p>
+                <p className="text-sm text-text-dark mt-0.5">
+                  {[partner.address, partner.city].filter(Boolean).join(", ")}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Contact Info */}
+          <div className="rounded-lg border border-gray-200 p-4 space-y-3">
+            <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider">
+              Contact Information
+            </h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-xs text-text-muted">Email</p>
+                <p className="text-sm text-text-dark mt-0.5">{partner.contact_email}</p>
+              </div>
+              {partner.phone_number && (
+                <div>
+                  <p className="text-xs text-text-muted">Phone</p>
+                  <p className="text-sm text-text-dark mt-0.5">{partner.phone_number}</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Account Stats */}
+          <div className="rounded-lg border border-gray-200 p-4 space-y-3">
+            <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider">
+              Account
+            </h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-xs text-text-muted">Balance</p>
+                <p className={`text-sm font-semibold mt-0.5 ${partner.balance > 0 ? "text-emerald-600" : "text-red-600"}`}>
+                  ${partner.balance.toFixed(2)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-text-muted">Commission Rate</p>
+                <p className="text-sm text-text-dark mt-0.5">{partner.commission_rate}%</p>
+              </div>
+              <div>
+                <p className="text-xs text-text-muted">Deliveries</p>
+                <p className="text-sm text-text-dark mt-0.5">{partner.deliveries_count}</p>
+              </div>
+              <div>
+                <p className="text-xs text-text-muted">Device Slots</p>
+                <p className="text-sm text-text-dark mt-0.5">{partner.max_device_slots}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Dates */}
+          <div className="text-xs text-text-muted">
+            Member since {new Date(partner.created_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 // ---------- Page Component ----------
 
 export default function PartnersPage() {
@@ -708,6 +829,9 @@ export default function PartnersPage() {
   const [depositLoading, setDepositLoading] = useState(false);
   const [depositError, setDepositError] = useState<string | null>(null);
   const [depositSuccess, setDepositSuccess] = useState<number | null>(null);
+
+  // Detail panel state
+  const [detailPartner, setDetailPartner] = useState<Partner | null>(null);
 
   // Transaction panel state
   const [txPartner, setTxPartner] = useState<Partner | null>(null);
@@ -964,6 +1088,16 @@ export default function PartnersPage() {
         const partner = item as unknown as Partner;
         return (
           <div className="flex items-center gap-1">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setDetailPartner(partner);
+              }}
+              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-primary bg-primary-light transition-colors hover:bg-blue-100"
+              title="View Details"
+            >
+              View
+            </button>
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -1261,6 +1395,14 @@ export default function PartnersPage() {
           depositSuccess={depositSuccess}
           onSubmit={handleDeposit}
           onClose={handleCloseDeposit}
+        />
+      )}
+
+      {/* Partner Detail Panel */}
+      {detailPartner && (
+        <PartnerDetailPanel
+          partner={detailPartner}
+          onClose={() => setDetailPartner(null)}
         />
       )}
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Link from "next/link";
 import {
   Handshake,
   Code,
@@ -21,71 +22,49 @@ import {
   Wallet,
   BarChart,
   Users,
+  Smartphone,
+  Eye,
+  EyeOff,
+  Loader2,
 } from "lucide-react";
+import { partnerAPI } from "@/lib/api";
 
 const benefits = [
   {
     icon: Code,
     title: "API Integration",
     description:
-      "Access our RESTful API to create deliveries, track packages, and receive real-time webhooks — all programmatically. Integrate TumaGo directly into your existing systems.",
+      "Access our RESTful API to create deliveries, track packages, and receive real-time webhooks — all programmatically.",
   },
   {
     icon: HeadphonesIcon,
     title: "Dedicated Support",
     description:
-      "Get a dedicated account manager who understands your business. Priority support, custom onboarding, and regular performance reviews to optimize your delivery operations.",
+      "Get a dedicated account manager who understands your business. Priority support and custom onboarding.",
   },
   {
     icon: TrendingUp,
     title: "Volume Pricing",
     description:
-      "Benefit from competitive tiered pricing as your delivery volume grows. The more you ship, the more you save. No hidden fees, transparent billing every month.",
+      "Benefit from competitive tiered pricing as your delivery volume grows. No hidden fees, transparent billing.",
   },
   {
     icon: MapPin,
     title: "Real-Time Tracking",
     description:
-      "Give your customers full visibility with live GPS tracking on every delivery. Reduce support inquiries with automated status notifications via SMS or webhook.",
+      "Give your customers full visibility with live GPS tracking on every delivery. Automated status notifications via webhook.",
   },
   {
     icon: BarChart3,
     title: "Analytics Dashboard",
     description:
-      "Access detailed analytics on delivery performance, driver ratings, delivery times, and costs. Make data-driven decisions to optimize your logistics.",
+      "Access detailed analytics on delivery performance, driver ratings, delivery times, and costs.",
   },
   {
     icon: Shield,
     title: "Insured Deliveries",
     description:
-      "Every partner delivery is covered by our insurance policy. Ship with confidence knowing your packages and your customers are protected.",
-  },
-];
-
-const integrationSteps = [
-  {
-    number: "01",
-    title: "Sign Up",
-    description:
-      "Create a business partner account through our partner portal. Tell us about your company, delivery volume, and integration needs.",
-  },
-  {
-    number: "02",
-    title: "Get Your API Key",
-    description:
-      "Receive your API credentials and access our comprehensive documentation. Our sandbox environment lets you test everything before going live.",
-  },
-  {
-    number: "03",
-    title: "Integrate",
-    description:
-      "Use our RESTful API, webhooks, and SDKs to connect TumaGo with your platform. Our engineering team provides hands-on integration support.",
-  },
-  {
-    number: "04",
-    title: "Launch",
-    description:
-      "Go live with confidence. We handle the fleet, the tracking, and the payments. You focus on your business while we handle the last mile.",
+      "Every partner delivery is covered by our insurance policy. Ship with confidence knowing your packages are protected.",
   },
 ];
 
@@ -122,21 +101,87 @@ const industries = [
   },
 ];
 
+type Step = "register" | "payment" | "polling" | "done";
+
 export default function PartnerPage() {
+  const [step, setStep] = useState<Step>("register");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  // Registration form
   const [formData, setFormData] = useState({
     name: "",
-    company: "",
     email: "",
+    password: "",
     phone: "",
-    volume: "",
-    message: "",
+    description: "",
+    address: "",
+    city: "",
+    contact_person_name: "",
+    contact_person_role: "",
   });
-  const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = (e: FormEvent) => {
+  // Payment form
+  const [partnerId, setPartnerId] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("");
+  const [paymentPhone, setPaymentPhone] = useState("");
+  const [redirectUrl, setRedirectUrl] = useState("");
+  const [pollInterval, setPollInterval] = useState<ReturnType<typeof setInterval> | null>(null);
+
+  const handleRegister = async (e: FormEvent) => {
     e.preventDefault();
-    // Client-side only for now — will connect to backend later
-    setSubmitted(true);
+    setError("");
+    setLoading(true);
+    try {
+      const res = await partnerAPI.register(formData);
+      setPartnerId(res.partner_id);
+      setPaymentPhone(formData.phone);
+      setStep("payment");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Registration failed.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePaySetup = async (e: FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      const res = await partnerAPI.paySetup({
+        partner_id: partnerId,
+        email: formData.email,
+        payment_method: paymentMethod,
+        phone: paymentPhone,
+      });
+      if (res.redirect_url) {
+        setRedirectUrl(res.redirect_url);
+      }
+      // Start polling for payment status
+      setStep("polling");
+      const interval = setInterval(async () => {
+        try {
+          const status = await partnerAPI.paySetupStatus(
+            partnerId,
+            formData.email
+          );
+          if (status.paid) {
+            clearInterval(interval);
+            setPollInterval(null);
+            setStep("done");
+          }
+        } catch {
+          // Keep polling
+        }
+      }, 5000);
+      setPollInterval(interval);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Payment initiation failed.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -156,31 +201,95 @@ export default function PartnerPage() {
             Partner With TumaGo
           </h1>
           <p className="mt-6 text-lg text-blue-100/90 max-w-2xl mx-auto leading-relaxed">
-            Integrate reliable, trackable last-mile delivery into your
-            business. Our API-first platform gives you full control over
-            your delivery operations — from automated dispatch to real-time
-            customer updates.
+            Register your business, get your API key, and give your team
+            access to reliable last-mile delivery — all in minutes.
+            Partnership is for the <strong>sender side</strong> of your
+            business.
           </p>
           <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-center">
             <a
-              href="#contact-form"
+              href="#register"
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-8 py-4 text-base font-semibold text-white shadow-lg shadow-accent/25 transition-all hover:bg-orange-600 hover:shadow-xl hover:-translate-y-0.5"
             >
-              Become a Partner
+              Register Now
               <ArrowRight className="h-5 w-5" />
             </a>
-            <a
-              href="#how-it-works"
+            <Link
+              href="/partner/docs"
               className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-white/30 px-8 py-4 text-base font-semibold text-white transition-all hover:bg-white/10"
             >
-              See How It Works
-            </a>
+              <Code className="h-5 w-5" />
+              API Docs
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* What You Get Section */}
+      <section className="py-20 lg:py-28 bg-white">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-16">
+            <p className="text-sm font-semibold uppercase tracking-wider text-primary mb-3">
+              What You Get
+            </p>
+            <h2 className="text-3xl font-bold text-text-dark sm:text-4xl">
+              Register, Pay, Start Delivering
+            </h2>
+            <p className="mt-4 text-lg text-text-muted">
+              No enquiry forms or waiting. Sign up, pay the one-time setup
+              fee, and you&apos;re live.
+            </p>
+          </div>
+          <div className="grid gap-8 md:grid-cols-3">
+            {[
+              {
+                icon: DollarSign,
+                number: "01",
+                title: "Register & Pay $15",
+                description:
+                  "Create your business account and pay the one-time $15 setup fee via EcoCash, OneMoney, or card.",
+              },
+              {
+                icon: Code,
+                number: "02",
+                title: "Get Your API Key",
+                description:
+                  "Instantly receive your API key and secret. Integrate TumaGo deliveries into your systems via our REST API.",
+              },
+              {
+                icon: Smartphone,
+                number: "03",
+                title: "Create 10 App Logins",
+                description:
+                  "Create up to 10 login credentials for your staff devices. Each device can request deliveries via the TumaGo sender app.",
+              },
+            ].map((item) => (
+              <div
+                key={item.number}
+                className="relative rounded-2xl border border-gray-100 bg-white p-8 shadow-sm transition-all hover:shadow-lg hover:border-primary/20 hover:-translate-y-1"
+              >
+                <div className="mb-6 flex items-center gap-4">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary-light text-primary">
+                    <item.icon className="h-7 w-7" />
+                  </div>
+                  <span className="text-5xl font-extrabold text-gray-100">
+                    {item.number}
+                  </span>
+                </div>
+                <h3 className="text-xl font-bold text-text-dark mb-3">
+                  {item.title}
+                </h3>
+                <p className="text-text-muted leading-relaxed">
+                  {item.description}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* Industries Section */}
-      <section className="py-20 lg:py-28 bg-white">
+      <section className="py-20 lg:py-28 bg-primary-light">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <p className="text-sm font-semibold uppercase tracking-wider text-primary mb-3">
@@ -189,24 +298,18 @@ export default function PartnerPage() {
             <h2 className="text-3xl font-bold text-text-dark sm:text-4xl">
               Delivery Solutions for Every Business
             </h2>
-            <p className="mt-4 text-lg text-text-muted">
-              From e-commerce to healthcare, TumaGo powers delivery for
-              businesses of all sizes across Zimbabwe.
-            </p>
           </div>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {industries.map((industry) => (
               <div
                 key={industry.name}
-                className="group flex items-start gap-4 rounded-2xl border border-gray-100 p-6 transition-all hover:shadow-lg hover:border-primary/20 hover:-translate-y-1"
+                className="group flex items-start gap-4 rounded-2xl bg-white border border-gray-100 p-6 transition-all hover:shadow-lg hover:border-primary/20 hover:-translate-y-1"
               >
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-white">
                   <industry.icon className="h-6 w-6" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-text-dark">
-                    {industry.name}
-                  </h3>
+                  <h3 className="font-bold text-text-dark">{industry.name}</h3>
                   <p className="mt-1 text-sm text-text-muted">
                     {industry.description}
                   </p>
@@ -218,7 +321,7 @@ export default function PartnerPage() {
       </section>
 
       {/* Benefits Section */}
-      <section className="py-20 lg:py-28 bg-primary-light">
+      <section className="py-20 lg:py-28 bg-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <p className="text-sm font-semibold uppercase tracking-wider text-primary mb-3">
@@ -227,16 +330,12 @@ export default function PartnerPage() {
             <h2 className="text-3xl font-bold text-text-dark sm:text-4xl">
               Why Businesses Choose TumaGo
             </h2>
-            <p className="mt-4 text-lg text-text-muted">
-              Everything you need to offer world-class delivery to your
-              customers, without building the infrastructure yourself.
-            </p>
           </div>
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {benefits.map((benefit) => (
               <div
                 key={benefit.title}
-                className="group rounded-2xl bg-white p-8 shadow-sm transition-all hover:shadow-lg hover:-translate-y-1"
+                className="group rounded-2xl bg-primary-light p-8 transition-all hover:shadow-lg hover:-translate-y-1"
               >
                 <div className="mb-5 inline-flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-white">
                   <benefit.icon className="h-7 w-7" />
@@ -253,136 +352,87 @@ export default function PartnerPage() {
         </div>
       </section>
 
-      {/* How It Works Section */}
-      <section id="how-it-works" className="py-20 lg:py-28 bg-white">
+      {/* Pricing Section */}
+      <section
+        id="pricing"
+        className="py-20 lg:py-24 bg-gradient-to-r from-primary-dark to-primary text-white"
+      >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <p className="text-sm font-semibold uppercase tracking-wider text-primary mb-3">
-              Integration Process
-            </p>
-            <h2 className="text-3xl font-bold text-text-dark sm:text-4xl">
-              Get Started in Four Steps
-            </h2>
-            <p className="mt-4 text-lg text-text-muted">
-              From signup to launch, our team supports you every step of
-              the way. Most partners are live within a week.
-            </p>
-          </div>
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-            {integrationSteps.map((step) => (
-              <div
-                key={step.number}
-                className="relative rounded-2xl border border-gray-100 bg-white p-8 transition-all hover:shadow-lg hover:border-primary/20"
-              >
-                <span className="text-5xl font-extrabold text-primary/10">
-                  {step.number}
-                </span>
-                <h3 className="mt-4 text-lg font-bold text-text-dark">
-                  {step.title}
-                </h3>
-                <p className="mt-3 text-sm text-text-muted leading-relaxed">
-                  {step.description}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing Section — Balance-Based */}
-      <section className="py-20 lg:py-24 bg-gradient-to-r from-primary-dark to-primary text-white">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          {/* Header */}
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold sm:text-4xl">
               Simple, Transparent Pricing
             </h2>
             <p className="mt-4 text-lg text-blue-100/80 max-w-2xl mx-auto">
-              No hidden fees. Deposit funds, request deliveries, and only pay
-              for what you use. Every dollar is accounted for.
+              One-time setup fee. No monthly subscriptions. Pay only for
+              deliveries you use.
             </p>
           </div>
 
-          {/* Setup Fee Card */}
-          <div className="mx-auto max-w-md mb-16">
+          {/* Pricing Cards */}
+          <div className="grid gap-8 md:grid-cols-2 max-w-3xl mx-auto mb-16">
+            {/* Setup Fee */}
             <div className="rounded-2xl bg-white p-8 text-center shadow-xl">
               <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
                 <DollarSign className="h-7 w-7 text-primary" />
               </div>
-              <p className="text-4xl font-extrabold text-primary-dark">
-                $15
-              </p>
+              <p className="text-4xl font-extrabold text-primary-dark">$15</p>
               <p className="mt-1 text-sm font-semibold text-text-dark uppercase tracking-wider">
                 One-Time Setup Fee
               </p>
               <p className="mt-3 text-sm text-text-muted leading-relaxed">
-                Get your API credentials and start integrating. Charged from
-                your first deposit — no upfront payment needed.
+                Register and pay once. Get your API key + 10 device logins
+                included.
               </p>
-              <a
-                href="#contact-form"
-                className="mt-6 inline-block rounded-xl bg-accent px-8 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/25 transition-all hover:bg-orange-600 hover:shadow-xl"
-              >
-                Get Started
-              </a>
-            </div>
-          </div>
-
-          {/* How Billing Works — 3 Steps */}
-          <div className="mb-16">
-            <h3 className="text-center text-xl font-bold mb-10">
-              How Billing Works
-            </h3>
-            <div className="grid gap-8 md:grid-cols-3">
-              {[
-                {
-                  step: "01",
-                  icon: Wallet,
-                  title: "Deposit Funds",
-                  description:
-                    "Add money to your TumaGo partner account via bank transfer or mobile money. Your balance is available instantly.",
-                },
-                {
-                  step: "02",
-                  icon: Package,
-                  title: "Request Deliveries",
-                  description:
-                    "Each delivery fare is automatically deducted from your balance. No invoices, no delays — it just works.",
-                },
-                {
-                  step: "03",
-                  icon: BarChart,
-                  title: "Track Everything",
-                  description:
-                    "View your balance, transaction history, and delivery costs in real-time via API and dashboard.",
-                },
-              ].map((item) => (
-                <div
-                  key={item.step}
-                  className="rounded-2xl bg-white/10 backdrop-blur p-8 text-center"
-                >
-                  <span className="text-5xl font-extrabold text-white/20">
-                    {item.step}
-                  </span>
-                  <div className="mx-auto mt-4 mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-white/20">
-                    <item.icon className="h-6 w-6 text-white" />
+              <div className="mt-4 space-y-2 text-left">
+                {[
+                  "API Key & Secret",
+                  "10 app login credentials",
+                  "Partner dashboard access",
+                  "Webhook integration",
+                ].map((item) => (
+                  <div key={item} className="flex items-center gap-2 text-sm text-text-dark">
+                    <CheckCircle className="h-4 w-4 shrink-0 text-primary" />
+                    <span>{item}</span>
                   </div>
-                  <h4 className="text-lg font-bold">{item.title}</h4>
-                  <p className="mt-3 text-sm text-blue-100/80 leading-relaxed">
-                    {item.description}
-                  </p>
-                </div>
-              ))}
+                ))}
+              </div>
+            </div>
+
+            {/* Extra Devices */}
+            <div className="rounded-2xl bg-white p-8 text-center shadow-xl">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-accent/10">
+                <Smartphone className="h-7 w-7 text-accent" />
+              </div>
+              <p className="text-4xl font-extrabold text-primary-dark">$5</p>
+              <p className="mt-1 text-sm font-semibold text-text-dark uppercase tracking-wider">
+                Per 7 Extra Devices
+              </p>
+              <p className="mt-3 text-sm text-text-muted leading-relaxed">
+                Need more than 10 devices? Purchase additional login
+                credentials in packs of 7.
+              </p>
+              <div className="mt-4 space-y-2 text-left">
+                {[
+                  "7 additional app logins",
+                  "Deducted from partner balance",
+                  "Create credentials instantly",
+                  "Buy as many packs as needed",
+                ].map((item) => (
+                  <div key={item} className="flex items-center gap-2 text-sm text-text-dark">
+                    <CheckCircle className="h-4 w-4 shrink-0 text-accent" />
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
           {/* Commission Structure */}
           <div>
             <h3 className="text-center text-xl font-bold mb-10">
-              Commission Structure
+              Delivery Commission
             </h3>
             <div className="grid gap-8 md:grid-cols-2 max-w-3xl mx-auto">
-              {/* Platform Fee */}
               <div className="rounded-2xl bg-white/10 backdrop-blur p-8">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
@@ -400,8 +450,6 @@ export default function PartnerPage() {
                   driver network, and support.
                 </p>
               </div>
-
-              {/* Driver Share */}
               <div className="rounded-2xl bg-white/10 backdrop-blur p-8">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
@@ -420,8 +468,6 @@ export default function PartnerPage() {
                 </p>
               </div>
             </div>
-
-            {/* Example breakdown */}
             <div className="mt-8 mx-auto max-w-xl rounded-2xl bg-white/10 backdrop-blur px-6 py-5 text-center">
               <p className="text-sm font-semibold text-blue-100/80 mb-2 uppercase tracking-wider">
                 Example
@@ -438,125 +484,270 @@ export default function PartnerPage() {
         </div>
       </section>
 
-      {/* Contact Form Section */}
-      <section id="contact-form" className="py-20 lg:py-28 bg-white">
+      {/* How Billing Works */}
+      <section className="py-20 lg:py-28 bg-white">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-16">
+            <p className="text-sm font-semibold uppercase tracking-wider text-primary mb-3">
+              Billing
+            </p>
+            <h2 className="text-3xl font-bold text-text-dark sm:text-4xl">
+              Balance-Based Delivery Payments
+            </h2>
+            <p className="mt-4 text-lg text-text-muted">
+              Deposit funds, request deliveries, and only pay for what you use.
+            </p>
+          </div>
+          <div className="grid gap-8 md:grid-cols-3">
+            {[
+              {
+                step: "01",
+                icon: Wallet,
+                title: "Deposit Funds",
+                description:
+                  "Add money to your TumaGo partner account via bank transfer or mobile money. Available instantly.",
+              },
+              {
+                step: "02",
+                icon: Package,
+                title: "Request Deliveries",
+                description:
+                  "Each delivery fare is automatically deducted from your balance. No invoices, no delays.",
+              },
+              {
+                step: "03",
+                icon: BarChart,
+                title: "Track Everything",
+                description:
+                  "View your balance, transaction history, and delivery costs in real-time via API and dashboard.",
+              },
+            ].map((item) => (
+              <div
+                key={item.step}
+                className="rounded-2xl border border-gray-100 bg-white p-8 text-center transition-all hover:shadow-lg hover:border-primary/20"
+              >
+                <span className="text-5xl font-extrabold text-primary/10">
+                  {item.step}
+                </span>
+                <div className="mx-auto mt-4 mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary-light">
+                  <item.icon className="h-6 w-6 text-primary" />
+                </div>
+                <h4 className="text-lg font-bold text-text-dark">
+                  {item.title}
+                </h4>
+                <p className="mt-3 text-sm text-text-muted leading-relaxed">
+                  {item.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Registration Section */}
+      <section id="register" className="py-20 lg:py-28 bg-primary-light">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-12 lg:grid-cols-2 lg:items-start">
             <div>
               <p className="text-sm font-semibold uppercase tracking-wider text-primary mb-3">
-                Get In Touch
+                Get Started
               </p>
               <h2 className="text-3xl font-bold text-text-dark sm:text-4xl">
-                Let&apos;s Build Something Together
+                Register Your Business
               </h2>
               <p className="mt-4 text-text-muted leading-relaxed">
-                Tell us about your business and delivery needs. Our
-                partnerships team will get back to you within 24 hours with
-                a custom proposal.
+                Create your partner account in minutes. Pay the one-time $15
+                setup fee and start using TumaGo for your business deliveries
+                immediately.
               </p>
               <div className="mt-8 space-y-6">
                 {[
                   {
-                    title: "Quick Integration",
-                    desc: "Most partners go live within 5 business days",
+                    title: "Client-Side Only",
+                    desc: "Partnership covers the sending side of your business — request and track deliveries",
+                  },
+                  {
+                    title: "10 Device Logins Included",
+                    desc: "Create login credentials for up to 10 staff devices at no extra cost",
                   },
                   {
                     title: "Pay-As-You-Go",
                     desc: "Deposit funds and only pay for deliveries you use",
                   },
                   {
-                    title: "Dedicated Support",
-                    desc: "A real person who knows your account, not a ticket queue",
+                    title: "Instant API Access",
+                    desc: "Get your API key and secret immediately after payment",
                   },
                 ].map((item) => (
-                  <div
-                    key={item.title}
-                    className="flex items-start gap-4"
-                  >
+                  <div key={item.title} className="flex items-start gap-4">
                     <CheckCircle className="h-6 w-6 shrink-0 text-primary mt-0.5" />
                     <div>
                       <p className="font-semibold text-text-dark">
                         {item.title}
                       </p>
-                      <p className="text-sm text-text-muted">
-                        {item.desc}
-                      </p>
+                      <p className="text-sm text-text-muted">{item.desc}</p>
                     </div>
                   </div>
                 ))}
+              </div>
+
+              {/* Already have an account? */}
+              <div className="mt-10 rounded-xl border border-primary/20 bg-white p-5">
+                <p className="text-sm font-semibold text-text-dark mb-1">
+                  Already registered?
+                </p>
+                <p className="text-sm text-text-muted mb-3">
+                  Log in to your partner dashboard to manage devices, view
+                  your API key, and track deliveries.
+                </p>
+                <Link
+                  href="/partner/dashboard"
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary-dark transition-colors"
+                >
+                  Go to Partner Dashboard
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
               </div>
             </div>
 
             {/* Form */}
             <div className="rounded-2xl border border-gray-100 bg-white p-8 shadow-lg">
-              {submitted ? (
-                <div className="text-center py-12">
-                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-                    <CheckCircle className="h-8 w-8 text-green-600" />
+              {step === "register" && (
+                <form onSubmit={handleRegister} className="space-y-5">
+                  <div className="text-center mb-2">
+                    <h3 className="text-xl font-bold text-text-dark">
+                      Create Partner Account
+                    </h3>
+                    <p className="text-sm text-text-muted mt-1">
+                      Step 1 of 2 — Registration
+                    </p>
                   </div>
-                  <h3 className="text-xl font-bold text-text-dark">
-                    Thank You!
-                  </h3>
-                  <p className="mt-2 text-text-muted">
-                    We have received your inquiry. Our partnerships team
-                    will reach out within 24 hours.
-                  </p>
-                </div>
-              ) : (
-                <form onSubmit={handleSubmit} className="space-y-5">
-                  <div className="grid gap-5 sm:grid-cols-2">
+                  {/* Contact Person */}
+                  <div className="grid gap-4 sm:grid-cols-2">
                     <div>
                       <label
-                        htmlFor="name"
+                        htmlFor="contact_person_name"
                         className="block text-sm font-medium text-text-dark mb-1.5"
                       >
-                        Full Name
+                        Your Full Name
                       </label>
                       <input
-                        id="name"
+                        id="contact_person_name"
                         type="text"
                         required
-                        value={formData.name}
+                        value={formData.contact_person_name}
                         onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            name: e.target.value,
-                          })
+                          setFormData({ ...formData, contact_person_name: e.target.value })
                         }
                         className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-text-dark placeholder:text-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition"
-                        placeholder="John Doe"
+                        placeholder="John Moyo"
                       />
                     </div>
                     <div>
                       <label
-                        htmlFor="company"
+                        htmlFor="contact_person_role"
                         className="block text-sm font-medium text-text-dark mb-1.5"
                       >
-                        Company Name
+                        Your Role
                       </label>
                       <input
-                        id="company"
+                        id="contact_person_role"
                         type="text"
-                        required
-                        value={formData.company}
+                        value={formData.contact_person_role}
                         onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            company: e.target.value,
-                          })
+                          setFormData({ ...formData, contact_person_role: e.target.value })
                         }
                         className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-text-dark placeholder:text-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition"
-                        placeholder="Acme Corp"
+                        placeholder="Operations Manager"
                       />
                     </div>
                   </div>
-                  <div className="grid gap-5 sm:grid-cols-2">
+
+                  {/* Company Info */}
+                  <div>
+                    <label
+                      htmlFor="name"
+                      className="block text-sm font-medium text-text-dark mb-1.5"
+                    >
+                      Company Name
+                    </label>
+                    <input
+                      id="name"
+                      type="text"
+                      required
+                      value={formData.name}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
+                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-text-dark placeholder:text-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition"
+                      placeholder="Acme Corp"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="description"
+                      className="block text-sm font-medium text-text-dark mb-1.5"
+                    >
+                      What does your business do?
+                    </label>
+                    <textarea
+                      id="description"
+                      rows={2}
+                      value={formData.description}
+                      onChange={(e) =>
+                        setFormData({ ...formData, description: e.target.value })
+                      }
+                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-text-dark placeholder:text-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition resize-none"
+                      placeholder="E-commerce store selling electronics..."
+                    />
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label
+                        htmlFor="address"
+                        className="block text-sm font-medium text-text-dark mb-1.5"
+                      >
+                        Business Address
+                      </label>
+                      <input
+                        id="address"
+                        type="text"
+                        value={formData.address}
+                        onChange={(e) =>
+                          setFormData({ ...formData, address: e.target.value })
+                        }
+                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-text-dark placeholder:text-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition"
+                        placeholder="12 Samora Machel Ave"
+                      />
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="city"
+                        className="block text-sm font-medium text-text-dark mb-1.5"
+                      >
+                        City
+                      </label>
+                      <input
+                        id="city"
+                        type="text"
+                        value={formData.city}
+                        onChange={(e) =>
+                          setFormData({ ...formData, city: e.target.value })
+                        }
+                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-text-dark placeholder:text-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition"
+                        placeholder="Harare"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Contact Details */}
+                  <div className="grid gap-4 sm:grid-cols-2">
                     <div>
                       <label
                         htmlFor="email"
                         className="block text-sm font-medium text-text-dark mb-1.5"
                       >
-                        Work Email
+                        Business Email
                       </label>
                       <input
                         id="email"
@@ -564,13 +755,10 @@ export default function PartnerPage() {
                         required
                         value={formData.email}
                         onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            email: e.target.value,
-                          })
+                          setFormData({ ...formData, email: e.target.value })
                         }
                         className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-text-dark placeholder:text-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition"
-                        placeholder="john@company.co.zw"
+                        placeholder="admin@company.co.zw"
                       />
                     </div>
                     <div>
@@ -583,12 +771,10 @@ export default function PartnerPage() {
                       <input
                         id="phone"
                         type="tel"
+                        required
                         value={formData.phone}
                         onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            phone: e.target.value,
-                          })
+                          setFormData({ ...formData, phone: e.target.value })
                         }
                         className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-text-dark placeholder:text-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition"
                         placeholder="+263 77 123 4567"
@@ -597,58 +783,221 @@ export default function PartnerPage() {
                   </div>
                   <div>
                     <label
-                      htmlFor="volume"
+                      htmlFor="password"
                       className="block text-sm font-medium text-text-dark mb-1.5"
                     >
-                      Estimated Monthly Deliveries
+                      Password
                     </label>
-                    <select
-                      id="volume"
-                      value={formData.volume}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          volume: e.target.value,
-                        })
-                      }
-                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-text-dark focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition"
-                    >
-                      <option value="">Select range</option>
-                      <option value="1-50">1 - 50</option>
-                      <option value="51-200">51 - 200</option>
-                      <option value="201-500">201 - 500</option>
-                      <option value="501-1000">501 - 1,000</option>
-                      <option value="1000+">1,000+</option>
-                    </select>
+                    <div className="relative">
+                      <input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        required
+                        minLength={8}
+                        value={formData.password}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            password: e.target.value,
+                          })
+                        }
+                        className="w-full rounded-xl border border-gray-200 px-4 py-3 pr-11 text-sm text-text-dark placeholder:text-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition"
+                        placeholder="Min. 8 characters"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
                   </div>
-                  <div>
-                    <label
-                      htmlFor="message"
-                      className="block text-sm font-medium text-text-dark mb-1.5"
-                    >
-                      Tell Us About Your Needs
-                    </label>
-                    <textarea
-                      id="message"
-                      rows={4}
-                      value={formData.message}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          message: e.target.value,
-                        })
-                      }
-                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-text-dark placeholder:text-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition resize-none"
-                      placeholder="What kind of deliveries does your business need? Any specific integration requirements?"
-                    />
-                  </div>
+
+                  {error && (
+                    <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">
+                      {error}
+                    </p>
+                  )}
+
                   <button
                     type="submit"
-                    className="w-full rounded-xl bg-accent py-3.5 text-sm font-semibold text-white shadow-lg shadow-accent/25 transition-all hover:bg-orange-600 hover:shadow-xl"
+                    disabled={loading}
+                    className="w-full rounded-xl bg-accent py-3.5 text-sm font-semibold text-white shadow-lg shadow-accent/25 transition-all hover:bg-orange-600 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    Submit Partnership Inquiry
+                    {loading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Registering...
+                      </>
+                    ) : (
+                      <>
+                        Continue to Payment
+                        <ArrowRight className="h-4 w-4" />
+                      </>
+                    )}
+                  </button>
+
+                  <p className="text-xs text-center text-text-muted">
+                    By registering, you agree to our{" "}
+                    <Link href="/terms" className="underline hover:text-primary">
+                      Terms of Service
+                    </Link>
+                  </p>
+                </form>
+              )}
+
+              {step === "payment" && (
+                <form onSubmit={handlePaySetup} className="space-y-5">
+                  <div className="text-center mb-2">
+                    <h3 className="text-xl font-bold text-text-dark">
+                      Pay Setup Fee
+                    </h3>
+                    <p className="text-sm text-text-muted mt-1">
+                      Step 2 of 2 — $15.00 one-time fee
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl bg-primary-light p-4 text-center">
+                    <p className="text-3xl font-extrabold text-primary-dark">
+                      $15.00
+                    </p>
+                    <p className="text-sm text-text-muted mt-1">
+                      One-time setup fee
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-text-dark mb-3">
+                      Payment Method
+                    </label>
+                    <div className="grid grid-cols-3 gap-3">
+                      {[
+                        { value: "ecocash", label: "EcoCash" },
+                        { value: "onemoney", label: "OneMoney" },
+                        { value: "card", label: "Card" },
+                      ].map((method) => (
+                        <button
+                          key={method.value}
+                          type="button"
+                          onClick={() => setPaymentMethod(method.value)}
+                          className={`rounded-xl border-2 px-4 py-3 text-sm font-medium transition-all ${
+                            paymentMethod === method.value
+                              ? "border-primary bg-primary-light text-primary"
+                              : "border-gray-200 text-text-dark hover:border-gray-300"
+                          }`}
+                        >
+                          {method.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {(paymentMethod === "ecocash" ||
+                    paymentMethod === "onemoney") && (
+                    <div>
+                      <label
+                        htmlFor="payPhone"
+                        className="block text-sm font-medium text-text-dark mb-1.5"
+                      >
+                        Phone Number
+                      </label>
+                      <input
+                        id="payPhone"
+                        type="tel"
+                        required
+                        value={paymentPhone}
+                        onChange={(e) => setPaymentPhone(e.target.value)}
+                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-text-dark placeholder:text-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition"
+                        placeholder="0771234567"
+                      />
+                    </div>
+                  )}
+
+                  {error && (
+                    <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">
+                      {error}
+                    </p>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={loading || !paymentMethod}
+                    className="w-full rounded-xl bg-accent py-3.5 text-sm font-semibold text-white shadow-lg shadow-accent/25 transition-all hover:bg-orange-600 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      <>Pay $15.00</>
+                    )}
                   </button>
                 </form>
+              )}
+
+              {step === "polling" && (
+                <div className="text-center py-8 space-y-4">
+                  <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
+                  <h3 className="text-xl font-bold text-text-dark">
+                    Waiting for Payment
+                  </h3>
+                  <p className="text-sm text-text-muted max-w-sm mx-auto">
+                    {redirectUrl ? (
+                      <>
+                        Complete your card payment in the new window.{" "}
+                        <a
+                          href={redirectUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary underline"
+                        >
+                          Open payment page
+                        </a>
+                      </>
+                    ) : (
+                      "Please confirm the payment on your phone. This page will update automatically."
+                    )}
+                  </p>
+                  <button
+                    onClick={() => {
+                      if (pollInterval) clearInterval(pollInterval);
+                      setPollInterval(null);
+                      setStep("payment");
+                    }}
+                    className="text-sm text-text-muted hover:text-text-dark underline"
+                  >
+                    Try a different payment method
+                  </button>
+                </div>
+              )}
+
+              {step === "done" && (
+                <div className="text-center py-8 space-y-4">
+                  <div className="mx-auto mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+                    <CheckCircle className="h-8 w-8 text-green-600" />
+                  </div>
+                  <h3 className="text-xl font-bold text-text-dark">
+                    You&apos;re All Set!
+                  </h3>
+                  <p className="text-sm text-text-muted max-w-sm mx-auto">
+                    Your partner account is now active. Log in to your
+                    dashboard to view your API key and create device login
+                    credentials.
+                  </p>
+                  <Link
+                    href="/partner/dashboard"
+                    className="inline-flex items-center gap-2 rounded-xl bg-primary px-8 py-3 text-sm font-semibold text-white transition-all hover:bg-primary-dark hover:shadow-lg"
+                  >
+                    Go to Dashboard
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </div>
               )}
             </div>
           </div>

@@ -6,7 +6,7 @@ from .views.UserViews import views, userViews, otpViews
 from .views.DriverViews import authViews, driverViews
 from .views.PaymentViews import paymentViews
 from .views.EmailViews import snsViews
-from .views.PartnerViews import partner_views
+from .views.PartnerViews import partner_views, partner_portal_views
 from .views.AdminViews import admin_views
 
 urlpatterns = [
@@ -75,12 +75,23 @@ urlpatterns = [
     path('payment/driver-balance/', paymentViews.get_driver_balance, name='driver_balance'),
     path('payment/pay-driver/', paymentViews.pay_driver, name='pay_driver'),
 
-    # B2B Partner API
+    # B2B Partner API (X-API-Key auth)
     path('partner/delivery/request/', partner_views.partner_request_delivery, name='partner_request_delivery'),
     path('partner/delivery/<uuid:delivery_id>/status/', partner_views.partner_delivery_status, name='partner_delivery_status'),
     path('partner/delivery/<uuid:delivery_id>/cancel/', partner_views.partner_cancel_delivery, name='partner_cancel_delivery'),
     path('partner/deliveries/', partner_views.partner_list_deliveries, name='partner_list_deliveries'),
     path('partner/balance/', partner_views.partner_check_balance, name='partner_check_balance'),
+
+    # Partner Self-Service Portal
+    path('partner/portal/register/', partner_portal_views.partner_register, name='partner_register'),
+    path('partner/portal/pay-setup/', partner_portal_views.partner_pay_setup, name='partner_pay_setup'),
+    path('partner/portal/pay-setup/status/', partner_portal_views.partner_pay_setup_status, name='partner_pay_setup_status'),
+    path('partner/portal/login/', partner_portal_views.partner_login, name='partner_login'),
+    path('partner/portal/account/', partner_portal_views.partner_account, name='partner_account'),
+    path('partner/portal/devices/', partner_portal_views.partner_create_device, name='partner_create_device'),
+    path('partner/portal/devices/list/', partner_portal_views.partner_list_devices, name='partner_list_devices'),
+    path('partner/portal/devices/<uuid:device_id>/toggle/', partner_portal_views.partner_toggle_device, name='partner_toggle_device'),
+    path('partner/portal/devices/purchase/', partner_portal_views.partner_purchase_device_slots, name='partner_purchase_slots'),
 
     # Admin Partner Balance Management
     path('admin/partners/<uuid:partner_id>/deposit/', admin_views.admin_partner_deposit, name='admin_partner_deposit'),

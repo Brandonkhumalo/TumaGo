@@ -523,18 +523,24 @@ def admin_partner_metrics(request):
         .order_by('-count')
     )
 
-    # Full partner list with delivery counts
+    # Full partner list with delivery counts and business info
     partner_list = list(
         PartnerCompany.objects.annotate(
             deliveries_count=Count('delivery_requests')
         ).values(
-            'id', 'name', 'is_active', 'contact_email',
+            'id', 'name', 'is_active', 'contact_email', 'phone_number',
             'rate_limit', 'created_at', 'deliveries_count',
+            'balance', 'setup_fee_paid', 'commission_rate',
+            'description', 'address', 'city',
+            'contact_person_name', 'contact_person_role',
+            'max_device_slots',
         ).order_by('-deliveries_count')
     )
     for entry in partner_list:
         entry['id'] = str(entry['id'])
         entry['created_at'] = str(entry['created_at'])
+        entry['balance'] = float(entry.get('balance') or 0)
+        entry['commission_rate'] = float(entry.get('commission_rate') or 20)
 
     return Response({
         'total_partners': total_partners,

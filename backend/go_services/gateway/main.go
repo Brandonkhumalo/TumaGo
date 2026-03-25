@@ -91,6 +91,8 @@ func main() {
 	mux.Handle("/api/v1/driver/signup/", authHandler)
 	mux.Handle("/api/v1/otp/send/", authHandler)
 	mux.Handle("/api/v1/otp/verify/", authHandler)
+	mux.Handle("/api/v1/partner/portal/register/", authHandler)
+	mux.Handle("/api/v1/partner/portal/login/", authHandler)
 
 	// Delivery request — medium rate limit (versioned API).
 	mux.Handle("/api/v1/delivery/request/", deliveryRL.limit(djangoProxy))
@@ -188,6 +190,10 @@ func (rh *routingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case strings.HasPrefix(path, "/api/v1/driver/signup/"):
 		rh.mux.ServeHTTP(w, r)
 	case strings.HasPrefix(path, "/api/v1/otp/"):
+		rh.mux.ServeHTTP(w, r)
+	case strings.HasPrefix(path, "/api/v1/partner/portal/register/"):
+		rh.mux.ServeHTTP(w, r)
+	case strings.HasPrefix(path, "/api/v1/partner/portal/login/"):
 		rh.mux.ServeHTTP(w, r)
 	case strings.HasPrefix(path, "/api/v1/delivery/request/"):
 		rh.mux.ServeHTTP(w, r)

@@ -21,6 +21,10 @@ export const metadata: Metadata = {
     "courier",
     "same-day delivery",
   ],
+  icons: {
+    icon: "/tuma_go_logo.png",
+    apple: "/tuma_go_logo.png",
+  },
   openGraph: {
     title: "TumaGo — Last-Mile Package Delivery",
     description:
