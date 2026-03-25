@@ -51,13 +51,43 @@ jobs:
             # Clean up old images
             docker image prune -f
 
-            # Update nginx config (auto-selects HTTP or HTTPS based on SSL cert existence)
+            # ── Nginx + SSL ────────────────────────────────────────────────
             NGINX_SRC=~/TumaGo/backend/infrastructure/nginx
-            if [ -d /etc/letsencrypt/live/tumago.co.zw ]; then
+
+            # Ensure nginx and certbot are installed
+            sudo apt-get update -qq
+            sudo apt-get install -y nginx certbot python3-certbot-nginx
+
+            # Ensure certbot webroot exists
+            sudo mkdir -p /var/www/certbot
+
+            # Remove default site so it doesn't conflict
+            sudo rm -f /etc/nginx/sites-enabled/default
+
+            # If SSL certs exist, use the HTTPS config directly
+            if [ -d /etc/letsencrypt/live/tumago.co.zw ] && [ -f /etc/letsencrypt/live/tumago.co.zw/fullchain.pem ]; then
                 sudo cp "$NGINX_SRC/tumago-ssl.conf" /etc/nginx/sites-available/tumago
             else
+                # No certs — deploy HTTP config first so certbot can verify the domain
                 sudo cp "$NGINX_SRC/tumago.conf" /etc/nginx/sites-available/tumago
+                sudo ln -sf /etc/nginx/sites-available/tumago /etc/nginx/sites-enabled/tumago
+                sudo nginx -t && sudo systemctl reload nginx
+
+                # Request SSL certificate from Let's Encrypt
+                sudo certbot certonly \
+                    --webroot \
+                    -w /var/www/certbot \
+                    -d tumago.co.zw \
+                    -d www.tumago.co.zw \
+                    --non-interactive \
+                    --agree-tos \
+                    --email brandon@tishanyq.co.zw \
+                    --no-eff-email
+
+                # Switch to HTTPS config now that certs are installed
+                sudo cp "$NGINX_SRC/tumago-ssl.conf" /etc/nginx/sites-available/tumago
             fi
+
+            # Enable site, test config, and reload
             sudo ln -sf /etc/nginx/sites-available/tumago /etc/nginx/sites-enabled/tumago
-            sudo rm -f /etc/nginx/sites-enabled/default
             sudo nginx -t && sudo systemctl reload nginx
