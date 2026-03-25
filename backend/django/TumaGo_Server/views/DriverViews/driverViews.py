@@ -240,6 +240,37 @@ def AcceptTrip(request):
     
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
+def mark_pickup(request):
+    delivery_id = request.data.get("delivery_id")
+    if not delivery_id:
+        return Response({"error": "delivery_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+    delivery = get_object_or_404(Delivery, delivery_id=delivery_id, driver=request.user)
+    delivery.picked_up = True
+    delivery.save()
+
+    # Notify client that package has been picked up
+    client = delivery.client
+    if client.fcm_token:
+        from firebase_admin import messaging as fcm_messaging
+        try:
+            message = fcm_messaging.Message(
+                token=client.fcm_token,
+                data={"type": "package_picked_up", "delivery_id": str(delivery_id)},
+                notification=fcm_messaging.Notification(
+                    title="Package Picked Up",
+                    body="Your driver has picked up the package and is on the way!",
+                ),
+            )
+            fcm_messaging.send(message)
+        except Exception as e:
+            logger.error(f"FCM pickup notification error: {e}")
+
+    return Response({"message": "Pickup confirmed"}, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def end_trip(request):
     delivery_id = request.data.get("delivery_id")
     rating_received = request.data.get("rating")
@@ -254,24 +285,23 @@ def end_trip(request):
     client_id = str(client.id)
 
     if not delivery_id or not client_id or rating_received is None:
-        return Response({"error": "delivery_id is required"},
-                        {"error": "rating is required"},
+        return Response({"error": "delivery_id and rating are required"},
                         status=status.HTTP_400_BAD_REQUEST)
 
     try:
         driver_vehicle = delivery.vehicle
-        rating = Decimal(str(rating))
+        rating = Decimal(str(rating_received))
 
         client = CustomUser.objects.get(id=client_id, role=CustomUser.USER)
 
-        # Update the client's rating by adding
-        if not hasattr(client, 'rating_count') or client.rating_count is None:
+        # Update the client's rating using weighted average
+        if not hasattr(client, 'rating_count') or client.rating_count is None or client.rating_count == 0:
             client.rating_count = 1
-            client.rating = rating_received
+            client.rating = rating
         else:
             total_rating = client.rating * client.rating_count
             client.rating_count += 1
-            client.rating = (total_rating + rating_received) / client.rating_count
+            client.rating = (total_rating + rating) / client.rating_count
         client.save()
         
         # Update fields
@@ -334,10 +364,34 @@ def end_trip(request):
                 description=f"Delivery completed by {driver.name} {driver.surname}",
             )
 
+        # Notify the client that delivery is complete
+        if client.fcm_token:
+            from firebase_admin import messaging as fcm_messaging
+            try:
+                msg = fcm_messaging.Message(
+                    token=client.fcm_token,
+                    data={
+                        "type": "delivery_complete",
+                        "delivery_id": str(delivery.delivery_id),
+                        "fare": str(delivery.fare),
+                        "driver_name": f"{driver.name} {driver.surname}",
+                    },
+                    notification=fcm_messaging.Notification(
+                        title="Delivery Complete",
+                        body="Your package has been delivered!",
+                    ),
+                )
+                fcm_messaging.send(msg)
+            except Exception as e:
+                logger.error(f"FCM delivery_complete error: {e}")
+
         if Driver.role == CustomUser.DRIVER:
             Driver.driver_available = True
             Driver.save()
-            return Response({"message": "Trip ended successfully"}, status=status.HTTP_200_OK)
+            return Response({
+                "message": "Trip ended successfully",
+                "fare": str(delivery.fare),
+            }, status=status.HTTP_200_OK)
         else:
             return Response({'error': 'User is not a driver'}, status=status.HTTP_400_BAD_REQUEST)
 

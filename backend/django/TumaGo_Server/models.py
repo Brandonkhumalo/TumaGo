@@ -159,6 +159,7 @@ class Delivery(models.Model):
     vehicle = models.CharField(max_length=50, null=True, blank=True)
     fare = models.DecimalField(max_digits=6, decimal_places=2, null=False, blank=False)
     payment_method = models.CharField(max_length=50, null=False, blank=False)
+    picked_up = models.BooleanField(default=False)
     successful = models.BooleanField(default=True) #True is successful, False is unsuccessful
 
     class Meta:

@@ -73,6 +73,9 @@ public interface ApiService {
     @POST("api/v1/accept/trip/")
     Call<ResponseBody> acceptTrip(@Header("Authorization") String authHeader, @Body Map<String, String> body);
 
+    @POST("api/v1/mark_pickup/")
+    Call<ResponseBody> markPickup(@Header("Authorization") String authHeader, @Body Map<String, String> body);
+
     @POST("api/v1/end_trip/")
     Call<ResponseBody> endTrip(@Header("Authorization") String authHeader, @Body EndTrip request);
 

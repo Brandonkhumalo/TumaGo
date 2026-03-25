@@ -62,6 +62,7 @@ urlpatterns = [
     path('driver/offline/', authViews.driver_offline, name='driver_offline'),
     path('add/vehicle/', authViews.driver_vehicle, name='add_driver_vehicle'),
     path('accept/trip/', driverViews.AcceptTrip, name="Accept_trip"),
+    path('mark_pickup/', driverViews.mark_pickup, name='mark_pickup'),
     path('end_trip/', driverViews.end_trip, name='end_trip'),
     path('add/license/', authViews.upload_license, name='upload_license'),
     path('driver/delivery_info/', driverViews.getDriver_Finances, name='driver_delivery_info'),

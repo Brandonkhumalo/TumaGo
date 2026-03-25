@@ -34,6 +34,19 @@ public class ClientMessagingService extends FirebaseMessagingService {
                 NoDriverFoundHelper.handle(getApplicationContext(), data);
                 break;
 
+            case "delivery_complete":
+                DeliveryCompleteHelper.handle(getApplicationContext(), data);
+                break;
+
+            case "package_picked_up":
+                PackagePickedUpHelper.handle(getApplicationContext(), data);
+                break;
+
+            case "delivery_cancelled":
+                // Driver-side cancellation handled by notification display only
+                Log.i("FCM", "Delivery cancelled notification received");
+                break;
+
             default:
                 Log.w("FCM", "Unknown message type: " + type);
                 break;

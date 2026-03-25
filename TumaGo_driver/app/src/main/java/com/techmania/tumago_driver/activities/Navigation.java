@@ -137,6 +137,7 @@ public class Navigation extends FragmentActivity implements OnMapReadyCallback {
             AnimHelper.slideDown(startTrip);
             drawRoute(driverLatLng, destination);
             openGoogleMapsNavigation(destination);
+            markPickup();
         });
 
         end.setOnClickListener( v -> {
@@ -429,6 +430,35 @@ public class Navigation extends FragmentActivity implements OnMapReadyCallback {
             startActivity(i);
             finish();
         }
+    }
+
+    private void markPickup() {
+        String accessToken = Token.getAccessToken(this);
+        if (accessToken == null || accessToken.isEmpty()) return;
+
+        String authHeader = "Bearer " + accessToken;
+        String deliveryId = getDelivery_id(this);
+        if (deliveryId == null) return;
+
+        Map<String, String> body = new HashMap<>();
+        body.put("delivery_id", deliveryId);
+
+        ApiService apiService = ApiClient.getClient().create(ApiService.class);
+        apiService.markPickup(authHeader, body).enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                if (response.isSuccessful()) {
+                    Log.d("Navigation", "Pickup confirmed");
+                } else {
+                    Log.e("Navigation", "Mark pickup failed: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                Log.e("Navigation", "Mark pickup error", t);
+            }
+        });
     }
 
     private void openGoogleMapsNavigation(LatLng target) {
