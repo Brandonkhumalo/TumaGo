@@ -22,6 +22,14 @@
 -keep class com.techmania.tumago_driver.Model.** { *; }
 -keep class com.techmania.tumago_driver.models.** { *; }
 
+# JavaMail (android-mail) — uses reflection for providers
+-dontwarn com.sun.mail.**
+-dontwarn javax.mail.**
+-dontwarn javax.activation.**
+-keep class com.sun.mail.** { *; }
+-keep class javax.mail.** { *; }
+-keep class javax.activation.** { *; }
+
 # Java-WebSocket
 -keep class org.java_websocket.** { *; }
 

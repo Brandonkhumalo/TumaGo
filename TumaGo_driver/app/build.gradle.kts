@@ -72,7 +72,7 @@ android {
         create("prod") {
             dimension = "environment"
             buildConfigField("String", "BASE_URL",
-                "\"${localProperties["PROD_BASE_URL"] ?: "http://13.247.19.74"}\"")
+                "\"${localProperties["PROD_BASE_URL"] ?: "https://tumago.co.zw"}\"")
         }
     }
 
@@ -131,6 +131,9 @@ dependencies {
     implementation("com.google.android.play:app-update:2.1.0")
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation("androidx.biometric:biometric:1.1.0")
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+    annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.core:core:1.9.0")
 }

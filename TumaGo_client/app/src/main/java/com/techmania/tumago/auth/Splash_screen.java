@@ -21,6 +21,7 @@ import com.techmania.tumago.Activities.HomeActivity;
 import com.techmania.tumago.Interface.ApiService;
 import com.techmania.tumago.R;
 import com.techmania.tumago.helper.ApiClient;
+import com.techmania.tumago.helper.BiometricHelper;
 import com.techmania.tumago.helper.ThemeHelper;
 import com.techmania.tumago.helper.Token;
 
@@ -29,7 +30,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class Splash_screen extends AppCompatActivity {
+public class Splash_screen extends androidx.fragment.app.FragmentActivity {
     ImageView imageSplash;
 
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 100;
@@ -120,6 +121,24 @@ public class Splash_screen extends AppCompatActivity {
                 @Override
                 public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                     if (response.isSuccessful()) {
+                        // Token valid — check if biometric gate is enabled
+                        if (BiometricHelper.isEnabled(Splash_screen.this)
+                                && BiometricHelper.isDeviceSupported(Splash_screen.this)) {
+                            BiometricHelper.authenticate(Splash_screen.this,
+                                    () -> {
+                                        // Biometric success — proceed to home
+                                        startActivity(new Intent(Splash_screen.this, HomeActivity.class));
+                                        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+                                        finish();
+                                    },
+                                    () -> {
+                                        // User pressed "Use password" — go to login
+                                        startActivity(new Intent(Splash_screen.this, Login.class));
+                                        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+                                        finish();
+                                    });
+                            return;
+                        }
                         Intent mainActivity = new Intent(Splash_screen.this, HomeActivity.class);
                         startActivity(mainActivity);
                         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);

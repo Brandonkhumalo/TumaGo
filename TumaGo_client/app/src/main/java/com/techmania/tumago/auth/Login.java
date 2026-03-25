@@ -22,8 +22,11 @@ import com.techmania.tumago.Model.LoginUser;
 import com.techmania.tumago.Model.TokenResponse;
 import com.techmania.tumago.R;
 import com.techmania.tumago.helper.ApiClient;
+import com.techmania.tumago.helper.BiometricHelper;
 import com.techmania.tumago.helper.Token;
 import com.techmania.tumago.helper.UiHelper;
+
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -135,13 +138,31 @@ public class Login extends AppCompatActivity {
                             Token.storeToken(Login.this, accessToken, refreshToken);
                         }
 
-                        Intent i = new Intent(Login.this, HomeActivity.class);
-                        startActivity(i);
-                        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
-                        finish();
-
                         progressBar.setVisibility(View.GONE);
                         loginBtn.setEnabled(true);
+
+                        // First-time biometric prompt
+                        if (!BiometricHelper.hasBeenAsked(Login.this)
+                                && BiometricHelper.isDeviceSupported(Login.this)) {
+                            BiometricHelper.setAsked(Login.this);
+                            new MaterialAlertDialogBuilder(Login.this)
+                                    .setTitle("Enable Biometric Login?")
+                                    .setMessage("Use your fingerprint or face to log in faster next time.")
+                                    .setPositiveButton("Enable", (d, w) -> {
+                                        BiometricHelper.setEnabled(Login.this, true);
+                                        goToHome();
+                                    })
+                                    .setNegativeButton("Not now", (d, w) -> {
+                                        Toast.makeText(Login.this,
+                                                "You can enable this later in Settings",
+                                                Toast.LENGTH_SHORT).show();
+                                        goToHome();
+                                    })
+                                    .setCancelable(false)
+                                    .show();
+                        } else {
+                            goToHome();
+                        }
                     } else {
                         progressBar.setVisibility(View.GONE);
                         loginBtn.setEnabled(true);
@@ -166,6 +187,13 @@ public class Login extends AppCompatActivity {
             progressBar.setVisibility(View.GONE);
             Toast.makeText(Login.this, "Please fill all the fields", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private void goToHome() {
+        Intent i = new Intent(Login.this, HomeActivity.class);
+        startActivity(i);
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+        finish();
     }
 }
 

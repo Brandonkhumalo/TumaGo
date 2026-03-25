@@ -42,6 +42,7 @@ urlpatterns = [
     path('track/delivery/', userViews.track_delivery, name='track_delivery'),
 
     path('login/', views.login, name='login'),
+    path('refresh/', views.refresh_token, name='refresh_token'),
     path('verify_token/', views.VerifyToken, name='VerifyToken'),
     path('logout/', views.logout, name='logout'),
     path('delete/account/', authViews.delete_account, name='delete_account'),

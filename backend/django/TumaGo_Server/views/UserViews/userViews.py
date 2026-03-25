@@ -214,6 +214,8 @@ def rate_driver(request):
 
     try:
         rating = Decimal(str(rating_received))
+        if rating < Decimal('0.5') or rating > Decimal('5.0'):
+            return Response({"error": "Rating must be between 0.5 and 5.0"}, status=status.HTTP_400_BAD_REQUEST)
 
         driver = CustomUser.objects.get(id=driver_id, role=CustomUser.DRIVER)
 

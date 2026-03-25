@@ -168,39 +168,35 @@ def admin_overview(request):
     """High-level dashboard overview stats."""
     today = timezone.now().date()
 
-    total_users = CustomUser.objects.filter(role='user').count()
-    total_drivers = CustomUser.objects.filter(role='driver').count()
-    drivers_online = CustomUser.objects.filter(role='driver', driver_online=True).count()
-    drivers_available = CustomUser.objects.filter(role='driver', driver_available=True).count()
+    # Single aggregated query for user/driver counts instead of 4 separate queries
+    user_stats = CustomUser.objects.aggregate(
+        total_users=Count('id', filter=Q(role='user')),
+        total_drivers=Count('id', filter=Q(role='driver')),
+        drivers_online=Count('id', filter=Q(role='driver', driver_online=True)),
+        drivers_available=Count('id', filter=Q(role='driver', driver_available=True)),
+    )
 
-    total_deliveries = Delivery.objects.count()
-    successful_deliveries = Delivery.objects.filter(successful=True).count()
-    cancelled_deliveries = Delivery.objects.filter(successful=False).count()
+    # Single aggregated query for delivery counts instead of 3 separate queries
+    delivery_stats = Delivery.objects.aggregate(
+        total_deliveries=Count('id'),
+        successful_deliveries=Count('id', filter=Q(successful=True)),
+        cancelled_deliveries=Count('id', filter=Q(successful=False)),
+        today_deliveries=Count('id', filter=Q(date=today)),
+    )
 
     pending_trip_requests = TripRequest.objects.filter(accepted=False, cancelled=False).count()
 
-    total_revenue = (
-        Payment.objects.filter(status='paid').aggregate(total=Sum('amount'))['total'] or 0
-    )
-
-    today_deliveries = Delivery.objects.filter(date=today).count()
-    today_revenue = (
-        Payment.objects.filter(status='paid', paid_at__date=today)
-        .aggregate(total=Sum('amount'))['total'] or 0
+    revenue_stats = Payment.objects.filter(status='paid').aggregate(
+        total_revenue=Sum('amount'),
+        today_revenue=Sum('amount', filter=Q(paid_at__date=today)),
     )
 
     return Response({
-        'total_users': total_users,
-        'total_drivers': total_drivers,
-        'drivers_online': drivers_online,
-        'drivers_available': drivers_available,
-        'total_deliveries': total_deliveries,
-        'successful_deliveries': successful_deliveries,
-        'cancelled_deliveries': cancelled_deliveries,
+        **user_stats,
+        **delivery_stats,
         'pending_trip_requests': pending_trip_requests,
-        'total_revenue': float(total_revenue),
-        'today_deliveries': today_deliveries,
-        'today_revenue': float(today_revenue),
+        'total_revenue': float(revenue_stats['total_revenue'] or 0),
+        'today_revenue': float(revenue_stats['today_revenue'] or 0),
     })
 
 

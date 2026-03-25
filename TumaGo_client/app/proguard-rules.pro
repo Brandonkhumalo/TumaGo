@@ -21,6 +21,14 @@
 # Keep model classes (Gson serialization)
 -keep class com.techmania.tumago.Model.** { *; }
 
+# JavaMail (android-mail) — uses reflection for providers
+-dontwarn com.sun.mail.**
+-dontwarn javax.mail.**
+-dontwarn javax.activation.**
+-keep class com.sun.mail.** { *; }
+-keep class javax.mail.** { *; }
+-keep class javax.activation.** { *; }
+
 # Google Play In-App Update
 -keep class com.google.android.play.** { *; }
 

@@ -74,6 +74,7 @@ class CustomUser(AbstractUser):
 
     class Meta:
         indexes = [
+            models.Index(fields=['role'], name='idx_user_role'),
             # Composite index for the matching query: online + available + role
             models.Index(fields=['role', 'driver_online', 'driver_available'], name='idx_driver_matching'),
         ]
@@ -233,6 +234,11 @@ class TripRequest(models.Model):
     accepted = models.BooleanField(default=False)
     cancelled = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['accepted', 'cancelled'], name='idx_trip_pending'),
+        ]
 
 
 class PartnerCompany(models.Model):

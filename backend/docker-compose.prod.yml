@@ -11,10 +11,10 @@ x-django-env: &django-env
   REDIS_URL: redis://redis:6379
   SECRET_KEY: ${SECRET_KEY}
   DEBUG: "False"
-  ALLOWED_HOSTS: ${ALLOWED_HOSTS:-api.tumago.com}
+  ALLOWED_HOSTS: ${ALLOWED_HOSTS:-tumago.co.zw,www.tumago.co.zw}
   GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY}
   FIREBASE_CREDENTIALS: ${FIREBASE_CREDENTIALS}
-  CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-https://api.tumago.com}
+  CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-https://tumago.co.zw,https://www.tumago.co.zw}
   AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
   AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
   AWS_SES_REGION: ${AWS_SES_REGION:-af-south-1}
@@ -34,15 +34,14 @@ services:
       context: ./go_services/gateway
       dockerfile: Dockerfile
     ports:
-      - "80:80"
-      - "443:443"
+      - "8080:8080"
     environment:
       <<: *go-env
       DJANGO_BACKEND: web:8000
       LOCATION_SERVICE: location:8001
       MATCHING_SERVICE: matching:8002
       STATIC_DIR: /static
-      LISTEN_ADDR: ":80"
+      LISTEN_ADDR: ":8080"
     volumes:
       - ./django/staticfiles:/static:ro
     depends_on:
@@ -157,6 +156,26 @@ services:
       - ${FIREBASE_CREDENTIALS_FILE:-./notification/firebase-credentials.json}:/secrets/firebase-credentials.json:ro
     depends_on:
       - redis
+    restart: always
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+  # ── Frontend (Next.js) ──────────────────────────────────────────────────
+  frontend:
+    image: ${REGISTRY:-tumago}/frontend:${VERSION:-latest}
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+    depends_on:
+      - gateway
     restart: always
     deploy:
       replicas: 1

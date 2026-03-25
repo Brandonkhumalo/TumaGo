@@ -19,8 +19,11 @@ import com.techmania.tumago_driver.R;
 import com.techmania.tumago_driver.activities.MainActivity;
 import com.techmania.tumago_driver.helpers.AnimHelper;
 import com.techmania.tumago_driver.helpers.ApiClient;
+import com.techmania.tumago_driver.helpers.BiometricHelper;
 import com.techmania.tumago_driver.helpers.SendFCMtoken;
 import com.techmania.tumago_driver.helpers.Token;
+
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.techmania.tumago_driver.models.LoginDriver;
 import com.techmania.tumago_driver.models.TokenResponse;
 
@@ -103,12 +106,31 @@ public class Login extends AppCompatActivity {
                                     sendFcmToken.sendFcmTokenToBackend(token, accessToken);
                                 });
 
-                        Intent i = new Intent(Login.this, MainActivity.class);
-                        startActivity(i);
-                        finish();
-
                         AnimHelper.fadeOut(progressBar);
                         login.setEnabled(true);
+
+                        // First-time biometric prompt
+                        if (!BiometricHelper.hasBeenAsked(Login.this)
+                                && BiometricHelper.isDeviceSupported(Login.this)) {
+                            BiometricHelper.setAsked(Login.this);
+                            new MaterialAlertDialogBuilder(Login.this)
+                                    .setTitle("Enable Biometric Login?")
+                                    .setMessage("Use your fingerprint or face to log in faster next time.")
+                                    .setPositiveButton("Enable", (d, w) -> {
+                                        BiometricHelper.setEnabled(Login.this, true);
+                                        goToMain();
+                                    })
+                                    .setNegativeButton("Not now", (d, w) -> {
+                                        Toast.makeText(Login.this,
+                                                "You can enable this later in Settings",
+                                                Toast.LENGTH_SHORT).show();
+                                        goToMain();
+                                    })
+                                    .setCancelable(false)
+                                    .show();
+                        } else {
+                            goToMain();
+                        }
                     } else {
                         AnimHelper.fadeOut(progressBar);
                         login.setEnabled(true);
@@ -136,5 +158,11 @@ public class Login extends AppCompatActivity {
             shakePinBoxes();
             Log.e("Error", "error");
         }
+    }
+
+    private void goToMain() {
+        Intent i = new Intent(Login.this, MainActivity.class);
+        startActivity(i);
+        finish();
     }
 }

@@ -1,13 +1,17 @@
 package com.techmania.tumago.Activities;
 
 import android.os.Bundle;
+import android.view.View;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
 
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.materialswitch.MaterialSwitch;
 import com.techmania.tumago.R;
+import com.techmania.tumago.helper.BiometricHelper;
 import com.techmania.tumago.helper.ThemeHelper;
 
 public class AppSettings extends AppCompatActivity {
@@ -23,6 +27,7 @@ public class AppSettings extends AppCompatActivity {
             overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
         });
 
+        // ── Theme ───────────────────────────────────────────────────────────
         RadioGroup themeGroup = findViewById(R.id.themeRadioGroup);
         RadioButton radioSystem = findViewById(R.id.radioSystem);
         RadioButton radioLight = findViewById(R.id.radioLight);
@@ -52,6 +57,19 @@ public class AppSettings extends AppCompatActivity {
             }
             ThemeHelper.saveAndApplyTheme(AppSettings.this, mode);
         });
+
+        // ── Biometric toggle ────────────────────────────────────────────────
+        CardView biometricCard = findViewById(R.id.biometricCard);
+        MaterialSwitch biometricSwitch = findViewById(R.id.biometricSwitch);
+
+        if (BiometricHelper.isDeviceSupported(this)) {
+            biometricCard.setVisibility(View.VISIBLE);
+            biometricSwitch.setChecked(BiometricHelper.isEnabled(this));
+
+            biometricSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                BiometricHelper.setEnabled(AppSettings.this, isChecked);
+            });
+        }
     }
 
     @Override
