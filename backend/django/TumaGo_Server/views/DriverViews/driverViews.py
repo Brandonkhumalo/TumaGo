@@ -13,6 +13,7 @@ from ...serializers.driverSerializer.authSerializers import UserSerializer
 from ...serializers.driverSerializer.rideSerializers import DeliverySerializer
 from ...models import DriverFinances, DriverVehicle, TripRequest, Delivery, CustomUser, Payment, DriverBalance, PartnerDeliveryRequest
 from .deliveryMatching.delivery import driver_found
+from ...busy_drivers import mark_driver_busy, mark_driver_available
 import googlemaps
 import logging
 from django.conf import settings
@@ -224,7 +225,8 @@ def AcceptTrip(request):
         if Driver.role == CustomUser.DRIVER:
             Driver.driver_available = False
             Driver.save()
-            return Response({'message': 'Driver availability set to false', 
+            mark_driver_busy(Driver.id)
+            return Response({'message': 'Driver availability set to false',
                              'delivery_id': str(delivery.delivery_id)},
                              status=status.HTTP_202_ACCEPTED)
         else:
@@ -390,6 +392,7 @@ def end_trip(request):
         if Driver.role == CustomUser.DRIVER:
             Driver.driver_available = True
             Driver.save()
+            mark_driver_available(Driver.id)
             return Response({
                 "message": "Trip ended successfully",
                 "fare": str(delivery.fare),

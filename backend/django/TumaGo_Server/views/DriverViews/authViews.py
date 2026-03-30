@@ -7,6 +7,7 @@ from rest_framework.throttling import AnonRateThrottle
 from ...serializers.driverSerializer.authSerializers import RegisterSerializer, VehicleSerializer, LicenseUploadSerializer, ResetPasswordSerializer
 from ...token import JWTAuthentication
 from ...otp import is_phone_verified, clear_verification
+from ...busy_drivers import mark_driver_available
 import logging
 from ...models import CustomUser
 from django.shortcuts import get_object_or_404
@@ -118,6 +119,7 @@ def driver_offline(request):
     driver.driver_available = False
     driver.driver_online = False
     driver.save()
+    mark_driver_available(driver.id)  # ensure removed from busy set when going offline
     logger.info("Driver %s offline", driver.id)
     return Response({"status": "driver marked offline"}, status=status.HTTP_202_ACCEPTED)
 

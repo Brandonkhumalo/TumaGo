@@ -8,6 +8,7 @@ from ...models import Delivery, CustomUser, TripRequest, PartnerDeliveryRequest,
 from firebase_admin import messaging
 from TumaGo.firebase_init import initialize_firebase
 from django.shortcuts import get_object_or_404
+from ...busy_drivers import mark_driver_available
 import logging
 logger = logging.getLogger(__name__)
 
@@ -77,6 +78,7 @@ def cancel_delivery(request):
         driver = delivery.driver
         driver.driver_available = True
         driver.save()
+        mark_driver_available(driver.id)
 
         client = delivery.client
         client_name = client.name

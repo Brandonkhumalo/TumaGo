@@ -8,6 +8,7 @@ New approach:
   3. Call Google Maps ONCE for the selected driver (ETA only — optional).
 """
 from ....models import DriverLocations, DriverVehicle, CustomUser
+from ....busy_drivers import filter_busy_drivers
 from firebase_admin import messaging
 from TumaGo.firebase_init import initialize_firebase
 import googlemaps
@@ -61,6 +62,11 @@ def find_nearest_driver(requester_lat, requester_lng, requested_vehicle_type, se
         entry[0]: {"latitude": entry[2][1], "longitude": entry[2][0]}
         for entry in nearby
     }
+
+    # Filter out busy drivers (currently on a trip) before hitting the DB
+    driver_ids_ordered = filter_busy_drivers(driver_ids_ordered)
+    if not driver_ids_ordered:
+        return None, None
 
     # Single DB query — available drivers with matching vehicle type
     drivers_qs = CustomUser.objects.filter(

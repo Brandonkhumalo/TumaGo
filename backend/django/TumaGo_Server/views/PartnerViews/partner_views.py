@@ -22,6 +22,7 @@ from ...models import (
     DriverVehicle,
 )
 from ..DriverViews.deliveryMatching.tasks import retry_trip_matching
+from ...busy_drivers import mark_driver_available
 
 import logging
 
@@ -301,6 +302,7 @@ def partner_cancel_delivery(request, delivery_id):
         if driver:
             driver.driver_available = True
             driver.save()
+            mark_driver_available(driver.id)
 
             # Notify driver via FCM
             try:
