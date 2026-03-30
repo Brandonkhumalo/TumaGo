@@ -54,6 +54,12 @@
             </intent-filter>
         </activity>
         <activity
+            android:name=".activities.WalletActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activities.RefundRequestsActivity"
+            android:exported="false" />
+        <activity
             android:name=".activities.Finances"
             android:exported="false" />
         <activity

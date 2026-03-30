@@ -56,8 +56,8 @@ type dbDriver struct {
 }
 
 // findAvailableDrivers queries the DB for available drivers with the matching
-// vehicle type from the given list of IDs.
-func findAvailableDrivers(ctx context.Context, driverIDs []string, vehicleType string) (map[string]dbDriver, error) {
+// vehicle type and sufficient wallet balance from the given list of IDs.
+func findAvailableDrivers(ctx context.Context, driverIDs []string, vehicleType string, minWalletBalance float64) (map[string]dbDriver, error) {
 	if dbPool == nil || len(driverIDs) == 0 {
 		return nil, nil
 	}
@@ -66,11 +66,13 @@ func findAvailableDrivers(ctx context.Context, driverIDs []string, vehicleType s
 		`SELECT u.id::text, u.name, u.surname, COALESCE(u.fcm_token, '')
 		 FROM "TumaGo_Server_customuser" u
 		 JOIN "TumaGo_Server_drivervehicle" v ON v.driver_id = u.id
+		 LEFT JOIN "TumaGo_Server_driverwallet" w ON w.driver_id = u.id
 		 WHERE u.id::text = ANY($1)
 		   AND u.driver_available = TRUE
 		   AND u.role = 'driver'
-		   AND v.delivery_vehicle = $2`,
-		driverIDs, vehicleType,
+		   AND v.delivery_vehicle = $2
+		   AND COALESCE(w.balance, 0) >= $3`,
+		driverIDs, vehicleType, minWalletBalance,
 	)
 	if err != nil {
 		return nil, err

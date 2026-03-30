@@ -382,6 +382,129 @@ class PartnerDevice(models.Model):
         return f"{self.partner.name} — {self.label} ({self.user.email})"
 
 
+class DriverWallet(models.Model):
+    """Prepaid wallet that drivers top up to accept deliveries.
+    Commission (15% cash, 20% online) is deducted from this balance
+    when the driver accepts a trip."""
+    driver = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='wallet')
+    balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.driver.email} — wallet ${self.balance}"
+
+
+class WalletTransaction(models.Model):
+    """Audit trail for every change to a driver's wallet balance."""
+    TOPUP = 'topup'
+    COMMISSION = 'commission'
+    REFUND = 'refund'
+    TRANSFER_IN = 'transfer_in'
+    TRANSFER_OUT = 'transfer_out'
+
+    TYPE_CHOICES = [
+        (TOPUP, 'Top-up'),
+        (COMMISSION, 'Commission Deduction'),
+        (REFUND, 'Commission Refund'),
+        (TRANSFER_IN, 'Transfer In (from owed)'),
+        (TRANSFER_OUT, 'Transfer Out (to owed)'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    driver = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='wallet_transactions')
+    transaction_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    balance_after = models.DecimalField(max_digits=10, decimal_places=2)
+    delivery = models.ForeignKey(
+        Delivery, null=True, blank=True, on_delete=models.SET_NULL, related_name='wallet_transactions',
+    )
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['driver', 'transaction_type'], name='idx_wallet_txn_type'),
+        ]
+
+    def __str__(self):
+        sign = '+' if self.amount > 0 else ''
+        return f"{self.driver.email} {sign}{self.amount} ({self.transaction_type})"
+
+
+class CommissionRefundRequest(models.Model):
+    """When a driver cancels a delivery, their commission is held.
+    They submit a reason, and an admin approves or denies the refund."""
+    PENDING = 'pending'
+    APPROVED = 'approved'
+    DENIED = 'denied'
+
+    STATUS_CHOICES = [
+        (PENDING, 'Pending'),
+        (APPROVED, 'Approved'),
+        (DENIED, 'Denied'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    driver = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='refund_requests')
+    delivery = models.ForeignKey(Delivery, on_delete=models.CASCADE, related_name='refund_requests')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    reason = models.TextField()
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=PENDING, db_index=True)
+    admin_notes = models.TextField(blank=True)
+    reviewed_by = models.ForeignKey(
+        CustomUser, null=True, blank=True, on_delete=models.SET_NULL, related_name='reviewed_refunds',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['driver', 'status'], name='idx_refund_driver_status'),
+            models.Index(fields=['status', 'created_at'], name='idx_refund_pending'),
+        ]
+
+    def __str__(self):
+        return f"{self.driver.email} — ${self.amount} ({self.status})"
+
+
+class PlatformSettings(models.Model):
+    """Singleton model for platform-wide pricing and commission config.
+    Only one row should ever exist — use PlatformSettings.load() to get it."""
+
+    # Per-km pricing
+    scooter_price_per_km = models.DecimalField(max_digits=6, decimal_places=2, default=0.50)
+    scooter_base_fee = models.DecimalField(max_digits=6, decimal_places=2, default=0.20)
+    van_price_per_km = models.DecimalField(max_digits=6, decimal_places=2, default=1.10)
+    van_base_fee = models.DecimalField(max_digits=6, decimal_places=2, default=0.30)
+    truck_price_per_km = models.DecimalField(max_digits=6, decimal_places=2, default=2.30)
+    truck_base_fee = models.DecimalField(max_digits=6, decimal_places=2, default=0.50)
+
+    # Commission rates (stored as percentages, e.g. 15 = 15%)
+    cash_commission_pct = models.DecimalField(max_digits=5, decimal_places=2, default=15.00)
+    online_commission_pct = models.DecimalField(max_digits=5, decimal_places=2, default=20.00)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Platform Settings'
+        verbose_name_plural = 'Platform Settings'
+
+    def save(self, *args, **kwargs):
+        # Enforce singleton — always use pk=1
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def load(cls):
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj
+
+    def __str__(self):
+        return "Platform Settings"
+
+
 class SESSuppressionList(models.Model):
     """Emails that bounced or were complained about — never send to these again.
     SES suspends accounts above 5% bounce rate or 0.1% complaint rate."""

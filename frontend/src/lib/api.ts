@@ -82,6 +82,20 @@ export const adminAPI = {
     fetchAPI(`/admin/users/${userId}/ban/`, { method: 'POST', token, body: JSON.stringify(data) }),
   unbanUser: (token: string, userId: string) =>
     fetchAPI(`/admin/users/${userId}/unban/`, { method: 'POST', token }),
+
+  // Platform Settings (pricing + commission)
+  getSettings: (token: string) =>
+    fetchAPI('/admin/settings/', { token }),
+  updateSettings: (token: string, data: Record<string, number>) =>
+    fetchAPI('/admin/settings/update/', { method: 'PUT', token, body: JSON.stringify(data) }),
+
+  // Commission Refund Requests
+  refundRequests: (token: string, params?: string) =>
+    fetchAPI(`/admin/refund-requests/${params ? '?' + params : ''}`, { token }),
+  reviewRefund: (token: string, refundId: string, data: { action: string; admin_notes?: string }) =>
+    fetchAPI(`/admin/refund-requests/${refundId}/review/`, { method: 'POST', token, body: JSON.stringify(data) }),
+  refundMetrics: (token: string) =>
+    fetchAPI('/admin/refund-requests/metrics/', { token }),
 };
 
 // ---------------------------------------------------------------------------

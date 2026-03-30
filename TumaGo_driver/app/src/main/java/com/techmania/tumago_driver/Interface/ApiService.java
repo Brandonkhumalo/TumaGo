@@ -11,6 +11,11 @@ import com.techmania.tumago_driver.models.LoginDriver;
 import com.techmania.tumago_driver.models.ResetPasswordModel;
 import com.techmania.tumago_driver.models.TokenResponse;
 import com.techmania.tumago_driver.models.Driver;
+import com.techmania.tumago_driver.models.WalletBalance;
+import com.techmania.tumago_driver.models.WalletTopupResponse;
+import com.techmania.tumago_driver.models.WalletTopupStatus;
+import com.techmania.tumago_driver.models.WalletTransactionResponse;
+import com.techmania.tumago_driver.models.RefundRequestResponse;
 
 import java.util.Map;
 
@@ -91,4 +96,26 @@ public interface ApiService {
             @Query("cursor") String cursor,
             @Header("Authorization") String authToken
     );
+
+    // --- Driver Wallet ---
+    @GET("api/v1/driver/wallet/balance/")
+    Call<WalletBalance> getWalletBalance(@Header("Authorization") String authHeader);
+
+    @POST("api/v1/driver/wallet/topup/")
+    Call<WalletTopupResponse> walletTopup(@Header("Authorization") String authHeader, @Body Map<String, Object> body);
+
+    @GET("api/v1/driver/wallet/topup/status/")
+    Call<WalletTopupStatus> walletTopupStatus(@Header("Authorization") String authHeader, @Query("payment_id") String paymentId);
+
+    @POST("api/v1/driver/wallet/transfer/")
+    Call<ResponseBody> walletTransfer(@Header("Authorization") String authHeader, @Body Map<String, Object> body);
+
+    @GET("api/v1/driver/wallet/transactions/")
+    Call<WalletTransactionResponse> getWalletTransactions(@Header("Authorization") String authHeader, @Query("offset") int offset);
+
+    @GET("api/v1/driver/wallet/refund-requests/")
+    Call<RefundRequestResponse> getRefundRequests(@Header("Authorization") String authHeader);
+
+    @POST("api/v1/driver/cancel/delivery/")
+    Call<ResponseBody> driverCancelDelivery(@Header("Authorization") String authHeader, @Body Map<String, String> body);
 }

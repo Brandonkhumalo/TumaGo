@@ -7,7 +7,7 @@ New approach:
   2. Filter by vehicle type and availability in a single DB query.
   3. Call Google Maps ONCE for the selected driver (ETA only — optional).
 """
-from ....models import DriverLocations, DriverVehicle, CustomUser
+from ....models import DriverLocations, DriverVehicle, CustomUser, DriverWallet, PlatformSettings
 from ....busy_drivers import filter_busy_drivers
 from firebase_admin import messaging
 from TumaGo.firebase_init import initialize_firebase
@@ -32,10 +32,11 @@ def get_sync_redis():
     return _sync_redis
 
 
-def find_nearest_driver(requester_lat, requester_lng, requested_vehicle_type, search_radius_km=15):
+def find_nearest_driver(requester_lat, requester_lng, requested_vehicle_type,
+                        search_radius_km=15, min_wallet_balance=0):
     """
     Query Redis GEO for nearby drivers, then filter by vehicle + availability
-    in a single DB query.  Returns (driver, coords_dict) or (None, None).
+    + wallet balance in a single DB query.  Returns (driver, coords_dict) or (None, None).
     """
     r = get_sync_redis()
 
@@ -68,12 +69,13 @@ def find_nearest_driver(requester_lat, requester_lng, requested_vehicle_type, se
     if not driver_ids_ordered:
         return None, None
 
-    # Single DB query — available drivers with matching vehicle type
+    # Single DB query — available drivers with matching vehicle type + wallet balance
     drivers_qs = CustomUser.objects.filter(
         id__in=driver_ids_ordered,
         driver_available=True,
         role=CustomUser.DRIVER,
         driver_vehicles__delivery_vehicle=requested_vehicle_type,
+        wallet__balance__gte=min_wallet_balance,
     )
     drivers_map = {str(d.id): d for d in drivers_qs}
 
@@ -121,17 +123,28 @@ def _db_fallback_find(requester_lat, requester_lng, requested_vehicle_type):
 
 
 def TripData(requester_data, delivery_data, trip_id):
+    from decimal import Decimal
     destination_lat = delivery_data['destination_lat']
     destination_lng = delivery_data['destination_lng']
     requester_lng = delivery_data['origin_lng']
     requester_lat = delivery_data['origin_lat']
     requested_vehicle_type = delivery_data['vehicle']
     cost = delivery_data['fare']
+    payment_method = str(delivery_data.get('payment_method', 'cash')).lower()
+
+    # Calculate minimum wallet balance (commission) driver must have
+    fare_decimal = Decimal(str(cost))
+    settings = PlatformSettings.load()
+    if payment_method in ('card', 'ecocash', 'onemoney'):
+        min_wallet = fare_decimal * (settings.online_commission_pct / Decimal('100'))
+    else:
+        min_wallet = fare_decimal * (settings.cash_commission_pct / Decimal('100'))
 
     requester_name = f"{requester_data['name']} {requester_data['surname']}"
 
     closest_driver, closest_driver_coords = find_nearest_driver(
-        requester_lat, requester_lng, requested_vehicle_type
+        requester_lat, requester_lng, requested_vehicle_type,
+        min_wallet_balance=min_wallet,
     )
 
     if closest_driver:

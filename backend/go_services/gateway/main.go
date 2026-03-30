@@ -94,6 +94,15 @@ func main() {
 	mux.Handle("/api/v1/partner/portal/register/", authHandler)
 	mux.Handle("/api/v1/partner/portal/login/", authHandler)
 
+	// Driver wallet endpoints — general rate limit.
+	walletHandler := generalRL.limit(djangoProxy)
+	mux.Handle("/api/v1/driver/wallet/", walletHandler)
+	mux.Handle("/api/v1/driver/cancel/delivery/", generalRL.limit(djangoProxy))
+
+	// Admin refund review + settings endpoints — general rate limit.
+	mux.Handle("/api/v1/admin/refund-requests/", generalRL.limit(djangoProxy))
+	mux.Handle("/api/v1/admin/settings/", generalRL.limit(djangoProxy))
+
 	// Delivery request — medium rate limit (versioned API).
 	mux.Handle("/api/v1/delivery/request/", deliveryRL.limit(djangoProxy))
 
@@ -194,6 +203,14 @@ func (rh *routingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case strings.HasPrefix(path, "/api/v1/partner/portal/register/"):
 		rh.mux.ServeHTTP(w, r)
 	case strings.HasPrefix(path, "/api/v1/partner/portal/login/"):
+		rh.mux.ServeHTTP(w, r)
+	case strings.HasPrefix(path, "/api/v1/driver/wallet/"):
+		rh.mux.ServeHTTP(w, r)
+	case strings.HasPrefix(path, "/api/v1/driver/cancel/delivery/"):
+		rh.mux.ServeHTTP(w, r)
+	case strings.HasPrefix(path, "/api/v1/admin/refund-requests/"):
+		rh.mux.ServeHTTP(w, r)
+	case strings.HasPrefix(path, "/api/v1/admin/settings/"):
 		rh.mux.ServeHTTP(w, r)
 	case strings.HasPrefix(path, "/api/v1/delivery/request/"):
 		rh.mux.ServeHTTP(w, r)

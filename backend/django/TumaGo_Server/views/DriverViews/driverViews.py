@@ -11,7 +11,7 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from ...serializers.driverSerializer.authSerializers import UserSerializer
 from ...serializers.driverSerializer.rideSerializers import DeliverySerializer
-from ...models import DriverFinances, DriverVehicle, TripRequest, Delivery, CustomUser, Payment, DriverBalance, PartnerDeliveryRequest
+from ...models import DriverFinances, DriverVehicle, TripRequest, Delivery, CustomUser, Payment, DriverBalance, PartnerDeliveryRequest, DriverWallet, WalletTransaction, PlatformSettings
 from .deliveryMatching.delivery import driver_found
 from ...busy_drivers import mark_driver_busy, mark_driver_available
 import googlemaps
@@ -26,6 +26,7 @@ from django.db.models import Sum
 from decimal import Decimal
 from .deliveryMatching.tasks import retry_trip_matching, publish_trip_accepted
 from django.utils import timezone
+from django.db import transaction as db_transaction
 initialize_firebase()
 
 gmaps = googlemaps.Client(key=settings.GOOGLE_MAPS_API_KEY)
@@ -152,11 +153,6 @@ def AcceptTrip(request):
 
     try:
         trip = TripRequest.objects.get(id=trip_id)
-        trip.accepted = True
-        trip.save()
-
-        # Signal the background matching task to stop waiting (replaces sleep polling)
-        publish_trip_accepted(str(trip_id))
 
         delivery_data = trip.delivery_details
         driver = request.user
@@ -167,8 +163,35 @@ def AcceptTrip(request):
         destination_lat = delivery_data.get("destination_lat")
         destination_lng = delivery_data.get("destination_lng")
         vehicle = delivery_data.get("vehicle")
-        fare = delivery_data.get("fare")
-        payment_method = delivery_data.get("payment_method")
+        fare = Decimal(str(delivery_data.get("fare", 0)))
+        payment_method = delivery_data.get("payment_method", "cash")
+
+        # Calculate commission from platform settings
+        settings = PlatformSettings.load()
+        if payment_method.lower() in ('card', 'ecocash', 'onemoney'):
+            commission_rate = settings.online_commission_pct / Decimal('100')
+        else:
+            commission_rate = settings.cash_commission_pct / Decimal('100')
+        commission = (fare * commission_rate).quantize(Decimal('0.01'))
+
+        # Deduct commission from driver wallet atomically
+        with db_transaction.atomic():
+            wallet, _ = DriverWallet.objects.select_for_update().get_or_create(driver=driver)
+            if wallet.balance < commission:
+                return Response({
+                    "error": "Insufficient wallet balance",
+                    "required": str(commission),
+                    "wallet_balance": str(wallet.balance),
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            wallet.balance -= commission
+            wallet.save()
+
+        trip.accepted = True
+        trip.save()
+
+        # Signal the background matching task to stop waiting (replaces sleep polling)
+        publish_trip_accepted(str(trip_id))
 
         delivery = Delivery.objects.create(
             driver=driver,
@@ -181,6 +204,16 @@ def AcceptTrip(request):
             vehicle=vehicle,
             fare=fare,
             payment_method=payment_method
+        )
+
+        # Record commission deduction in wallet transaction log
+        WalletTransaction.objects.create(
+            driver=driver,
+            transaction_type=WalletTransaction.COMMISSION,
+            amount=-commission,
+            balance_after=wallet.balance,
+            delivery=delivery,
+            description=f"{int(commission_rate * 100)}% commission on ${fare} delivery",
         )
 
         # ✅ Get driver's vehicle (use driver already fetched — avoids N+1)
@@ -314,25 +347,25 @@ def end_trip(request):
         delivery.save()
 
         earnings = Decimal(delivery_cost)
-        if driver_vehicle and driver_vehicle.lower() == "scooter":
-            charges = Decimal("0.20")
-        elif driver_vehicle and driver_vehicle.lower() == "van":
-            charges = Decimal("0.30")
-        elif driver_vehicle and driver_vehicle.lower() == "truck":
-            charges = Decimal("0.50")
+        # Commission is deducted from the driver's wallet at trip acceptance.
+        # Record the rate here for DriverFinances reporting.
+        payment_method = delivery.payment_method.lower()
+        settings = PlatformSettings.load()
+        if payment_method in ('card', 'ecocash', 'onemoney'):
+            charges = earnings * (settings.online_commission_pct / Decimal('100'))
         else:
-            charges = Decimal("0.10")
+            charges = earnings * (settings.cash_commission_pct / Decimal('100'))
 
         finances = DriverFinances(earnings=earnings, charges=charges, driver=driver)
         finances.save()
 
         # If this delivery was paid online (card/ecocash/onemoney),
-        # the money went to the platform — track what we owe the driver.
-        payment_method = delivery.payment_method.lower()
+        # the money went to the platform — credit 100% of the fare to
+        # the driver's owed balance.  The commission was already deducted
+        # from the driver's wallet when they accepted the trip.
         if payment_method in ('card', 'ecocash', 'onemoney'):
-            driver_earnings = earnings - charges
             balance, _ = DriverBalance.objects.get_or_create(driver=driver)
-            balance.owed_amount += driver_earnings
+            balance.owed_amount += earnings
             balance.save()
 
             # Link the Payment record to this Delivery

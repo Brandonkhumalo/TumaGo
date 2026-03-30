@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/page_bg">
+
+    <!-- Toolbar -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbarWallet"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/white"
+            app:title="Wallet"
+            app:titleTextColor="@color/blackish"
+            app:navigationIcon="@drawable/back"/>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone"/>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Delivery Wallet Card -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="4dp"
+                app:cardBackgroundColor="@color/primary_dark"
+                android:layout_marginBottom="12dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Delivery Wallet"
+                        android:textColor="#B3FFFFFF"
+                        android:textSize="14sp"
+                        android:fontFamily="sans-serif"/>
+
+                    <TextView
+                        android:id="@+id/walletBalance"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="$0.00"
+                        android:textColor="@color/white"
+                        android:textSize="32sp"
+                        android:fontFamily="sans-serif-medium"
+                        android:layout_marginTop="4dp"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Used to accept deliveries"
+                        android:textColor="#80FFFFFF"
+                        android:textSize="12sp"
+                        android:layout_marginTop="4dp"/>
+
+                    <!-- Top Up Button -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnTopUp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:text="Top Up"
+                        android:textSize="13sp"
+                        android:layout_marginTop="12dp"
+                        app:cornerRadius="20dp"
+                        android:backgroundTint="@color/white"
+                        android:textColor="@color/primary_dark"/>
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Owed Balance Card -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="4dp"
+                app:cardBackgroundColor="@color/white"
+                android:layout_marginBottom="12dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="System Owes You"
+                        android:textColor="@color/hint_text"
+                        android:textSize="14sp"
+                        android:fontFamily="sans-serif"/>
+
+                    <TextView
+                        android:id="@+id/owedBalance"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="$0.00"
+                        android:textColor="@color/blackish"
+                        android:textSize="28sp"
+                        android:fontFamily="sans-serif-medium"
+                        android:layout_marginTop="4dp"/>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="8dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Total paid out: "
+                            android:textColor="@color/hint_text"
+                            android:textSize="12sp"/>
+
+                        <TextView
+                            android:id="@+id/totalPaid"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="$0.00"
+                            android:textColor="@color/blackish"
+                            android:textSize="12sp"
+                            android:fontFamily="sans-serif-medium"/>
+                    </LinearLayout>
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Transfer Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnTransfer"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:text="Transfer Between Accounts"
+                android:textSize="14sp"
+                app:cornerRadius="12dp"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                app:strokeColor="@color/light_blue"
+                android:textColor="@color/primary_dark"
+                android:layout_marginBottom="20dp"/>
+
+            <!-- Transaction History Header -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Transaction History"
+                    android:textColor="@color/blackish"
+                    android:textSize="16sp"
+                    android:fontFamily="sans-serif-medium"/>
+
+                <TextView
+                    android:id="@+id/btnRefundRequests"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Refund Requests"
+                    android:textColor="@color/light_blue"
+                    android:textSize="13sp"
+                    android:padding="4dp"/>
+            </LinearLayout>
+
+            <!-- Transactions List -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/transactionsRecycler"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"/>
+
+            <!-- Empty state -->
+            <TextView
+                android:id="@+id/emptyState"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="No transactions yet. Top up your wallet to get started!"
+                android:textColor="@color/hint_text"
+                android:textSize="14sp"
+                android:gravity="center"
+                android:padding="32dp"
+                android:visibility="gone"/>
+
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

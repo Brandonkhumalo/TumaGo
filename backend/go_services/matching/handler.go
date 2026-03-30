@@ -4,13 +4,16 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 )
 
 type matchRequest struct {
-	OriginLat   float64 `json:"origin_lat"`
-	OriginLng   float64 `json:"origin_lng"`
-	VehicleType string  `json:"vehicle_type"`
-	TripID      string  `json:"trip_id"`
+	OriginLat     float64 `json:"origin_lat"`
+	OriginLng     float64 `json:"origin_lng"`
+	VehicleType   string  `json:"vehicle_type"`
+	TripID        string  `json:"trip_id"`
+	Fare          float64 `json:"fare"`
+	PaymentMethod string  `json:"payment_method"`
 }
 
 type matchResponse struct {
@@ -73,8 +76,17 @@ func matchHandler(w http.ResponseWriter, r *http.Request) {
 		coordsMap[d.ID] = d
 	}
 
-	// 3. Single DB query — filter by availability + vehicle type.
-	dbDrivers, err := findAvailableDrivers(ctx, driverIDs, req.VehicleType)
+	// Calculate minimum wallet balance (commission) the driver must have.
+	// 15% for cash, 20% for online payments.
+	commissionRate := 0.15
+	pm := strings.ToLower(req.PaymentMethod)
+	if pm == "card" || pm == "ecocash" || pm == "onemoney" {
+		commissionRate = 0.20
+	}
+	minWalletBalance := req.Fare * commissionRate
+
+	// 3. Single DB query — filter by availability + vehicle type + wallet balance.
+	dbDrivers, err := findAvailableDrivers(ctx, driverIDs, req.VehicleType, minWalletBalance)
 	if err != nil {
 		log.Printf("DB query error: %v", err)
 		writeJSON(w, http.StatusInternalServerError, errorResponse{Detail: "database error"})

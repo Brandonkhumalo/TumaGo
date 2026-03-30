@@ -4,11 +4,12 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from ...serializers.userSerializer.authserializers import UserSerializer
 from decimal import Decimal
-from ...models import Delivery, CustomUser, TripRequest, PartnerDeliveryRequest, DriverLocations
+from ...models import Delivery, CustomUser, TripRequest, PartnerDeliveryRequest, DriverLocations, DriverWallet, WalletTransaction, PlatformSettings
 from firebase_admin import messaging
 from TumaGo.firebase_init import initialize_firebase
 from django.shortcuts import get_object_or_404
 from ...busy_drivers import mark_driver_available
+from django.db import transaction as db_transaction
 import logging
 logger = logging.getLogger(__name__)
 
@@ -39,9 +40,10 @@ def GetTripExpenses(request):
             return Response({"error": "Distance must be greater than 0."}, status=status.HTTP_400_BAD_REQUEST)
 
         dist = Decimal(str(distance))
-        scooterPrice = round(Decimal('0.50') * dist + Decimal('0.20'), 2)
-        vanPrice = round(Decimal('1.10') * dist + Decimal('0.30'), 2)
-        truckPrice = round(Decimal('2.30') * dist + Decimal('0.50'), 2)
+        s = PlatformSettings.load()
+        scooterPrice = round(s.scooter_price_per_km * dist + s.scooter_base_fee, 2)
+        vanPrice = round(s.van_price_per_km * dist + s.van_base_fee, 2)
+        truckPrice = round(s.truck_price_per_km * dist + s.truck_base_fee, 2)
 
         fare = {
             "scooter": scooterPrice,
@@ -79,6 +81,28 @@ def cancel_delivery(request):
         driver.driver_available = True
         driver.save()
         mark_driver_available(driver.id)
+
+        # Auto-refund commission to driver wallet (client cancelled)
+        commission_txn = WalletTransaction.objects.filter(
+            driver=driver,
+            delivery=delivery,
+            transaction_type=WalletTransaction.COMMISSION,
+        ).first()
+        if commission_txn:
+            refund_amount = abs(commission_txn.amount)
+            with db_transaction.atomic():
+                wallet = DriverWallet.objects.select_for_update().get(driver=driver)
+                wallet.balance += refund_amount
+                wallet.save()
+                WalletTransaction.objects.create(
+                    driver=driver,
+                    transaction_type=WalletTransaction.REFUND,
+                    amount=refund_amount,
+                    balance_after=wallet.balance,
+                    delivery=delivery,
+                    description="Commission refunded — client cancelled delivery",
+                )
+            logger.info(f"Refunded ${refund_amount} to driver {driver.email} wallet (client cancel)")
 
         client = delivery.client
         client_name = client.name
@@ -148,6 +172,88 @@ def cancel_trip_request(request):
 
     logger.info("Trip request %s cancelled by user %s", trip_id, request.user.id)
     return Response({"message": "Trip request cancelled."}, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def driver_cancel_delivery(request):
+    """Driver cancels an active delivery. Requires a reason for refund review.
+
+    Body: { "delivery_id": "<uuid>", "reason": "Vehicle broke down" }
+    """
+    from ...models import CommissionRefundRequest
+
+    user = request.user
+    if user.role != CustomUser.DRIVER:
+        return Response({"error": "Only drivers can use this endpoint"},
+                        status=status.HTTP_403_FORBIDDEN)
+
+    delivery_id = request.data.get("delivery_id")
+    reason = request.data.get("reason", "").strip()
+
+    if not delivery_id:
+        return Response({"error": "delivery_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+    if not reason:
+        return Response({"error": "reason is required for driver cancellations"},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        delivery = Delivery.objects.get(delivery_id=delivery_id, driver=user)
+    except Delivery.DoesNotExist:
+        return Response({"error": "Delivery not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    if delivery.picked_up:
+        return Response({"error": "Cannot cancel — package already picked up"},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+    delivery.successful = False
+    delivery.save()
+
+    user.driver_available = True
+    user.save()
+    mark_driver_available(user.id)
+
+    # Create refund request for admin review (commission stays held)
+    commission_txn = WalletTransaction.objects.filter(
+        driver=user,
+        delivery=delivery,
+        transaction_type=WalletTransaction.COMMISSION,
+    ).first()
+    if commission_txn:
+        CommissionRefundRequest.objects.create(
+            driver=user,
+            delivery=delivery,
+            amount=abs(commission_txn.amount),
+            reason=reason,
+        )
+
+    # Notify client
+    client = delivery.client
+    if client.fcm_token:
+        try:
+            msg = messaging.Message(
+                token=client.fcm_token,
+                data={"type": "delivery_cancelled", "delivery_id": str(delivery.delivery_id)},
+                notification=messaging.Notification(
+                    title="Delivery Cancelled",
+                    body=f"Driver cancelled: {reason[:50]}",
+                ),
+            )
+            messaging.send(msg)
+        except Exception as e:
+            logger.error(f"FCM driver cancel notification error: {e}")
+
+    # B2B partner webhook
+    partner_req = PartnerDeliveryRequest.objects.filter(delivery=delivery).first()
+    if partner_req:
+        partner_req.status = "cancelled"
+        partner_req.save()
+        from ..PartnerViews.webhooks import send_partner_webhook
+        send_partner_webhook.send(str(partner_req.id), "cancelled", {"reason": "driver_cancelled"})
+
+    return Response({"message": "Delivery cancelled. Refund request submitted for review."},
+                    status=status.HTTP_200_OK)
+
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])

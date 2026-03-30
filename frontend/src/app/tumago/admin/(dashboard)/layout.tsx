@@ -16,6 +16,8 @@ import {
   Menu,
   X,
   ChevronLeft,
+  RotateCcw,
+  Settings,
 } from "lucide-react";
 
 // ── Sidebar navigation items ────────────────────────────────────────────
@@ -50,6 +52,16 @@ const NAV_ITEMS = [
     label: "Partners",
     href: "/tumago/admin/partners",
     icon: Building2,
+  },
+  {
+    label: "Settings",
+    href: "/tumago/admin/settings",
+    icon: Settings,
+  },
+  {
+    label: "Refund Requests",
+    href: "/tumago/admin/refunds",
+    icon: RotateCcw,
   },
   {
     label: "System Health",

@@ -23,7 +23,12 @@ from ...models import (
     PartnerDeliveryRequest,
     PartnerTransaction,
     DriverLocations,
+    CommissionRefundRequest,
+    DriverWallet,
+    WalletTransaction,
+    PlatformSettings,
 )
+from django.db import transaction as db_transaction
 from ...token import JWTAuthentication
 
 import logging
@@ -1196,3 +1201,183 @@ def admin_partner_transactions(request, partner_id):
         'partner_name': partner.name,
         **paginated,
     })
+
+
+# ---------------------------------------------------------------------------
+# Commission Refund Requests
+# ---------------------------------------------------------------------------
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def admin_refund_requests(request):
+    """List commission refund requests with optional status filter.
+
+    Query: ?status=pending|approved|denied  (default: all)
+    """
+    status_filter = request.query_params.get('status', '').lower()
+
+    qs = CommissionRefundRequest.objects.select_related('driver', 'delivery')
+    if status_filter in ('pending', 'approved', 'denied'):
+        qs = qs.filter(status=status_filter)
+
+    qs = qs.order_by('-created_at')
+
+    paginated = paginate_queryset(qs.values(
+        'id', 'amount', 'reason', 'status', 'admin_notes',
+        'created_at', 'reviewed_at',
+        'driver__id', 'driver__name', 'driver__surname', 'driver__email',
+        'delivery__delivery_id', 'delivery__fare', 'delivery__payment_method',
+    ), request)
+
+    for entry in paginated['results']:
+        entry['id'] = str(entry['id'])
+        entry['amount'] = float(entry['amount']) if entry['amount'] else 0
+        entry['driver_id'] = str(entry.pop('driver__id'))
+        entry['driver_name'] = f"{entry.pop('driver__name', '')} {entry.pop('driver__surname', '')}".strip()
+        entry['driver_email'] = entry.pop('driver__email', '')
+        entry['delivery_id'] = str(entry.pop('delivery__delivery_id'))
+        entry['delivery_fare'] = float(entry.pop('delivery__fare')) if entry.get('delivery__fare') else 0
+        entry['payment_method'] = entry.pop('delivery__payment_method', '')
+        entry['created_at'] = str(entry['created_at']) if entry['created_at'] else None
+        entry['reviewed_at'] = str(entry['reviewed_at']) if entry['reviewed_at'] else None
+
+    return Response(paginated)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def admin_review_refund(request, refund_id):
+    """Approve or deny a commission refund request.
+
+    Body: { "action": "approve"|"deny", "admin_notes": "optional note" }
+    """
+    try:
+        refund = CommissionRefundRequest.objects.select_related('driver').get(id=refund_id)
+    except CommissionRefundRequest.DoesNotExist:
+        return Response({"error": "Refund request not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    if refund.status != CommissionRefundRequest.PENDING:
+        return Response({"error": f"Already {refund.status}"}, status=status.HTTP_400_BAD_REQUEST)
+
+    action = request.data.get("action", "").lower()
+    admin_notes = request.data.get("admin_notes", "")
+
+    if action not in ('approve', 'deny'):
+        return Response({"error": "action must be approve or deny"},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+    refund.admin_notes = admin_notes
+    refund.reviewed_by = request.user
+    refund.reviewed_at = timezone.now()
+
+    if action == 'approve':
+        refund.status = CommissionRefundRequest.APPROVED
+
+        # Refund commission back to driver wallet
+        with db_transaction.atomic():
+            wallet, _ = DriverWallet.objects.select_for_update().get_or_create(driver=refund.driver)
+            wallet.balance += refund.amount
+            wallet.save()
+
+            WalletTransaction.objects.create(
+                driver=refund.driver,
+                transaction_type=WalletTransaction.REFUND,
+                amount=refund.amount,
+                balance_after=wallet.balance,
+                delivery=refund.delivery,
+                description=f"Commission refund approved by admin",
+            )
+
+        logger.info(f"Admin {request.user.email} approved refund ${refund.amount} for {refund.driver.email}")
+    else:
+        refund.status = CommissionRefundRequest.DENIED
+        logger.info(f"Admin {request.user.email} denied refund ${refund.amount} for {refund.driver.email}")
+
+    refund.save()
+
+    return Response({
+        "message": f"Refund {action}d",
+        "refund_id": str(refund.id),
+        "status": refund.status,
+    })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def admin_refund_metrics(request):
+    """Counts of pending/approved/denied refund requests."""
+    counts = CommissionRefundRequest.objects.values('status').annotate(count=Count('id'))
+    metrics = {'pending': 0, 'approved': 0, 'denied': 0}
+    for row in counts:
+        metrics[row['status']] = row['count']
+
+    total_refunded = CommissionRefundRequest.objects.filter(
+        status='approved'
+    ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+
+    return Response({
+        **metrics,
+        'total': sum(metrics.values()),
+        'total_refunded': float(total_refunded),
+    })
+
+
+# ---------------------------------------------------------------------------
+# Platform Settings (pricing + commission)
+# ---------------------------------------------------------------------------
+
+SETTINGS_FIELDS = [
+    'scooter_price_per_km', 'scooter_base_fee',
+    'van_price_per_km', 'van_base_fee',
+    'truck_price_per_km', 'truck_base_fee',
+    'cash_commission_pct', 'online_commission_pct',
+]
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def admin_get_settings(request):
+    """Return current platform pricing and commission settings."""
+    settings_obj = PlatformSettings.load()
+    data = {field: float(getattr(settings_obj, field)) for field in SETTINGS_FIELDS}
+    data['updated_at'] = str(settings_obj.updated_at) if settings_obj.updated_at else None
+    return Response(data)
+
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def admin_update_settings(request):
+    """Update platform pricing and commission settings.
+
+    Body: any subset of the settings fields, e.g.
+    { "scooter_price_per_km": 0.60, "cash_commission_pct": 18 }
+    """
+    settings_obj = PlatformSettings.load()
+    updated = []
+
+    for field in SETTINGS_FIELDS:
+        if field in request.data:
+            try:
+                value = Decimal(str(request.data[field]))
+                if value < 0:
+                    return Response(
+                        {"error": f"{field} cannot be negative"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                setattr(settings_obj, field, value)
+                updated.append(field)
+            except Exception:
+                return Response(
+                    {"error": f"Invalid value for {field}"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+    if not updated:
+        return Response({"error": "No valid fields provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+    settings_obj.save()
+    logger.info(f"Admin {request.user.email} updated platform settings: {updated}")
+
+    data = {field: float(getattr(settings_obj, field)) for field in SETTINGS_FIELDS}
+    data['updated_at'] = str(settings_obj.updated_at)
+    return Response({"message": f"Updated: {', '.join(updated)}", **data})

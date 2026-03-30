@@ -4,7 +4,7 @@ from TumaGo import settings
 from django.conf.urls.static import static
 from .views.UserViews import views, userViews, otpViews
 from .views.DriverViews import authViews, driverViews
-from .views.PaymentViews import paymentViews
+from .views.PaymentViews import paymentViews, walletViews
 from .views.EmailViews import snsViews
 from .views.PartnerViews import partner_views, partner_portal_views
 from .views.AdminViews import admin_views
@@ -75,6 +75,17 @@ urlpatterns = [
     path('payment/driver-balance/', paymentViews.get_driver_balance, name='driver_balance'),
     path('payment/pay-driver/', paymentViews.pay_driver, name='pay_driver'),
 
+    # Driver Wallet
+    path('driver/wallet/topup/', walletViews.wallet_topup, name='wallet_topup'),
+    path('driver/wallet/topup/status/', walletViews.wallet_topup_status, name='wallet_topup_status'),
+    path('driver/wallet/balance/', walletViews.wallet_balance, name='wallet_balance'),
+    path('driver/wallet/transfer/', walletViews.wallet_transfer, name='wallet_transfer'),
+    path('driver/wallet/transactions/', walletViews.wallet_transactions, name='wallet_transactions'),
+    path('driver/wallet/refund-requests/', walletViews.wallet_refund_requests, name='wallet_refund_requests'),
+
+    # Driver cancel delivery (with reason for refund review)
+    path('driver/cancel/delivery/', userViews.driver_cancel_delivery, name='driver_cancel_delivery'),
+
     # B2B Partner API (X-API-Key auth)
     path('partner/delivery/request/', partner_views.partner_request_delivery, name='partner_request_delivery'),
     path('partner/delivery/<uuid:delivery_id>/status/', partner_views.partner_delivery_status, name='partner_delivery_status'),
@@ -96,6 +107,15 @@ urlpatterns = [
     # Admin Partner Balance Management
     path('admin/partners/<uuid:partner_id>/deposit/', admin_views.admin_partner_deposit, name='admin_partner_deposit'),
     path('admin/partners/<uuid:partner_id>/transactions/', admin_views.admin_partner_transactions, name='admin_partner_transactions'),
+
+    # Admin Commission Refund Reviews
+    path('admin/refund-requests/', admin_views.admin_refund_requests, name='admin_refund_requests'),
+    path('admin/refund-requests/<uuid:refund_id>/review/', admin_views.admin_review_refund, name='admin_review_refund'),
+    path('admin/refund-requests/metrics/', admin_views.admin_refund_metrics, name='admin_refund_metrics'),
+
+    # Admin Platform Settings (pricing + commission)
+    path('admin/settings/', admin_views.admin_get_settings, name='admin_get_settings'),
+    path('admin/settings/update/', admin_views.admin_update_settings, name='admin_update_settings'),
 
     # SES (email bounce/complaint handling via SNS)
     path('ses/notifications/', snsViews.ses_notifications, name='ses_notifications'),

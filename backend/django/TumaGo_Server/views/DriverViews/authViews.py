@@ -9,7 +9,7 @@ from ...token import JWTAuthentication
 from ...otp import is_phone_verified, clear_verification
 from ...busy_drivers import mark_driver_available
 import logging
-from ...models import CustomUser
+from ...models import CustomUser, DriverWallet
 from django.shortcuts import get_object_or_404
 
 logger = logging.getLogger(__name__)
@@ -51,6 +51,11 @@ def driver_register(request):
 
     if serializer.is_valid():
         user = serializer.save()  # This will save the user as either 'driver' or 'user'
+
+        # Auto-create wallet for drivers (balance starts at $0)
+        if user.role == CustomUser.DRIVER:
+            DriverWallet.objects.get_or_create(driver=user)
+
         payload = {
             "id": str(user.id)  # Add role info to payload (driver or user)
         }

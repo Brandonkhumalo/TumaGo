@@ -74,7 +74,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     FrameLayout menuList;
     RelativeLayout UserProfile;
-    LinearLayout upload, deliveries, finances, settings, logout, support;
+    LinearLayout upload, deliveries, finances, wallet, settings, logout, support;
     CardView menuButton;
     ImageView menu, close;
     TextView mainUsername, mainRating, avatarInitials;
@@ -126,6 +126,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         upload = findViewById(R.id.upload);
         deliveries = findViewById(R.id.deliveries);
         finances = findViewById(R.id.finances);
+        wallet = findViewById(R.id.wallet);
         settings = findViewById(R.id.goToSettings);
         support = findViewById(R.id.support);
 
@@ -145,6 +146,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         UserProfile.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, DriverProfile.class)));
         upload.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, UploadLicenseActivity.class)));
         deliveries.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, GetDeliveries.class)));
+        wallet.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, WalletActivity.class)));
         finances.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, Finances.class)));
         settings.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, AppSettings.class)));
         support.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, Support.class)));
