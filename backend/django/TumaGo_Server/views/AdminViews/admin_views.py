@@ -625,19 +625,23 @@ def admin_system_health(request):
         })
 
     # 4. Go Gateway
-    gw_status, gw_note = _check_service(settings.GATEWAY_URL)
+    gw_url = getattr(settings, 'GATEWAY_URL', 'http://gateway:80')
+    gw_status, gw_note = _check_service(gw_url)
     services.append({'name': 'gateway', 'status': gw_status, 'note': gw_note})
 
     # 5. Go Location Service
-    loc_status, loc_note = _check_service(settings.LOCATION_SERVICE_URL)
+    loc_url = getattr(settings, 'LOCATION_SERVICE_URL', 'http://location:8001')
+    loc_status, loc_note = _check_service(loc_url)
     services.append({'name': 'location', 'status': loc_status, 'note': loc_note})
 
     # 6. Go Matching Service
-    match_status, match_note = _check_service(settings.MATCHING_SERVICE_URL)
+    match_url = getattr(settings, 'MATCHING_SERVICE_URL', 'http://matching:8002')
+    match_status, match_note = _check_service(match_url)
     services.append({'name': 'matching', 'status': match_status, 'note': match_note})
 
     # 7. Notification Service
-    notif_status, notif_note = _check_service(settings.NOTIFICATION_SERVICE_URL)
+    notif_url = getattr(settings, 'NOTIFICATION_SERVICE_URL', 'http://notification:8003')
+    notif_status, notif_note = _check_service(notif_url)
     services.append({'name': 'notification', 'status': notif_status, 'note': notif_note})
 
     return Response({
