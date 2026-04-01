@@ -96,6 +96,10 @@ urlpatterns = [
     # Admin Partner Balance Management
     path('admin/partners/<uuid:partner_id>/deposit/', admin_views.admin_partner_deposit, name='admin_partner_deposit'),
     path('admin/partners/<uuid:partner_id>/transactions/', admin_views.admin_partner_transactions, name='admin_partner_transactions'),
+    path('admin/partners/<uuid:partner_id>/edit/', admin_views.admin_edit_partner, name='admin_edit_partner'),
+    path('admin/partners/<uuid:partner_id>/mark-paid/', admin_views.admin_mark_partner_paid, name='admin_mark_partner_paid'),
+    path('admin/partners/<uuid:partner_id>/suspend/', admin_views.admin_suspend_partner, name='admin_suspend_partner'),
+    path('admin/partners/<uuid:partner_id>/delete/', admin_views.admin_delete_partner, name='admin_delete_partner'),
 
     # SES (email bounce/complaint handling via SNS)
     path('ses/notifications/', snsViews.ses_notifications, name='ses_notifications'),

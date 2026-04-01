@@ -359,6 +359,9 @@ def partner_account(request):
         "max_device_slots": partner.max_device_slots,
         "device_count": device_count,
         "created_at": partner.created_at.isoformat(),
+        "setup_fee_paid": partner.setup_fee_paid,
+        "is_suspended": getattr(partner, 'is_suspended', False),
+        "is_permanently_banned": getattr(partner, 'is_permanently_banned', False),
     })
 
 

@@ -34,7 +34,10 @@ interface DriverMetrics {
   avg_rating: number;
   leaderboard: LeaderboardEntry[];
   acceptance_rate: number;
-  inactive_drivers_count: number;
+  drivers_with_no_recent_activity: {
+    count: number;
+    sample: { id: string; name: string; surname: string; email: string }[];
+  };
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────
@@ -95,7 +98,7 @@ const leaderboardColumns = [
     sortable: true,
     render: (row: Row) => (
       <span className="font-semibold">
-        {(row.total_trips as number).toLocaleString()}
+        {((row.total_trips as number) ?? 0).toLocaleString()}
       </span>
     ),
   },
@@ -105,7 +108,7 @@ const leaderboardColumns = [
     sortable: true,
     render: (row: Row) => (
       <span className="font-semibold text-emerald-700">
-        {formatCurrency(row.earnings as number)}
+        {formatCurrency((row.earnings as number) ?? 0)}
       </span>
     ),
   },
@@ -116,7 +119,7 @@ const leaderboardColumns = [
     render: (row: Row) => (
       <span className="inline-flex items-center gap-1">
         <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-        <span className="font-semibold">{(row.rating as number).toFixed(1)}</span>
+        <span className="font-semibold">{((row.rating as number) ?? 0).toFixed(1)}</span>
       </span>
     ),
   },
@@ -228,15 +231,15 @@ export default function DriversPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <StatsCard
           title="Inactive Drivers"
-          value={metrics.inactive_drivers_count.toLocaleString()}
+          value={metrics.drivers_with_no_recent_activity.count.toLocaleString()}
           icon={<UserX className="h-5 w-5" />}
           subtitle="No activity in 7+ days"
           changeType={
-            metrics.inactive_drivers_count > 0 ? "negative" : "positive"
+            metrics.drivers_with_no_recent_activity.count > 0 ? "negative" : "positive"
           }
           change={
-            metrics.inactive_drivers_count > 0
-              ? `${((metrics.inactive_drivers_count / metrics.total_drivers) * 100).toFixed(1)}% churn risk`
+            metrics.drivers_with_no_recent_activity.count > 0
+              ? `${((metrics.drivers_with_no_recent_activity.count / metrics.total_drivers) * 100).toFixed(1)}% churn risk`
               : "All drivers active"
           }
         />

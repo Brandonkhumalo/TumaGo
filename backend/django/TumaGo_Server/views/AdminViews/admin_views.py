@@ -552,23 +552,101 @@ def admin_partner_metrics(request):
 
 
 # ---------------------------------------------------------------------------
-# System Health (placeholder)
+# System Health
 # ---------------------------------------------------------------------------
+
+def _check_service(url, timeout=3):
+    """HTTP health check a service. Returns (status, note)."""
+    import requests
+    try:
+        resp = requests.get(f"{url}/health", timeout=timeout)
+        if resp.status_code == 200:
+            return "healthy", f"HTTP {resp.status_code}"
+        return "degraded", f"HTTP {resp.status_code}"
+    except requests.ConnectionError:
+        return "down", "Connection refused"
+    except requests.Timeout:
+        return "down", f"Timeout after {timeout}s"
+    except Exception as e:
+        return "down", str(e)
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated, IsAdminUser])
 def admin_system_health(request):
-    """Placeholder system health endpoint.
+    """Check health of all TumaGo services."""
+    import sys
+    import django
+    import redis as redis_lib
+    from django.conf import settings
+    from django.db import connection
 
-    Real metrics come from Prometheus / Grafana. This endpoint provides
-    basic info and pointers to where actual monitoring data lives.
-    """
+    services = []
+
+    # 1. Django — if we're responding, it's healthy
+    services.append({
+        'name': 'django',
+        'status': 'healthy',
+        'note': 'Responding to health check',
+    })
+
+    # 2. PostgreSQL — try a simple query
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+        services.append({
+            'name': 'postgresql',
+            'status': 'healthy',
+            'note': 'SELECT 1 OK',
+        })
+    except Exception as e:
+        services.append({
+            'name': 'postgresql',
+            'status': 'down',
+            'note': str(e),
+        })
+
+    # 3. Redis — ping
+    try:
+        r = redis_lib.from_url(settings.REDIS_URL, socket_timeout=3)
+        r.ping()
+        info = r.info(section='memory')
+        used_mb = round(info.get('used_memory', 0) / (1024 * 1024), 1)
+        services.append({
+            'name': 'redis',
+            'status': 'healthy',
+            'note': f'PING OK, memory: {used_mb}MB',
+        })
+    except Exception as e:
+        services.append({
+            'name': 'redis',
+            'status': 'down',
+            'note': str(e),
+        })
+
+    # 4. Go Gateway
+    gw_status, gw_note = _check_service(settings.GATEWAY_URL)
+    services.append({'name': 'gateway', 'status': gw_status, 'note': gw_note})
+
+    # 5. Go Location Service
+    loc_status, loc_note = _check_service(settings.LOCATION_SERVICE_URL)
+    services.append({'name': 'location', 'status': loc_status, 'note': loc_note})
+
+    # 6. Go Matching Service
+    match_status, match_note = _check_service(settings.MATCHING_SERVICE_URL)
+    services.append({'name': 'matching', 'status': match_status, 'note': match_note})
+
+    # 7. Notification Service
+    notif_status, notif_note = _check_service(settings.NOTIFICATION_SERVICE_URL)
+    services.append({'name': 'notification', 'status': notif_status, 'note': notif_note})
+
     return Response({
-        'total_db_connections': 'check PgBouncer',
-        'redis_status': 'check Redis directly',
-        'websocket_connections': 'check Go location service',
-        'recent_errors': 'placeholder for future Prometheus integration',
-        'note': 'Real-time metrics are available via Prometheus at /metrics on each service.',
+        'services': services,
+        'system_info': {
+            'django_version': django.get_version(),
+            'python_version': sys.version.split()[0],
+            'timestamp': timezone.now().isoformat(),
+        },
     })
 
 
@@ -623,8 +701,19 @@ def admin_deliveries_list(request):
     status_filter = request.query_params.get('status', '').strip()
     start_date = request.query_params.get('start_date')
     end_date = request.query_params.get('end_date')
+    search = request.query_params.get('search', '').strip()
 
     deliveries = Delivery.objects.select_related('driver', 'client').order_by('-date', '-start_time')
+
+    # Search by delivery ID, driver name, or client name
+    if search:
+        deliveries = deliveries.filter(
+            Q(delivery_id__icontains=search) |
+            Q(driver__name__icontains=search) |
+            Q(driver__surname__icontains=search) |
+            Q(client__name__icontains=search) |
+            Q(client__surname__icontains=search)
+        )
 
     # Filter by success status
     if status_filter == 'successful':
@@ -736,6 +825,17 @@ def admin_create_partner(request):
     webhook_url = (request.data.get('webhook_url') or '').strip()
     rate_limit = request.data.get('rate_limit', 100)
     is_active = request.data.get('is_active', True)
+    setup_fee_paid = request.data.get('setup_fee_paid', False)
+
+    # Optional business info fields
+    phone_number = (request.data.get('phone_number') or '').strip()
+    description = (request.data.get('description') or '').strip()
+    address = (request.data.get('address') or '').strip()
+    city = (request.data.get('city') or '').strip()
+    contact_person_name = (request.data.get('contact_person_name') or '').strip()
+    contact_person_role = (request.data.get('contact_person_role') or '').strip()
+    commission_rate = request.data.get('commission_rate', 20)
+    password = (request.data.get('password') or '').strip()
 
     # Coerce rate_limit to int safely
     try:
@@ -743,13 +843,16 @@ def admin_create_partner(request):
     except (ValueError, TypeError):
         rate_limit = 100
 
-    # Coerce is_active to bool
+    # Coerce booleans
     if isinstance(is_active, str):
         is_active = is_active.lower() in ('true', '1', 'yes')
+    if isinstance(setup_fee_paid, str):
+        setup_fee_paid = setup_fee_paid.lower() in ('true', '1', 'yes')
 
-    api_key = secrets.token_hex(16)    # 32 hex characters
-    api_secret = secrets.token_hex(32)  # 64 hex characters
+    api_key = 'tg_live_' + secrets.token_hex(16)
+    api_secret = 'sk_' + secrets.token_hex(32)
 
+    from django.contrib.auth.hashers import make_password as hash_pw
     partner = PartnerCompany.objects.create(
         name=name,
         contact_email=contact_email,
@@ -758,6 +861,15 @@ def admin_create_partner(request):
         is_active=is_active,
         api_key=api_key,
         api_secret=api_secret,
+        setup_fee_paid=setup_fee_paid,
+        phone_number=phone_number,
+        description=description,
+        address=address,
+        city=city,
+        contact_person_name=contact_person_name,
+        contact_person_role=contact_person_role,
+        commission_rate=Decimal(str(commission_rate)),
+        password=hash_pw(password) if password else '',
     )
 
     return Response({
@@ -767,6 +879,7 @@ def admin_create_partner(request):
         'webhook_url': partner.webhook_url,
         'rate_limit': partner.rate_limit,
         'is_active': partner.is_active,
+        'setup_fee_paid': partner.setup_fee_paid,
         'api_key': partner.api_key,
         'api_secret': partner.api_secret,
         'created_at': str(partner.created_at),
@@ -1196,3 +1309,174 @@ def admin_partner_transactions(request, partner_id):
         'partner_name': partner.name,
         **paginated,
     })
+
+
+# ---------------------------------------------------------------------------
+# Partner Edit
+# ---------------------------------------------------------------------------
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def admin_edit_partner(request, partner_id):
+    """Update partner company details. Any subset of fields can be sent."""
+    try:
+        partner = PartnerCompany.objects.get(id=partner_id)
+    except PartnerCompany.DoesNotExist:
+        return Response({'detail': 'Partner not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    editable_text_fields = [
+        'name', 'contact_email', 'webhook_url', 'phone_number',
+        'description', 'address', 'city',
+        'contact_person_name', 'contact_person_role',
+    ]
+    updated = []
+    for field in editable_text_fields:
+        if field in request.data:
+            setattr(partner, field, (request.data[field] or '').strip())
+            updated.append(field)
+
+    if 'rate_limit' in request.data:
+        try:
+            partner.rate_limit = int(request.data['rate_limit'])
+            updated.append('rate_limit')
+        except (ValueError, TypeError):
+            pass
+
+    if 'commission_rate' in request.data:
+        try:
+            partner.commission_rate = Decimal(str(request.data['commission_rate']))
+            updated.append('commission_rate')
+        except Exception:
+            pass
+
+    if 'max_device_slots' in request.data:
+        try:
+            partner.max_device_slots = int(request.data['max_device_slots'])
+            updated.append('max_device_slots')
+        except (ValueError, TypeError):
+            pass
+
+    if 'password' in request.data and request.data['password']:
+        from django.contrib.auth.hashers import make_password as hash_pw
+        partner.password = hash_pw(request.data['password'])
+        updated.append('password')
+
+    if not updated:
+        return Response({'error': 'No valid fields provided'}, status=status.HTTP_400_BAD_REQUEST)
+
+    partner.save()
+    logger.info(f"Admin {request.user.email} edited partner {partner.name}: {updated}")
+    return Response({'message': f'Updated: {", ".join(updated)}', 'partner_id': str(partner.id)})
+
+
+# ---------------------------------------------------------------------------
+# Partner Mark Paid / Unpaid
+# ---------------------------------------------------------------------------
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def admin_mark_partner_paid(request, partner_id):
+    """Toggle partner's setup_fee_paid status.
+
+    Body: { "paid": true|false }
+    If marking as paid and partner has no live API key, generate one.
+    """
+    try:
+        partner = PartnerCompany.objects.get(id=partner_id)
+    except PartnerCompany.DoesNotExist:
+        return Response({'detail': 'Partner not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    paid = request.data.get('paid', True)
+    if isinstance(paid, str):
+        paid = paid.lower() in ('true', '1', 'yes')
+
+    partner.setup_fee_paid = paid
+
+    # If marking as paid and partner doesn't have a live API key yet, generate one
+    if paid and not partner.api_key.startswith('tg_live_'):
+        partner.api_key = 'tg_live_' + secrets.token_hex(16)
+        partner.api_secret = 'sk_' + secrets.token_hex(32)
+        partner.is_active = True
+
+    partner.save()
+    logger.info(f"Admin {request.user.email} marked partner {partner.name} as {'paid' if paid else 'unpaid'}")
+
+    return Response({
+        'message': f"Partner marked as {'paid' if paid else 'unpaid'}",
+        'setup_fee_paid': partner.setup_fee_paid,
+        'is_active': partner.is_active,
+    })
+
+
+# ---------------------------------------------------------------------------
+# Partner Suspend / Ban
+# ---------------------------------------------------------------------------
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def admin_suspend_partner(request, partner_id):
+    """Suspend, ban permanently, or unsuspend a partner.
+
+    Body: { "action": "suspend"|"ban"|"unsuspend", "duration": "7d"|"30d"|"90d" (for suspend), "reason": "..." }
+    """
+    try:
+        partner = PartnerCompany.objects.get(id=partner_id)
+    except PartnerCompany.DoesNotExist:
+        return Response({'detail': 'Partner not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    action = request.data.get('action', '').lower()
+    reason = (request.data.get('reason') or '').strip()
+
+    if action == 'suspend':
+        duration = request.data.get('duration', '30d')
+        days_map = {'1d': 1, '7d': 7, '30d': 30, '90d': 90, '365d': 365}
+        days = days_map.get(duration, 30)
+        partner.is_suspended = True
+        partner.suspended_until = timezone.now() + timedelta(days=days)
+        partner.ban_reason = reason
+        partner.is_permanently_banned = False
+        partner.is_active = False
+        partner.save()
+        logger.info(f"Admin {request.user.email} suspended partner {partner.name} for {days} days")
+        return Response({'message': f'Partner suspended for {days} days', 'suspended_until': str(partner.suspended_until)})
+
+    elif action == 'ban':
+        partner.is_permanently_banned = True
+        partner.is_suspended = True
+        partner.suspended_until = None
+        partner.ban_reason = reason
+        partner.is_active = False
+        partner.save()
+        logger.info(f"Admin {request.user.email} permanently banned partner {partner.name}")
+        return Response({'message': 'Partner permanently banned'})
+
+    elif action == 'unsuspend':
+        partner.is_suspended = False
+        partner.suspended_until = None
+        partner.is_permanently_banned = False
+        partner.ban_reason = ''
+        partner.is_active = True
+        partner.save()
+        logger.info(f"Admin {request.user.email} unsuspended partner {partner.name}")
+        return Response({'message': 'Partner unsuspended and reactivated'})
+
+    return Response({'error': 'action must be suspend, ban, or unsuspend'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+# ---------------------------------------------------------------------------
+# Partner Delete
+# ---------------------------------------------------------------------------
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def admin_delete_partner(request, partner_id):
+    """Permanently delete a partner and all associated data."""
+    try:
+        partner = PartnerCompany.objects.get(id=partner_id)
+    except PartnerCompany.DoesNotExist:
+        return Response({'detail': 'Partner not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    name = partner.name
+    partner.delete()
+    logger.info(f"Admin {request.user.email} deleted partner {name}")
+    return Response({'message': f'Partner {name} deleted permanently'})

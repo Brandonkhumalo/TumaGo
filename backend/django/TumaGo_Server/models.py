@@ -274,6 +274,12 @@ class PartnerCompany(models.Model):
     # Commission rate — percentage the platform keeps (e.g. 20 = 20%)
     commission_rate = models.DecimalField(max_digits=5, decimal_places=2, default=20.00)
 
+    # Suspension / ban fields (admin-managed)
+    is_suspended = models.BooleanField(default=False)
+    suspended_until = models.DateTimeField(null=True, blank=True)
+    ban_reason = models.TextField(blank=True)
+    is_permanently_banned = models.BooleanField(default=False)
+
     def __str__(self):
         return self.name
 

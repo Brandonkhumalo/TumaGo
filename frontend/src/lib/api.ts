@@ -66,7 +66,7 @@ export const adminAPI = {
     }),
 
   // Partner management
-  createPartner: (token: string, data: { name: string; contact_email: string; webhook_url?: string; rate_limit?: number }) =>
+  createPartner: (token: string, data: Record<string, unknown>) =>
     fetchAPI('/admin/partners/create/', { method: 'POST', token, body: JSON.stringify(data) }),
   togglePartner: (token: string, partnerId: string) =>
     fetchAPI(`/admin/partners/${partnerId}/toggle/`, { method: 'POST', token }),
@@ -74,6 +74,14 @@ export const adminAPI = {
     fetchAPI(`/admin/partners/${partnerId}/deposit/`, { method: 'POST', token, body: JSON.stringify(data) }),
   partnerTransactions: (token: string, partnerId: string, params?: string) =>
     fetchAPI(`/admin/partners/${partnerId}/transactions/${params ? '?' + params : ''}`, { token }),
+  editPartner: (token: string, partnerId: string, data: Record<string, unknown>) =>
+    fetchAPI(`/admin/partners/${partnerId}/edit/`, { method: 'PUT', token, body: JSON.stringify(data) }),
+  markPartnerPaid: (token: string, partnerId: string, paid: boolean) =>
+    fetchAPI(`/admin/partners/${partnerId}/mark-paid/`, { method: 'POST', token, body: JSON.stringify({ paid }) }),
+  suspendPartner: (token: string, partnerId: string, data: { action: string; duration?: string; reason?: string }) =>
+    fetchAPI(`/admin/partners/${partnerId}/suspend/`, { method: 'POST', token, body: JSON.stringify(data) }),
+  deletePartner: (token: string, partnerId: string) =>
+    fetchAPI(`/admin/partners/${partnerId}/delete/`, { method: 'DELETE', token }),
 
   // User management
   userDetail: (token: string, userId: string) =>

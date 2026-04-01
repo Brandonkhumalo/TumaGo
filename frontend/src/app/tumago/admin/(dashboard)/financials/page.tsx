@@ -224,6 +224,7 @@ export default function FinancialsPage() {
     try {
       const params = new URLSearchParams();
       params.set("page", String(paymentsPage));
+      params.set("page_size", "15");
       if (statusFilter !== "all") params.set("status", statusFilter);
       if (methodFilter !== "all") params.set("payment_method", methodFilter);
 

@@ -84,11 +84,7 @@ const CHART_COLORS = [
 
 const STATUS_OPTIONS = [
   { value: "", label: "All Statuses" },
-  { value: "pending", label: "Pending" },
-  { value: "accepted", label: "Accepted" },
-  { value: "in_transit", label: "In Transit" },
-  { value: "delivered", label: "Delivered" },
-  { value: "completed", label: "Completed" },
+  { value: "successful", label: "Successful" },
   { value: "cancelled", label: "Cancelled" },
 ];
 
@@ -316,7 +312,7 @@ export default function DeliveriesPage() {
     try {
       const params = new URLSearchParams();
       params.set("page", String(page));
-      params.set("page_size", "10");
+      params.set("page_size", "15");
       if (statusFilter) params.set("status", statusFilter);
       if (searchQuery) params.set("search", searchQuery);
 
@@ -328,6 +324,15 @@ export default function DeliveriesPage() {
       });
 
       const res = await adminAPI.deliveriesList(token, params.toString());
+      // Map backend field names to frontend expectations
+      if (res.results) {
+        res.results = res.results.map((d: Record<string, unknown>) => ({
+          ...d,
+          id: d.delivery_id || d.id || "",
+          status: d.successful === true ? "successful" : d.successful === false ? "cancelled" : "unknown",
+          created_at: d.date || d.created_at || "",
+        }));
+      }
       setDeliveries(res);
     } catch (err) {
       if (!error) {

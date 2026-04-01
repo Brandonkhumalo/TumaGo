@@ -118,8 +118,8 @@ function PieTooltipContent({ active, payload }: PieTooltipProps) {
 // ---------- Create Partner Modal ----------
 
 interface CreatePartnerModalProps {
-  createForm: { name: string; contact_email: string; webhook_url: string; rate_limit: number };
-  setCreateForm: React.Dispatch<React.SetStateAction<{ name: string; contact_email: string; webhook_url: string; rate_limit: number }>>;
+  createForm: Record<string, unknown>;
+  setCreateForm: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
   createLoading: boolean;
   createError: string | null;
   createdCredentials: { api_key: string; api_secret: string } | null;
@@ -311,26 +311,74 @@ function CreatePartnerModal({
                 />
               </div>
 
-              {/* Rate Limit */}
+              {/* Phone */}
               <div>
-                <label
-                  htmlFor="partner-ratelimit"
-                  className="mb-1 block text-sm font-medium text-text-dark"
-                >
-                  Rate Limit <span className="text-xs text-text-muted font-normal">(requests/min, default 100)</span>
-                </label>
-                <input
-                  id="partner-ratelimit"
-                  type="number"
-                  min={1}
-                  max={10000}
-                  value={createForm.rate_limit}
-                  onChange={(e) =>
-                    setCreateForm((prev) => ({ ...prev, rate_limit: parseInt(e.target.value) || 100 }))
-                  }
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-text-dark outline-none transition-colors placeholder:text-text-muted focus:border-primary focus:ring-2 focus:ring-primary/20"
-                />
+                <label className="mb-1 block text-sm font-medium text-text-dark">Phone Number</label>
+                <input type="text" value={(createForm.phone_number as string) ?? ""} onChange={(e) => setCreateForm((prev) => ({ ...prev, phone_number: e.target.value }))}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-text-dark outline-none transition-colors placeholder:text-text-muted focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="+263..." />
               </div>
+
+              {/* Contact Person */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-text-dark">Contact Person</label>
+                  <input type="text" value={(createForm.contact_person_name as string) ?? ""} onChange={(e) => setCreateForm((prev) => ({ ...prev, contact_person_name: e.target.value }))}
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-text-dark outline-none transition-colors placeholder:text-text-muted focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="John Doe" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-text-dark">Role</label>
+                  <input type="text" value={(createForm.contact_person_role as string) ?? ""} onChange={(e) => setCreateForm((prev) => ({ ...prev, contact_person_role: e.target.value }))}
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-text-dark outline-none transition-colors placeholder:text-text-muted focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="CEO" />
+                </div>
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="mb-1 block text-sm font-medium text-text-dark">Business Description</label>
+                <input type="text" value={(createForm.description as string) ?? ""} onChange={(e) => setCreateForm((prev) => ({ ...prev, description: e.target.value }))}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-text-dark outline-none transition-colors placeholder:text-text-muted focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="What the business does" />
+              </div>
+
+              {/* Address + City */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-text-dark">Address</label>
+                  <input type="text" value={(createForm.address as string) ?? ""} onChange={(e) => setCreateForm((prev) => ({ ...prev, address: e.target.value }))}
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-text-dark outline-none transition-colors placeholder:text-text-muted focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="123 Main St" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-text-dark">City</label>
+                  <input type="text" value={(createForm.city as string) ?? ""} onChange={(e) => setCreateForm((prev) => ({ ...prev, city: e.target.value }))}
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-text-dark outline-none transition-colors placeholder:text-text-muted focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="Harare" />
+                </div>
+              </div>
+
+              {/* Commission + Rate Limit */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-text-dark">Commission %</label>
+                  <input type="number" value={(createForm.commission_rate as number) ?? 20} onChange={(e) => setCreateForm((prev) => ({ ...prev, commission_rate: parseFloat(e.target.value) || 20 }))}
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-text-dark outline-none transition-colors placeholder:text-text-muted focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-text-dark">Rate Limit</label>
+                  <input type="number" min={1} max={10000} value={(createForm.rate_limit as number) ?? 100} onChange={(e) => setCreateForm((prev) => ({ ...prev, rate_limit: parseInt(e.target.value) || 100 }))}
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-text-dark outline-none transition-colors placeholder:text-text-muted focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                </div>
+              </div>
+
+              {/* Portal Password */}
+              <div>
+                <label className="mb-1 block text-sm font-medium text-text-dark">Portal Password <span className="text-xs text-text-muted font-normal">(for partner login)</span></label>
+                <input type="password" value={(createForm.password as string) ?? ""} onChange={(e) => setCreateForm((prev) => ({ ...prev, password: e.target.value }))}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-text-dark outline-none transition-colors placeholder:text-text-muted focus:border-primary focus:ring-2 focus:ring-primary/20" />
+              </div>
+
+              {/* Mark as paid */}
+              <label className="flex items-center gap-2 text-sm text-text-dark">
+                <input type="checkbox" checked={(createForm.setup_fee_paid as boolean) ?? false} onChange={(e) => setCreateForm((prev) => ({ ...prev, setup_fee_paid: e.target.checked }))} className="rounded" />
+                Mark setup fee as paid (skip $15 payment)
+              </label>
 
               <button
                 type="submit"
@@ -808,6 +856,15 @@ export default function PartnersPage() {
     contact_email: "",
     webhook_url: "",
     rate_limit: 100,
+    phone_number: "",
+    description: "",
+    address: "",
+    city: "",
+    contact_person_name: "",
+    contact_person_role: "",
+    commission_rate: 20,
+    password: "",
+    setup_fee_paid: false,
   });
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -841,6 +898,83 @@ export default function PartnersPage() {
   const [txPage, setTxPage] = useState(1);
   const [txHasMore, setTxHasMore] = useState(false);
 
+  // Manage partner state
+  const [editPartner, setEditPartner] = useState<Partner | null>(null);
+  const [editForm, setEditForm] = useState<Record<string, string | number>>({});
+  const [editLoading, setEditLoading] = useState(false);
+  const [suspendPartner, setSuspendPartner] = useState<Partner | null>(null);
+  const [suspendAction, setSuspendAction] = useState<"suspend" | "ban">("suspend");
+  const [suspendDuration, setSuspendDuration] = useState("30d");
+  const [suspendReason, setSuspendReason] = useState("");
+  const [suspendLoading, setSuspendLoading] = useState(false);
+  const [deleteConfirmPartner, setDeleteConfirmPartner] = useState<Partner | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [markPaidLoading, setMarkPaidLoading] = useState<string | null>(null);
+
+  const handleEditPartner = async () => {
+    if (!token || !editPartner) return;
+    setEditLoading(true);
+    try {
+      await adminAPI.editPartner(token, editPartner.id, editForm);
+      setEditPartner(null);
+      fetchData();
+    } catch { /* silently handle */ } finally { setEditLoading(false); }
+  };
+
+  const handleMarkPaid = async (partner: Partner, paid: boolean) => {
+    if (!token) return;
+    setMarkPaidLoading(partner.id);
+    try {
+      await adminAPI.markPartnerPaid(token, partner.id, paid);
+      fetchData();
+    } catch { /* silently handle */ } finally { setMarkPaidLoading(null); }
+  };
+
+  const handleSuspendPartner = async () => {
+    if (!token || !suspendPartner) return;
+    setSuspendLoading(true);
+    try {
+      await adminAPI.suspendPartner(token, suspendPartner.id, {
+        action: suspendAction,
+        duration: suspendDuration,
+        reason: suspendReason,
+      });
+      setSuspendPartner(null);
+      setSuspendReason("");
+      fetchData();
+    } catch { /* silently handle */ } finally { setSuspendLoading(false); }
+  };
+
+  const handleUnsuspendPartner = async (partner: Partner) => {
+    if (!token) return;
+    try {
+      await adminAPI.suspendPartner(token, partner.id, { action: "unsuspend" });
+      fetchData();
+    } catch { /* silently handle */ }
+  };
+
+  const handleDeletePartner = async () => {
+    if (!token || !deleteConfirmPartner) return;
+    setDeleteLoading(true);
+    try {
+      await adminAPI.deletePartner(token, deleteConfirmPartner.id);
+      setDeleteConfirmPartner(null);
+      fetchData();
+    } catch { /* silently handle */ } finally { setDeleteLoading(false); }
+  };
+
+  const openEditModal = (partner: Partner) => {
+    setEditForm({
+      name: partner.name, contact_email: partner.contact_email,
+      phone_number: partner.phone_number || "", webhook_url: "",
+      description: partner.description || "", address: partner.address || "",
+      city: partner.city || "", contact_person_name: partner.contact_person_name || "",
+      contact_person_role: partner.contact_person_role || "",
+      commission_rate: partner.commission_rate, max_device_slots: partner.max_device_slots,
+    });
+    setEditPartner(partner);
+  };
+
   const fetchData = useCallback(async () => {
     if (!token) return;
     setLoading(true);
@@ -868,14 +1002,7 @@ export default function PartnersPage() {
     setCreateError(null);
 
     try {
-      const payload: { name: string; contact_email: string; webhook_url?: string; rate_limit?: number } = {
-        name: createForm.name,
-        contact_email: createForm.contact_email,
-      };
-      if (createForm.webhook_url) payload.webhook_url = createForm.webhook_url;
-      if (createForm.rate_limit !== 100) payload.rate_limit = createForm.rate_limit;
-
-      const result = await adminAPI.createPartner(token, payload);
+      const result = await adminAPI.createPartner(token, createForm as Record<string, unknown>);
       setCreatedCredentials({
         api_key: result.api_key,
         api_secret: result.api_secret,
@@ -889,7 +1016,7 @@ export default function PartnersPage() {
 
   const handleCloseModal = () => {
     setShowCreateModal(false);
-    setCreateForm({ name: "", contact_email: "", webhook_url: "", rate_limit: 100 });
+    setCreateForm({ name: "", contact_email: "", webhook_url: "", rate_limit: 100, phone_number: "", description: "", address: "", city: "", contact_person_name: "", contact_person_role: "", commission_rate: 20, password: "", setup_fee_paid: false });
     setCreateError(null);
     if (createdCredentials) {
       setCreatedCredentials(null);
@@ -1087,39 +1214,28 @@ export default function PartnersPage() {
       render: (item: PartnerRow) => {
         const partner = item as unknown as Partner;
         return (
-          <div className="flex items-center gap-1">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setDetailPartner(partner);
-              }}
-              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-primary bg-primary-light transition-colors hover:bg-blue-100"
-              title="View Details"
-            >
-              View
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setDepositPartner(partner);
-              }}
-              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-emerald-700 bg-emerald-50 transition-colors hover:bg-emerald-100"
-              title="Deposit Funds"
-            >
-              <DollarSign className="h-3.5 w-3.5" />
-              Deposit
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleOpenTransactions(partner);
-              }}
-              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-blue-700 bg-blue-50 transition-colors hover:bg-blue-100"
-              title="View Transactions"
-            >
-              <History className="h-3.5 w-3.5" />
-              Transactions
-            </button>
+          <div className="flex flex-wrap items-center gap-1">
+            <button onClick={(e) => { e.stopPropagation(); setDetailPartner(partner); }}
+              className="rounded-md px-2 py-1 text-xs font-medium text-primary bg-primary-light hover:bg-blue-100" title="View Details">View</button>
+            <button onClick={(e) => { e.stopPropagation(); openEditModal(partner); }}
+              className="rounded-md px-2 py-1 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200" title="Edit">Edit</button>
+            <button onClick={(e) => { e.stopPropagation(); setDepositPartner(partner); }}
+              className="rounded-md px-2 py-1 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100" title="Deposit">
+              <DollarSign className="h-3.5 w-3.5 inline" /> Deposit</button>
+            <button onClick={(e) => { e.stopPropagation(); handleMarkPaid(partner, !partner.setup_fee_paid); }}
+              disabled={markPaidLoading === partner.id}
+              className={`rounded-md px-2 py-1 text-xs font-medium ${partner.setup_fee_paid ? "text-amber-700 bg-amber-50 hover:bg-amber-100" : "text-emerald-700 bg-emerald-50 hover:bg-emerald-100"} disabled:opacity-50`}
+              title={partner.setup_fee_paid ? "Mark Unpaid" : "Mark Paid"}>
+              {partner.setup_fee_paid ? "Mark Unpaid" : "Mark Paid"}</button>
+            <button onClick={(e) => { e.stopPropagation(); handleOpenTransactions(partner); }}
+              className="rounded-md px-2 py-1 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100" title="Transactions">
+              <History className="h-3.5 w-3.5 inline" /> Txns</button>
+            <button onClick={(e) => { e.stopPropagation(); setSuspendAction("suspend"); setSuspendPartner(partner); }}
+              className="rounded-md px-2 py-1 text-xs font-medium text-orange-700 bg-orange-50 hover:bg-orange-100" title="Suspend">Suspend</button>
+            <button onClick={(e) => { e.stopPropagation(); setSuspendAction("ban"); setSuspendPartner(partner); }}
+              className="rounded-md px-2 py-1 text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100" title="Ban Forever">Ban</button>
+            <button onClick={(e) => { e.stopPropagation(); setDeleteConfirmPartner(partner); }}
+              className="rounded-md px-2 py-1 text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100" title="Delete">Delete</button>
           </div>
         );
       },
@@ -1418,6 +1534,107 @@ export default function PartnersPage() {
           onPageChange={handleTxPageChange}
           onClose={handleCloseTransactions}
         />
+      )}
+
+      {/* Edit Partner Modal */}
+      {editPartner && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setEditPartner(null)} />
+          <div className="relative z-10 w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <button onClick={() => setEditPartner(null)} className="absolute right-4 top-4 rounded-lg p-1 text-text-muted hover:bg-gray-100"><X className="h-5 w-5" /></button>
+            <h2 className="text-lg font-bold text-text-dark mb-4">Edit {editPartner.name}</h2>
+            <div className="space-y-3">
+              {[
+                { key: "name", label: "Company Name", type: "text" },
+                { key: "contact_email", label: "Email", type: "email" },
+                { key: "phone_number", label: "Phone", type: "text" },
+                { key: "description", label: "Description", type: "text" },
+                { key: "address", label: "Address", type: "text" },
+                { key: "city", label: "City", type: "text" },
+                { key: "contact_person_name", label: "Contact Person", type: "text" },
+                { key: "contact_person_role", label: "Contact Role", type: "text" },
+                { key: "commission_rate", label: "Commission %", type: "number" },
+                { key: "max_device_slots", label: "Device Slots", type: "number" },
+              ].map((f) => (
+                <div key={f.key}>
+                  <label className="block text-xs font-medium text-text-muted mb-1">{f.label}</label>
+                  <input type={f.type} value={editForm[f.key] ?? ""} onChange={(e) => setEditForm((p) => ({ ...p, [f.key]: f.type === "number" ? Number(e.target.value) : e.target.value }))}
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                </div>
+              ))}
+              <div>
+                <label className="block text-xs font-medium text-text-muted mb-1">New Password (leave blank to keep)</label>
+                <input type="password" value={editForm.password ?? ""} onChange={(e) => setEditForm((p) => ({ ...p, password: e.target.value }))}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+              </div>
+              <button onClick={handleEditPartner} disabled={editLoading}
+                className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-dark disabled:opacity-50 mt-2">
+                {editLoading ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Suspend / Ban Modal */}
+      {suspendPartner && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setSuspendPartner(null)} />
+          <div className="relative z-10 w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl mx-4">
+            <button onClick={() => setSuspendPartner(null)} className="absolute right-4 top-4 rounded-lg p-1 text-text-muted hover:bg-gray-100"><X className="h-5 w-5" /></button>
+            <h2 className="text-lg font-bold text-text-dark mb-1">
+              {suspendAction === "ban" ? "Permanently Ban" : "Suspend"} {suspendPartner.name}
+            </h2>
+            <p className="text-sm text-text-muted mb-4">
+              {suspendAction === "ban" ? "This partner will be permanently banned and deactivated." : "This partner will be temporarily deactivated."}
+            </p>
+            {suspendAction === "suspend" && (
+              <div className="mb-3">
+                <label className="block text-xs font-medium text-text-muted mb-1">Duration</label>
+                <select value={suspendDuration} onChange={(e) => setSuspendDuration(e.target.value)}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary">
+                  <option value="1d">1 Day</option>
+                  <option value="7d">7 Days</option>
+                  <option value="30d">30 Days</option>
+                  <option value="90d">90 Days</option>
+                  <option value="365d">1 Year</option>
+                </select>
+              </div>
+            )}
+            <div className="mb-4">
+              <label className="block text-xs font-medium text-text-muted mb-1">Reason</label>
+              <textarea value={suspendReason} onChange={(e) => setSuspendReason(e.target.value)} rows={3}
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary" placeholder="Reason for action..." />
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setSuspendPartner(null)} className="flex-1 rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-text-dark hover:bg-gray-50">Cancel</button>
+              <button onClick={handleSuspendPartner} disabled={suspendLoading}
+                className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50 ${suspendAction === "ban" ? "bg-red-600 hover:bg-red-700" : "bg-orange-600 hover:bg-orange-700"}`}>
+                {suspendLoading ? "Processing..." : suspendAction === "ban" ? "Ban Permanently" : "Suspend"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmPartner && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setDeleteConfirmPartner(null)} />
+          <div className="relative z-10 w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl mx-4">
+            <h2 className="text-lg font-bold text-red-700 mb-2">Delete {deleteConfirmPartner.name}?</h2>
+            <p className="text-sm text-text-muted mb-4">
+              This will permanently delete this partner and all associated data (devices, transactions, delivery requests). This cannot be undone.
+            </p>
+            <div className="flex gap-2">
+              <button onClick={() => setDeleteConfirmPartner(null)} className="flex-1 rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-text-dark hover:bg-gray-50">Cancel</button>
+              <button onClick={handleDeletePartner} disabled={deleteLoading}
+                className="flex-1 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50">
+                {deleteLoading ? "Deleting..." : "Delete Permanently"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

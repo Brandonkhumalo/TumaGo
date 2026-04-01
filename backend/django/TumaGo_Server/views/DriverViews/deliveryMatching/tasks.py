@@ -18,6 +18,7 @@ from decimal import Decimal
 import redis
 import dramatiq
 from dramatiq.errors import Retry
+from dramatiq.middleware import CurrentMessage
 from django.conf import settings
 from django.db import close_old_connections
 from ....models import TripRequest, CustomUser
@@ -115,8 +116,10 @@ def retry_trip_matching(trip_id: str, user_id: str, delivery_data: dict):
     result = TripData(requester_data, delivery_data, trip_id)
 
     if result is None:
-        # No drivers available — no point waiting or retrying
-        logger.info(f"No drivers found for trip {trip_id} — notifying user")
+        # No drivers available — mark trip as cancelled and notify user
+        logger.info(f"No drivers found for trip {trip_id} — cancelling and notifying user")
+        trip.cancelled = True
+        trip.save()
         no_driver_found(user)
         return
 
@@ -144,7 +147,17 @@ def retry_trip_matching(trip_id: str, user_id: str, delivery_data: dict):
         logger.info(f"Trip {trip_id} cancelled (DB check) — task complete")
         return
 
-    logger.info(f"Trip {trip_id} not accepted, re-queueing")
+    # Check if this is the last retry — if so, cancel the trip instead of re-queueing.
+    msg = CurrentMessage.get_current_message()
+    retries_so_far = msg.options.get("retries", 0) if msg else 0
+    if retries_so_far >= 3:  # max_retries=4 means attempts 0,1,2,3 — cancel on last
+        logger.info(f"Trip {trip_id} not accepted after all retries — cancelling")
+        trip.cancelled = True
+        trip.save()
+        no_driver_found(user)
+        return
+
+    logger.info(f"Trip {trip_id} not accepted, re-queueing (retry {retries_so_far})")
     raise Retry(delay=2000)  # Re-queue after 2 s
 
 

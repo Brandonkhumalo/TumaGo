@@ -1069,7 +1069,7 @@ export default function UsersPage() {
   const [usersPage, setUsersPage] = useState(1);
   const [usersSearch, setUsersSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | "user" | "driver">(
-    "all"
+    "user"
   );
 
   // Detail panel state
@@ -1104,6 +1104,7 @@ export default function UsersPage() {
     try {
       const params = new URLSearchParams();
       params.set("page", String(usersPage));
+      params.set("page_size", "15");
       if (usersSearch) params.set("search", usersSearch);
       if (roleFilter !== "all") params.set("role", roleFilter);
 

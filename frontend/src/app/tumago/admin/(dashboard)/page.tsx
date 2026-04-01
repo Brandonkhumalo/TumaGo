@@ -205,6 +205,7 @@ export default function DashboardPage() {
     []
   );
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -214,18 +215,26 @@ export default function DashboardPage() {
       if (!token) return;
 
       if (showLoading) setLoading(true);
+      else setRefreshing(true);
       setError(null);
 
       try {
         const [overviewRes, metricsRes, deliveriesRes] = await Promise.all([
           adminAPI.overview(token),
           adminAPI.deliveryMetrics(token, "period=week"),
-          adminAPI.deliveriesList(token, "page_size=5"),
+          adminAPI.deliveriesList(token, "page_size=15"),
         ]);
 
         setOverview(overviewRes);
         setMetrics(metricsRes);
-        setRecentDeliveries(deliveriesRes.results ?? []);
+        // Map backend field names to what the frontend expects
+        const mapped = (deliveriesRes.results ?? []).map((d: Record<string, unknown>) => ({
+          ...d,
+          id: d.delivery_id || d.id || "",
+          status: d.successful === true ? "successful" : d.successful === false ? "cancelled" : "unknown",
+          created_at: d.date || d.created_at || "",
+        }));
+        setRecentDeliveries(mapped);
         setLastUpdated(new Date());
       } catch (err) {
         setError(
@@ -233,6 +242,7 @@ export default function DashboardPage() {
         );
       } finally {
         setLoading(false);
+        setRefreshing(false);
       }
     },
     [token]
@@ -307,10 +317,11 @@ export default function DashboardPage() {
         </div>
         <button
           onClick={() => fetchData(false)}
-          className="inline-flex items-center gap-2 self-start rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-text-dark transition hover:bg-gray-50"
+          disabled={refreshing}
+          className="inline-flex items-center gap-2 self-start rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-text-dark transition hover:bg-gray-50 disabled:opacity-60"
         >
-          <RefreshCw className="h-4 w-4" />
-          Refresh
+          <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+          {refreshing ? "Refreshing..." : "Refresh"}
         </button>
       </div>
 

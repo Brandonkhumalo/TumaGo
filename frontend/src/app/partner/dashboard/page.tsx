@@ -35,6 +35,9 @@ interface PartnerAccount {
   max_device_slots: number;
   device_count: number;
   created_at: string;
+  setup_fee_paid: boolean;
+  is_suspended: boolean;
+  is_permanently_banned: boolean;
 }
 
 interface Device {
@@ -374,6 +377,20 @@ export default function PartnerDashboard() {
         {!account ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : account.is_permanently_banned || account.is_suspended ? (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-8 text-center">
+            <h2 className="text-xl font-bold text-red-700 mb-2">Account Suspended</h2>
+            <p className="text-sm text-red-600">Your account has been {account.is_permanently_banned ? "permanently banned" : "temporarily suspended"}. Please contact support for assistance.</p>
+          </div>
+        ) : !account.setup_fee_paid ? (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-8 text-center">
+            <h2 className="text-xl font-bold text-amber-800 mb-2">Setup Fee Required</h2>
+            <p className="text-sm text-amber-700 mb-4">Your account is pending setup fee payment ($15). Please complete the payment to access your dashboard.</p>
+            <a href={`/partner?pay_setup=true&partner_id=${account.id}&email=${encodeURIComponent(account.email)}`}
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-white hover:bg-primary-dark transition">
+              Pay Now — $15
+            </a>
           </div>
         ) : (
           <div className="space-y-8">
