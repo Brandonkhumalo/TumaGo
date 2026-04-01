@@ -19,8 +19,9 @@ jobs:
           script: |
             cd ~/TumaGo
 
-            # Pull latest code
-            git pull origin main
+            # Pull latest code (discard any local server changes)
+            git fetch origin main
+            git reset --hard origin/main
 
             # Ensure swap exists (prevents OOM during builds on t3.small)
             if [ ! -f /swapfile ]; then
