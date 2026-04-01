@@ -71,3 +71,21 @@ func upsertDriverLocation(ctx context.Context, driverID string, lat, lng float64
 		log.Printf("db upsert error for driver %s: %v", driverID, err)
 	}
 }
+
+// markDriverOffline sets driver_online=false and driver_available=false
+// when their WebSocket connection drops (app killed, phone died, etc).
+func markDriverOffline(ctx context.Context, driverID string) {
+	if dbPool == nil {
+		return
+	}
+
+	_, err := dbPool.Exec(ctx,
+		`UPDATE "TumaGo_Server_customuser"
+		 SET driver_online = FALSE, driver_available = FALSE
+		 WHERE id = $1 AND role = 'driver'`,
+		driverID,
+	)
+	if err != nil {
+		log.Printf("failed to mark driver %s offline: %v", driverID, err)
+	}
+}

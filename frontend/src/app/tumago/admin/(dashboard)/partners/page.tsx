@@ -144,15 +144,16 @@ function CreatePartnerModal({
   onClose,
 }: CreatePartnerModalProps) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Dark overlay */}
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
 
       {/* Modal card */}
-      <div className="relative z-10 w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl mx-4">
+      <div className="flex min-h-full items-center justify-center p-4">
+      <div className="relative z-10 w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
         {/* Close button */}
         <button
           onClick={onClose}
@@ -393,6 +394,7 @@ function CreatePartnerModal({
             </form>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

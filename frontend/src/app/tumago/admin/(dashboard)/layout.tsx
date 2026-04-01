@@ -133,7 +133,7 @@ export default function DashboardLayout({
   // ── Render ─────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen flex bg-slate-100">
+    <div className="h-screen flex overflow-hidden bg-slate-100">
       {/* ── Mobile overlay ──────────────────────────────────────────── */}
       {mobileOpen && (
         <div

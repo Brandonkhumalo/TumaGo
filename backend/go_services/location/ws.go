@@ -129,12 +129,13 @@ func handleDriverWS(rdb *redis.Client) http.HandlerFunc {
 
 		log.Printf("driver %s connected", driverID)
 
-		// Ensure cleanup on disconnect.
+		// Ensure cleanup on disconnect — remove from GEO set + mark offline in DB.
 		defer func() {
-			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
 			rdb.ZRem(ctx, driverGeoKey, driverID)
-			log.Printf("driver %s disconnected", driverID)
+			markDriverOffline(ctx, driverID)
+			log.Printf("driver %s disconnected — marked offline", driverID)
 		}()
 
 		// Set sensible read limits and deadlines.
