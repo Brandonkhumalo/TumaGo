@@ -108,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // adminAPI.login already throws on non-2xx responses.
       const data = await adminAPI.login(email, password);
 
-      const accessToken: string = data.accessToken;
+      const accessToken: string = data.access_token || data.accessToken;
       const adminUser: AdminUser = data.user;
 
       // Persist to localStorage so state survives page refreshes.
