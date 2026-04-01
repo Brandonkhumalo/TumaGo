@@ -124,6 +124,14 @@ DATABASES = {
 REDIS_URL = config("REDIS_URL", default="redis://localhost:6379")
 
 # ---------------------------------------------------------------------------
+# Internal service URLs — used by admin health checks
+# ---------------------------------------------------------------------------
+GATEWAY_URL = config("GATEWAY_URL", default="http://localhost:80")
+LOCATION_SERVICE_URL = config("LOCATION_SERVICE_URL", default="http://localhost:8001")
+MATCHING_SERVICE_URL = config("MATCHING_SERVICE_URL", default="http://localhost:8002")
+NOTIFICATION_SERVICE_URL = config("NOTIFICATION_SERVICE_URL", default="http://localhost:8003")
+
+# ---------------------------------------------------------------------------
 # Cache — Redis backend for query/response/session caching
 # ---------------------------------------------------------------------------
 CACHES = {

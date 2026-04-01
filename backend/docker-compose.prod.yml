@@ -19,6 +19,10 @@ x-django-env: &django-env
   AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
   AWS_SES_REGION: ${AWS_SES_REGION:-af-south-1}
   SES_FROM_EMAIL: ${SES_FROM_EMAIL:-noreply@tishanyq.co.zw}
+  GATEWAY_URL: http://gateway:8080
+  LOCATION_SERVICE_URL: http://location:8001
+  MATCHING_SERVICE_URL: http://matching:8002
+  NOTIFICATION_SERVICE_URL: http://notification_service:8003
 
 x-go-env: &go-env
   REDIS_URL: redis://redis:6379

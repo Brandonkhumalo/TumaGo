@@ -151,7 +151,7 @@ export default function DashboardLayout({
         {/* Brand + close */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-slate-800">
           <div className="flex items-center gap-2">
-            <Image src="/tuma_go_logo.png" alt="TumaGo" width={28} height={28} className="brightness-0 invert" />
+            <Image src="/tuma_go_logo.png" alt="TumaGo" width={32} height={32} className="rounded" />
             <span className="text-white font-bold text-lg">TumaGo Admin</span>
           </div>
           <button
@@ -185,7 +185,7 @@ export default function DashboardLayout({
       >
         {/* Brand + collapse toggle */}
         <div className="flex items-center h-16 px-4 border-b border-slate-800">
-          <Image src="/tuma_go_logo.png" alt="TumaGo" width={28} height={28} className="brightness-0 invert shrink-0" />
+          <Image src="/tuma_go_logo.png" alt="TumaGo" width={32} height={32} className="rounded shrink-0" />
           {!collapsed && (
             <span className="text-white font-bold text-lg flex-1 ml-2">
               TumaGo Admin

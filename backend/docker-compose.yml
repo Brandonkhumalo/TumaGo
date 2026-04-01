@@ -88,6 +88,10 @@ services:
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       AWS_SES_REGION: ${AWS_SES_REGION:-af-south-1}
       SES_FROM_EMAIL: ${SES_FROM_EMAIL:-noreply@tishanyq.co.zw}
+      GATEWAY_URL: http://gateway:80
+      LOCATION_SERVICE_URL: http://location:8001
+      MATCHING_SERVICE_URL: http://matching:8002
+      NOTIFICATION_SERVICE_URL: http://notification:8003
     volumes:
       - django_static:/app/staticfiles
       - ${FIREBASE_CREDENTIALS_FILE:-./notification/firebase-credentials.json}:/secrets/firebase-credentials.json:ro
