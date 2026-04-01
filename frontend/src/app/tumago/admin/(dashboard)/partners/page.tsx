@@ -117,9 +117,12 @@ function PieTooltipContent({ active, payload }: PieTooltipProps) {
 
 // ---------- Create Partner Modal ----------
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type CreateForm = Record<string, any>;
+
 interface CreatePartnerModalProps {
-  createForm: Record<string, unknown>;
-  setCreateForm: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
+  createForm: CreateForm;
+  setCreateForm: React.Dispatch<React.SetStateAction<CreateForm>>;
   createLoading: boolean;
   createError: string | null;
   createdCredentials: { api_key: string; api_secret: string } | null;
@@ -851,7 +854,7 @@ export default function PartnersPage() {
 
   // Create partner modal state
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [createForm, setCreateForm] = useState({
+  const [createForm, setCreateForm] = useState<CreateForm>({
     name: "",
     contact_email: "",
     webhook_url: "",
