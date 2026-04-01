@@ -41,7 +41,7 @@ jobs:
             docker compose -f docker-compose.prod.yml build location
             docker compose -f docker-compose.prod.yml build matching
             docker compose -f docker-compose.prod.yml build notification_service
-            docker compose -f docker-compose.prod.yml build frontend
+            docker compose -f docker-compose.prod.yml build --no-cache frontend
 
             # Start all services (images already built)
             docker compose -f docker-compose.prod.yml up -d
