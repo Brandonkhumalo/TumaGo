@@ -178,10 +178,10 @@ def admin_overview(request):
 
     # Single aggregated query for delivery counts instead of 3 separate queries
     delivery_stats = Delivery.objects.aggregate(
-        total_deliveries=Count('id'),
-        successful_deliveries=Count('id', filter=Q(successful=True)),
-        cancelled_deliveries=Count('id', filter=Q(successful=False)),
-        today_deliveries=Count('id', filter=Q(date=today)),
+        total_deliveries=Count('delivery_id'),
+        successful_deliveries=Count('delivery_id', filter=Q(successful=True)),
+        cancelled_deliveries=Count('delivery_id', filter=Q(successful=False)),
+        today_deliveries=Count('delivery_id', filter=Q(date=today)),
     )
 
     pending_trip_requests = TripRequest.objects.filter(accepted=False, cancelled=False).count()
