@@ -45,8 +45,8 @@ export default function Navbar() {
             <Image
               src="/tuma_go_logo.png"
               alt="TumaGo"
-              width={40}
-              height={40}
+              width={52}
+              height={52}
               className="transition-transform group-hover:scale-105"
             />
             <span className="text-xl font-bold text-primary-dark">

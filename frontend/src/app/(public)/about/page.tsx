@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import {
   Shield,
   Zap,
@@ -143,22 +144,33 @@ export default function AboutPage() {
               </p>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              {teamStats.map((stat) => (
-                <div
-                  key={stat.label}
-                  className="rounded-2xl bg-primary-light p-6 text-center"
-                >
-                  <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                    <stat.icon className="h-6 w-6" />
-                  </div>
-                  <p className="text-2xl font-bold text-text-dark">
-                    {stat.value}
-                  </p>
-                  <p className="mt-1 text-sm text-text-muted">
-                    {stat.label}
-                  </p>
-                </div>
-              ))}
+              <div className="col-span-2 overflow-hidden rounded-2xl">
+                <Image
+                  src="/headoffice1.png"
+                  alt="TumaGo headquarters in Msasa, Harare"
+                  width={600}
+                  height={300}
+                  className="w-full h-48 object-cover"
+                />
+              </div>
+              <div className="overflow-hidden rounded-2xl">
+                <Image
+                  src="/depo.png"
+                  alt="TumaGo delivery fleet at the depot"
+                  width={300}
+                  height={200}
+                  className="w-full h-40 object-cover"
+                />
+              </div>
+              <div className="overflow-hidden rounded-2xl">
+                <Image
+                  src="/parcel_handover.png"
+                  alt="TumaGo driver handing over a parcel"
+                  width={300}
+                  height={200}
+                  className="w-full h-40 object-cover"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -298,24 +310,25 @@ export default function AboutPage() {
               </p>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="rounded-2xl bg-white/10 p-6 backdrop-blur col-span-2">
-                <MapPin className="h-8 w-8 text-blue-200 mb-3" />
-                <h3 className="font-bold text-lg">Harare</h3>
-                <p className="text-sm text-blue-100/80 mt-1">
-                  Our home base. Full city coverage including CBD,
-                  Borrowdale, Avondale, Mount Pleasant, Msasa, and all
-                  surrounding suburbs. This is where it all started.
-                </p>
+              <div className="col-span-2 overflow-hidden rounded-2xl">
+                <Image
+                  src="/headoffice2.png"
+                  alt="TumaGo team and fleet at headquarters"
+                  width={600}
+                  height={250}
+                  className="w-full h-48 object-cover"
+                />
               </div>
-              <div className="rounded-2xl bg-white/10 p-6 backdrop-blur">
-                <Target className="h-8 w-8 text-blue-200 mb-3" />
-                <h3 className="font-bold text-lg">Coming Soon</h3>
-                <p className="text-sm text-blue-100/80 mt-1">
-                  Bulawayo, Mutare, Gweru, and more cities as we expand
-                  nationwide
-                </p>
+              <div className="overflow-hidden rounded-2xl">
+                <Image
+                  src="/headoffice3.png"
+                  alt="TumaGo fleet of delivery bikes"
+                  width={300}
+                  height={200}
+                  className="w-full h-40 object-cover"
+                />
               </div>
-              <div className="rounded-2xl bg-white/10 p-6 backdrop-blur">
+              <div className="rounded-2xl bg-white/10 p-6 backdrop-blur flex flex-col justify-center">
                 <Users className="h-8 w-8 text-blue-200 mb-3" />
                 <h3 className="font-bold text-lg">Drivers Nationwide</h3>
                 <p className="text-sm text-blue-100/80 mt-1">

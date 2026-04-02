@@ -1,16 +1,16 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
+import Image from "next/image";
 import {
   Mail,
   Phone,
   MapPin,
   Clock,
-  Send,
-  CheckCircle,
   MessageCircle,
   HelpCircle,
   Headphones,
+  ChevronDown,
 } from "lucide-react";
 
 const contactMethods = [
@@ -66,20 +66,6 @@ const supportTopics = [
 ];
 
 export default function ContactPage() {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    subject: "",
-    message: "",
-  });
-  const [submitted, setSubmitted] = useState(false);
-
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    // Client-side only for now — will connect to backend later
-    setSubmitted(true);
-  };
-
   return (
     <main>
       {/* Hero Section */}
@@ -103,8 +89,19 @@ export default function ContactPage() {
         </div>
       </section>
 
+      {/* Photo Banner */}
+      <section className="bg-white">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 -mt-10 relative z-10">
+          <div className="grid grid-cols-3 gap-3 overflow-hidden rounded-2xl shadow-xl">
+            <Image src="/parcel_handover.png" alt="Package handover" width={400} height={250} className="w-full h-32 sm:h-48 lg:h-56 object-cover" />
+            <Image src="/depo.png" alt="TumaGo depot" width={400} height={250} className="w-full h-32 sm:h-48 lg:h-56 object-cover" />
+            <Image src="/parce_handover2.png" alt="Driver delivering package" width={400} height={250} className="w-full h-32 sm:h-48 lg:h-56 object-cover" />
+          </div>
+        </div>
+      </section>
+
       {/* Contact Methods */}
-      <section className="py-16 bg-white">
+      <section className="pt-12 pb-16 bg-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {contactMethods.map((method) => (
@@ -139,165 +136,10 @@ export default function ContactPage() {
         </div>
       </section>
 
-      {/* Contact Form + Map Section */}
+      {/* Support + Map Section */}
       <section className="py-20 lg:py-28 bg-primary-light">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid gap-12 lg:grid-cols-5">
-            {/* Form */}
-            <div className="lg:col-span-3">
-              <p className="text-sm font-semibold uppercase tracking-wider text-primary mb-3">
-                Send a Message
-              </p>
-              <h2 className="text-3xl font-bold text-text-dark sm:text-4xl mb-8">
-                We Are Here to Help
-              </h2>
-
-              <div className="rounded-2xl bg-white p-8 shadow-lg">
-                {submitted ? (
-                  <div className="text-center py-12">
-                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-                      <CheckCircle className="h-8 w-8 text-green-600" />
-                    </div>
-                    <h3 className="text-xl font-bold text-text-dark">
-                      Message Sent!
-                    </h3>
-                    <p className="mt-2 text-text-muted max-w-sm mx-auto">
-                      Thank you for reaching out. We will get back to you
-                      within a few hours during business hours.
-                    </p>
-                    <button
-                      onClick={() => {
-                        setSubmitted(false);
-                        setFormData({
-                          name: "",
-                          email: "",
-                          subject: "",
-                          message: "",
-                        });
-                      }}
-                      className="mt-6 text-sm font-medium text-primary hover:text-primary-dark transition-colors"
-                    >
-                      Send another message
-                    </button>
-                  </div>
-                ) : (
-                  <form onSubmit={handleSubmit} className="space-y-5">
-                    <div className="grid gap-5 sm:grid-cols-2">
-                      <div>
-                        <label
-                          htmlFor="name"
-                          className="block text-sm font-medium text-text-dark mb-1.5"
-                        >
-                          Your Name
-                        </label>
-                        <input
-                          id="name"
-                          type="text"
-                          required
-                          value={formData.name}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              name: e.target.value,
-                            })
-                          }
-                          className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-text-dark placeholder:text-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition"
-                          placeholder="John Doe"
-                        />
-                      </div>
-                      <div>
-                        <label
-                          htmlFor="email"
-                          className="block text-sm font-medium text-text-dark mb-1.5"
-                        >
-                          Email Address
-                        </label>
-                        <input
-                          id="email"
-                          type="email"
-                          required
-                          value={formData.email}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              email: e.target.value,
-                            })
-                          }
-                          className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-text-dark placeholder:text-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition"
-                          placeholder="john@example.com"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label
-                        htmlFor="subject"
-                        className="block text-sm font-medium text-text-dark mb-1.5"
-                      >
-                        Subject
-                      </label>
-                      <select
-                        id="subject"
-                        required
-                        value={formData.subject}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            subject: e.target.value,
-                          })
-                        }
-                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-text-dark focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition"
-                      >
-                        <option value="">Select a topic</option>
-                        <option value="general">
-                          General Inquiry
-                        </option>
-                        <option value="support">
-                          Customer Support
-                        </option>
-                        <option value="driver">Driver Support</option>
-                        <option value="partnership">
-                          Partnership Inquiry
-                        </option>
-                        <option value="feedback">Feedback</option>
-                        <option value="media">Media / Press</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label
-                        htmlFor="message"
-                        className="block text-sm font-medium text-text-dark mb-1.5"
-                      >
-                        Your Message
-                      </label>
-                      <textarea
-                        id="message"
-                        rows={6}
-                        required
-                        value={formData.message}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            message: e.target.value,
-                          })
-                        }
-                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-text-dark placeholder:text-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition resize-none"
-                        placeholder="How can we help you? Please provide as much detail as possible."
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      className="inline-flex items-center justify-center gap-2 w-full rounded-xl bg-accent py-3.5 text-sm font-semibold text-white shadow-lg shadow-accent/25 transition-all hover:bg-orange-600 hover:shadow-xl"
-                    >
-                      <Send className="h-4 w-4" />
-                      Send Message
-                    </button>
-                  </form>
-                )}
-              </div>
-            </div>
-
-            {/* Sidebar */}
-            <div className="lg:col-span-2 space-y-8">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+          <div className="grid gap-8 sm:grid-cols-2">
               {/* Support Topics */}
               <div>
                 <h3 className="text-lg font-bold text-text-dark mb-4">
@@ -350,46 +192,6 @@ export default function ContactPage() {
                     </p>
                   </div>
                 </a>
-              </div>
-
-              {/* Map Placeholder */}
-              <div id="map">
-                <h3 className="text-lg font-bold text-text-dark mb-4">
-                  Find Us
-                </h3>
-                <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
-                  <div className="relative h-64 bg-gradient-to-br from-primary/5 to-primary/10 flex items-center justify-center">
-                    <div className="text-center">
-                      <MapPin className="h-12 w-12 text-primary mx-auto mb-3" />
-                      <p className="font-semibold text-text-dark text-sm">
-                        7 Martin Drive, Msasa
-                      </p>
-                      <p className="text-xs text-text-muted mt-1">
-                        Harare, Zimbabwe
-                      </p>
-                      <a
-                        href="https://maps.google.com/?q=7+Martin+Drive+Msasa+Harare+Zimbabwe"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-dark transition-colors"
-                      >
-                        Open in Google Maps
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                          className="h-3.5 w-3.5"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M5.22 14.78a.75.75 0 001.06 0l7.22-7.22v5.69a.75.75 0 001.5 0v-7.5a.75.75 0 00-.75-.75h-7.5a.75.75 0 000 1.5h5.69l-7.22 7.22a.75.75 0 000 1.06z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </a>
-                    </div>
-                  </div>
-                </div>
               </div>
 
               {/* Social Links */}
@@ -447,62 +249,133 @@ export default function ContactPage() {
                   ))}
                 </div>
               </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Find Us — Full-width Map */}
+      <section id="map" className="py-16 bg-white">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-8">
+            <p className="text-sm font-semibold uppercase tracking-wider text-primary mb-3">
+              Find Us
+            </p>
+            <h2 className="text-3xl font-bold text-text-dark sm:text-4xl">
+              Our Location
+            </h2>
+          </div>
+          <div className="overflow-hidden rounded-2xl shadow-lg">
+            <iframe
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3798.5!2d31.1!3d-17.82!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2s7+Martin+Drive%2C+Msasa%2C+Harare%2C+Zimbabwe!5e0!3m2!1sen!2szw!4v1700000000000"
+              width="100%"
+              className="min-h-[300px] sm:min-h-[400px] lg:min-h-[500px]"
+              style={{ border: 0 }}
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              title="TumaGo Office Location"
+            />
+          </div>
+          <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-4 text-center">
+            <div>
+              <p className="font-semibold text-text-dark">7 Martin Drive, Msasa, Harare, Zimbabwe</p>
             </div>
+            <a
+              href="https://maps.google.com/?q=7+Martin+Drive+Msasa+Harare+Zimbabwe"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-dark transition-colors"
+            >
+              <MapPin className="h-4 w-4" />
+              Open in Google Maps
+            </a>
           </div>
         </div>
       </section>
 
       {/* FAQ Section */}
-      <section className="py-20 lg:py-28 bg-white">
-        <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <p className="text-sm font-semibold uppercase tracking-wider text-primary mb-3">
-              FAQ
-            </p>
-            <h2 className="text-3xl font-bold text-text-dark sm:text-4xl">
-              Frequently Asked Questions
-            </h2>
-          </div>
-          <div className="space-y-6">
-            {[
-              {
-                q: "What cities does TumaGo operate in?",
-                a: "TumaGo currently operates in Harare. Drivers from across Zimbabwe are welcome to register, and we are actively planning expansion to Bulawayo, Mutare, Gweru, and more cities.",
-              },
-              {
-                q: "What payment methods are accepted?",
-                a: "We accept EcoCash, OneMoney, and card payments (Visa/Mastercard). All transactions are processed securely through our payment partner Paynow.",
-              },
-              {
-                q: "How long does a typical delivery take?",
-                a: "Most same-city deliveries are completed within 25-45 minutes depending on distance. You can track your package in real-time through the app.",
-              },
-              {
-                q: "How do I become a TumaGo driver?",
-                a: "Download the TumaGo Driver app from Google Play, sign up with your details, upload your driver's license and vehicle documents, and complete the verification process. You can start accepting deliveries once approved.",
-              },
-              {
-                q: "Is my package insured?",
-                a: "Yes, all deliveries through TumaGo are covered by our delivery insurance policy. In the rare event of damage or loss, our support team will help you through the claims process.",
-              },
-              {
-                q: "Can I schedule a delivery in advance?",
-                a: "Currently, TumaGo supports on-demand deliveries. Scheduled deliveries are on our roadmap and will be available soon for both individual and business users.",
-              },
-            ].map((faq) => (
-              <div
-                key={faq.q}
-                className="rounded-2xl border border-gray-100 p-6 transition-all hover:shadow-sm"
-              >
-                <h3 className="font-bold text-text-dark">{faq.q}</h3>
-                <p className="mt-2 text-sm text-text-muted leading-relaxed">
-                  {faq.a}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <FAQSection />
     </main>
+  );
+}
+
+const faqs = [
+  {
+    q: "What cities does TumaGo operate in?",
+    a: "TumaGo currently operates in Harare, Zimbabwe. We are actively planning expansion to Bulawayo, Mutare, Gweru, and other major cities. Drivers from across Zimbabwe are welcome to register.",
+  },
+  {
+    q: "What payment methods are accepted?",
+    a: "We accept EcoCash, OneMoney, and card payments (Visa/Mastercard). All transactions are processed securely through our payment partner Paynow. Cash payments are also available — you pay the driver directly on delivery.",
+  },
+  {
+    q: "How long does a typical delivery take?",
+    a: "Most same-city deliveries in Harare are completed within 25-45 minutes depending on distance and traffic. You can track your package in real-time through the TumaGo app from pickup to dropoff.",
+  },
+  {
+    q: "How do I become a TumaGo driver?",
+    a: "Download the TumaGo Driver app from Google Play, sign up with your details, upload your driver's license and vehicle documents, and complete the verification process. Once approved, top up your delivery wallet and start accepting trips.",
+  },
+  {
+    q: "What vehicle types are available for deliveries?",
+    a: "We offer three vehicle options: Scooter (small packages, fastest and most affordable), Van (medium to large packages), and Truck (bulk or heavy items). Pricing varies by vehicle type and distance.",
+  },
+  {
+    q: "Can businesses integrate with TumaGo?",
+    a: "Yes! Our B2B Partner API allows e-commerce platforms, food delivery services, pharmacies, and other businesses to request deliveries programmatically. Visit our Partner page to register and get API access.",
+  },
+  {
+    q: "What happens if my delivery is cancelled?",
+    a: "If you cancel before the driver picks up your package, the delivery is cancelled at no charge. If the driver cancels, they must provide a reason and the system handles the refund process automatically.",
+  },
+];
+
+function FAQSection() {
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+
+  return (
+    <section className="py-20 lg:py-28 bg-white">
+      <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-12">
+          <p className="text-sm font-semibold uppercase tracking-wider text-primary mb-3">
+            FAQ
+          </p>
+          <h2 className="text-3xl font-bold text-text-dark sm:text-4xl">
+            Frequently Asked Questions
+          </h2>
+        </div>
+        <div className="space-y-3">
+          {faqs.map((faq, i) => (
+            <div
+              key={i}
+              className="rounded-2xl border border-gray-100 bg-white overflow-hidden transition-all hover:shadow-sm"
+            >
+              <button
+                onClick={() => setOpenIndex(openIndex === i ? null : i)}
+                className="flex w-full items-center justify-between px-6 py-5 text-left cursor-pointer"
+              >
+                <span className="font-bold text-text-dark pr-4">{faq.q}</span>
+                <ChevronDown
+                  className={`h-5 w-5 shrink-0 text-text-muted transition-transform duration-200 ${
+                    openIndex === i ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+              <div
+                className={`grid transition-all duration-200 ease-in-out ${
+                  openIndex === i ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+                }`}
+              >
+                <div className="overflow-hidden">
+                  <p className="px-6 pb-5 text-sm text-text-muted leading-relaxed">
+                    {faq.a}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }

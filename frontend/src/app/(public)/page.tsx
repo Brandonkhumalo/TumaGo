@@ -133,84 +133,40 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Right Visual */}
+            {/* Right Visual — Hero Image */}
             <div className="relative hidden lg:block">
-              <div className="relative mx-auto w-full max-w-md">
-                {/* Phone Mockup */}
-                <div className="rounded-3xl bg-gradient-to-br from-primary to-primary-dark p-8 shadow-2xl shadow-primary/20">
-                  <div className="rounded-2xl bg-white p-6 space-y-4">
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="h-10 w-10 rounded-full bg-primary-light flex items-center justify-center">
-                        <Package className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-text-dark">
-                          New Delivery
-                        </p>
-                        <p className="text-xs text-text-muted">
-                          Harare CBD to Borrowdale
-                        </p>
-                      </div>
-                    </div>
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-3">
-                        <div className="h-3 w-3 rounded-full bg-green-500" />
-                        <div className="h-3 flex-1 rounded bg-gray-100" />
-                      </div>
-                      <div className="ml-1.5 h-6 border-l-2 border-dashed border-gray-200" />
-                      <div className="flex items-center gap-3">
-                        <div className="h-3 w-3 rounded-full bg-accent" />
-                        <div className="h-3 flex-1 rounded bg-gray-100" />
-                      </div>
-                    </div>
-                    <div className="mt-4 rounded-xl bg-primary-light p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-xs text-text-muted">
-                            Estimated Fare
-                          </p>
-                          <p className="text-lg font-bold text-primary-dark">
-                            $3.50 USD
-                          </p>
-                        </div>
-                        <div className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white">
-                          Confirm
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              <div className="relative mx-auto w-full max-w-lg">
+                <Image
+                  src="/tumago-bike.png"
+                  alt="TumaGo delivery driver on motorcycle"
+                  width={600}
+                  height={600}
+                  className="rounded-3xl object-cover drop-shadow-2xl"
+                  priority
+                />
                 {/* Floating Card - Driver Found */}
-                <div className="absolute -right-8 top-8 rounded-xl bg-white p-4 shadow-xl shadow-gray-200/50 animate-bounce" style={{ animationDuration: "3s" }}>
+                <div className="absolute -right-4 top-8 rounded-xl bg-white p-4 shadow-xl shadow-gray-200/50 animate-bounce" style={{ animationDuration: "3s" }}>
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
                       <CheckCircle className="h-5 w-5 text-green-600" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-text-dark">
-                        Driver Found!
-                      </p>
-                      <p className="text-xs text-text-muted">
-                        2 min away
-                      </p>
+                      <p className="text-sm font-semibold text-text-dark">Driver Found!</p>
+                      <p className="text-xs text-text-muted">2 min away</p>
                     </div>
                   </div>
                 </div>
                 {/* Floating Card - Live Tracking */}
-                <div className="absolute -left-8 bottom-16 rounded-xl bg-white p-4 shadow-xl shadow-gray-200/50">
+                <div className="absolute -left-4 bottom-16 rounded-xl bg-white p-4 shadow-xl shadow-gray-200/50">
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-full bg-primary-light flex items-center justify-center">
                       <MapPin className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-text-dark">
-                        Live Tracking
-                      </p>
+                      <p className="text-sm font-semibold text-text-dark">Live Tracking</p>
                       <div className="flex items-center gap-1">
                         <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                        <p className="text-xs text-text-muted">
-                          En route
-                        </p>
+                        <p className="text-xs text-text-muted">En route</p>
                       </div>
                     </div>
                   </div>
@@ -236,6 +192,17 @@ export default function HomePage() {
               across the city effortless and transparent.
             </p>
           </div>
+          {/* Image banner */}
+          <div className="mb-12 overflow-hidden rounded-2xl">
+            <Image
+              src="/headoffice3.png"
+              alt="TumaGo delivery fleet lined up at headquarters"
+              width={1200}
+              height={500}
+              className="w-full h-64 sm:h-80 lg:h-96 object-cover"
+            />
+          </div>
+
           <div className="grid gap-8 md:grid-cols-3">
             {steps.map((step, index) => (
               <div
@@ -356,22 +323,24 @@ export default function HomePage() {
               </div>
             </div>
             <div className="mt-8 lg:mt-0 shrink-0">
-              <div className="flex flex-col items-center gap-4 rounded-2xl bg-white p-8 shadow-lg">
-                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary-light">
-                  <Users className="h-10 w-10 text-primary" />
+              <div className="rounded-2xl overflow-hidden shadow-lg max-w-sm">
+                <Image
+                  src="/delivery.png"
+                  alt="TumaGo driver on the streets of Harare"
+                  width={400}
+                  height={300}
+                  className="w-full h-48 object-cover"
+                />
+                <div className="bg-white p-6 text-center">
+                  <p className="text-2xl font-bold text-text-dark">100+ Drivers</p>
+                  <p className="text-sm text-text-muted mt-1">and growing every week</p>
+                  <Link
+                    href="/get-started"
+                    className="mt-4 block w-full rounded-xl bg-primary px-6 py-3 text-center text-sm font-semibold text-white transition-all hover:bg-primary-dark hover:shadow-lg"
+                  >
+                    Get Started
+                  </Link>
                 </div>
-                <p className="text-2xl font-bold text-text-dark">
-                  100+ Drivers
-                </p>
-                <p className="text-sm text-text-muted">
-                  and growing every week
-                </p>
-                <Link
-                  href="/get-started"
-                  className="w-full rounded-xl bg-primary px-6 py-3 text-center text-sm font-semibold text-white transition-all hover:bg-primary-dark hover:shadow-lg"
-                >
-                  Get Started
-                </Link>
               </div>
             </div>
           </div>
