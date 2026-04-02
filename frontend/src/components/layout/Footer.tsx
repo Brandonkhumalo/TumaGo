@@ -32,9 +32,9 @@ export default function Footer() {
               <Image
                 src="/tuma_go_logo.png"
                 alt="TumaGo"
-                width={40}
-                height={40}
-                style={{ filter: "brightness(0) invert(1)" }}
+                width={44}
+                height={44}
+                className="rounded"
               />
               <span className="text-xl font-bold text-white">
                 Tuma<span className="text-primary">Go</span>
