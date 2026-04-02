@@ -89,9 +89,27 @@ class BlacklistedToken(models.Model):
     def __str__(self):
         return f"Blacklisted at {self.blacklisted_at}"
     
+class TermsContent(models.Model):
+    """Admin-managed T&C text. One active version per app_type at a time."""
+    APP_CHOICES = [('client', 'Client App'), ('driver', 'Driver App')]
+
+    app_type = models.CharField(max_length=10, choices=APP_CHOICES)
+    content = models.TextField()
+    version = models.PositiveIntegerField(default=1)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-version']
+        unique_together = ['app_type', 'version']
+
+    def __str__(self):
+        return f"{self.get_app_type_display()} T&C v{self.version}"
+
 class TermsAndConditions(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='terms_and_conditions')
     terms_and_conditions = models.BooleanField(default=False)
+    accepted_version = models.PositiveIntegerField(default=0)
     date = models.DateField(auto_now_add=True)
 
 class DriverLocations(models.Model):

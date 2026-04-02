@@ -9,6 +9,7 @@ import com.techmania.tumago_driver.models.FcmTokenRequest;
 import com.techmania.tumago_driver.models.LogOutRequest;
 import com.techmania.tumago_driver.models.LoginDriver;
 import com.techmania.tumago_driver.models.ResetPasswordModel;
+import com.techmania.tumago_driver.models.TermsResponse;
 import com.techmania.tumago_driver.models.TokenResponse;
 import com.techmania.tumago_driver.models.Driver;
 
@@ -28,6 +29,15 @@ import retrofit2.http.Part;
 import retrofit2.http.Query;
 
 public interface ApiService {
+    @POST("api/v1/email/otp/send/")
+    Call<ResponseBody> sendEmailOtp(@Body java.util.Map<String, String> body);
+
+    @POST("api/v1/email/otp/verify/")
+    Call<ResponseBody> verifyEmailOtp(@Body java.util.Map<String, String> body);
+
+    @POST("api/v1/forgot-password/")
+    Call<ResponseBody> forgotPassword(@Body java.util.Map<String, String> body);
+
     @POST("api/v1/driver/signup/")
     Call<TokenResponse> createDriver(@Body CreateDriver request);
 
@@ -46,8 +56,11 @@ public interface ApiService {
     @DELETE("api/v1/delete/account/")
     Call<ResponseBody> deleteAccount(@Header("Authorization") String authHeader);
 
+    @GET("api/v1/terms/content/")
+    Call<TermsResponse> getTermsContent(@Query("app_type") String appType);
+
     @POST("api/v1/accept/terms/")
-    Call<ResponseBody> acceptTerms(@Header("Authorization") String authHeader);
+    Call<ResponseBody> acceptTerms(@Header("Authorization") String authHeader, @Body java.util.Map<String, String> body);
 
     @POST("api/v1/save-fcm-token/")
     Call<Void> sendFcmToken(
@@ -62,7 +75,7 @@ public interface ApiService {
     Call<ResponseBody> verifyToken(@Header("Authorization") String authHeader);
 
     @GET("api/v1/verifyTerms/")
-    Call<ResponseBody> checkTerms(@Header("Authorization") String authHeader);
+    Call<ResponseBody> checkTerms(@Header("Authorization") String authHeader, @Query("app_type") String appType);
 
     @GET("api/v1/driver/delivery_info/")
     Call<FinanceInfo> getFinances(@Header("Authorization") String authHeader);

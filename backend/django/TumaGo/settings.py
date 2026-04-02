@@ -23,12 +23,12 @@ PAYNOW_RETURN_URL = config("PAYNOW_RETURN_URL", default="http://localhost/paymen
 PAYNOW_RESULT_URL = config("PAYNOW_RESULT_URL", default="http://localhost/api/v1/payment/callback/")
 
 # ---------------------------------------------------------------------------
-# AWS SES — email sending via tishanyq.co.zw
+# Resend — email sending
 # ---------------------------------------------------------------------------
-AWS_ACCESS_KEY_ID = config("AWS_ACCESS_KEY_ID", default="")
-AWS_SECRET_ACCESS_KEY = config("AWS_SECRET_ACCESS_KEY", default="")
-AWS_SES_REGION = config("AWS_SES_REGION", default="af-south-1")
-SES_FROM_EMAIL = config("SES_FROM_EMAIL", default="noreply@tishanyq.co.zw")
+RESEND_API_KEY = config("RESENDAPIKEY", default="")
+RESEND_FROM_EMAIL = config("RESEND_FROM_EMAIL", default="TumaGo <noreply@tumago.co.zw>")
+RESEND_WEBHOOK_SECRET = config("RESEND_WEBHOOK_SECRET", default="")
+FRONTEND_URL = config("FRONTEND_URL", default="https://tumago.co.zw")
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*').split(',')
 
 # Application definition

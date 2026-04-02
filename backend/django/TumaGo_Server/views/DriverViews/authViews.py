@@ -6,9 +6,13 @@ from rest_framework import status
 from rest_framework.throttling import AnonRateThrottle
 from ...serializers.driverSerializer.authSerializers import RegisterSerializer, VehicleSerializer, LicenseUploadSerializer, ResetPasswordSerializer
 from ...token import JWTAuthentication
-from ...otp import is_phone_verified, clear_verification
+from ...otp import is_phone_verified, clear_verification, is_email_verified, clear_email_verification
 from ...busy_drivers import mark_driver_available
+from ..EmailViews.emailService import send_email
+from ..EmailViews.templates import welcome_driver_email, password_reset_email
 import logging
+import secrets
+from django.core.cache import cache
 from ...models import CustomUser
 from django.shortcuts import get_object_or_404
 
@@ -61,6 +65,20 @@ def driver_register(request):
         # Clear the OTP verification flag so it can't be reused
         if phone and not is_whatsapp_internal:
             clear_verification(phone)
+
+        # Mark email as verified if email OTP was completed
+        if user.email and is_email_verified(user.email):
+            user.verifiedEmail = True
+            user.save(update_fields=["verifiedEmail"])
+            clear_email_verification(user.email)
+
+        # Send welcome email
+        if user.email:
+            try:
+                subject, text, html = welcome_driver_email(user.name)
+                send_email(to=user.email, subject=subject, body_text=text, body_html=html)
+            except Exception as e:
+                logger.warning(f"Welcome email failed for {user.email}: {e}")
 
         return Response({
             'accessToken': token,
@@ -141,3 +159,85 @@ def change_password(request):
         return Response({'detail': 'Password has been updated successfully.'}, status=status.HTTP_200_OK)
     else:
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# ---------------------------------------------------------------------------
+# Forgot Password — email-based password reset (no auth required)
+# ---------------------------------------------------------------------------
+
+RESET_TOKEN_TTL = 1800  # 30 minutes
+
+class ForgotPasswordThrottle(AnonRateThrottle):
+    scope = 'otp_send'
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+@throttle_classes([ForgotPasswordThrottle])
+def forgot_password(request):
+    """Send a password reset link to the user's email.
+
+    Body: { "email": "user@example.com" }
+
+    Always returns 200 to prevent email enumeration.
+    """
+    email = (request.data.get("email") or "").strip().lower()
+    if not email or "@" not in email:
+        return Response({"detail": "A valid email is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Always return success to prevent email enumeration
+    try:
+        user = CustomUser.objects.get(email=email)
+    except CustomUser.DoesNotExist:
+        return Response({"detail": "If an account with that email exists, a reset link has been sent."})
+
+    # Generate a secure reset token and store in Redis
+    token = secrets.token_urlsafe(48)
+    cache.set(f"password_reset:{token}", str(user.id), timeout=RESET_TOKEN_TTL)
+
+    # Build reset URL pointing to the frontend
+    frontend_url = settings.FRONTEND_URL.rstrip("/")
+    reset_url = f"{frontend_url}/reset-password?token={token}"
+
+    subject, text, html = password_reset_email(user.name, reset_url)
+    send_email(to=email, subject=subject, body_text=text, body_html=html)
+
+    return Response({"detail": "If an account with that email exists, a reset link has been sent."})
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def reset_password_confirm(request):
+    """Reset password using the token from the email link.
+
+    Body: { "token": "...", "password": "newpassword", "confirm_password": "newpassword" }
+    """
+    token = (request.data.get("token") or "").strip()
+    password = request.data.get("password") or ""
+    confirm = request.data.get("confirm_password") or ""
+
+    if not token:
+        return Response({"detail": "Reset token is required."}, status=status.HTTP_400_BAD_REQUEST)
+    if len(password) < 6:
+        return Response({"detail": "Password must be at least 6 characters."}, status=status.HTTP_400_BAD_REQUEST)
+    if password != confirm:
+        return Response({"detail": "Passwords do not match."}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Look up the token in Redis
+    user_id = cache.get(f"password_reset:{token}")
+    if not user_id:
+        return Response({"detail": "Invalid or expired reset link."}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        user = CustomUser.objects.get(id=user_id)
+    except CustomUser.DoesNotExist:
+        return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    user.set_password(password)
+    user.save()
+
+    # Delete the token so it can't be reused
+    cache.delete(f"password_reset:{token}")
+
+    logger.info("Password reset for user %s via email link", user_id)
+    return Response({"detail": "Password has been reset successfully."})

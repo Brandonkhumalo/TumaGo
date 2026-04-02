@@ -131,6 +131,83 @@ def clear_verification(phone: str):
     cache.delete(_cache_key_verified(phone))
 
 
+def send_otp_email(email: str, otp: str) -> bool:
+    """
+    Send the OTP to the user via email using Resend.
+
+    Args:
+        email: Email address to send the OTP to
+        otp: The 6-digit OTP code
+    """
+    from TumaGo_Server.views.EmailViews.emailService import send_email
+
+    subject = "TumaGo — Your Verification Code"
+    body_text = f"Your TumaGo verification code is: {otp}\n\nThis code expires in 10 minutes."
+    body_html = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
+        <h2 style="color: #0e74bc;">TumaGo</h2>
+        <p>Your verification code is:</p>
+        <div style="background: #EFF8FE; padding: 16px; border-radius: 8px; text-align: center; margin: 16px 0;">
+            <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #0e74bc;">{otp}</span>
+        </div>
+        <p style="color: #666; font-size: 14px;">This code expires in 10 minutes. If you didn't request this, you can safely ignore this email.</p>
+    </div>
+    """
+
+    try:
+        return send_email(to=email, subject=subject, body_text=body_text, body_html=body_html)
+    except Exception as e:
+        logger.error("Failed to send OTP email to %s: %s", email, e)
+        return False
+
+
+def generate_email_otp(email: str) -> str:
+    """Generate a 6-digit OTP for email verification and store in Redis."""
+    email = email.strip().lower()
+    otp = f"{secrets.randbelow(900000) + 100000}"
+    cache.set(f"email_otp:{email}", otp, timeout=OTP_TTL_SECONDS)
+    cache.delete(f"email_otp_attempts:{email}")
+    logger.info("Email OTP generated for %s", email)
+    return otp
+
+
+def verify_email_otp(email: str, otp: str) -> tuple[bool, str]:
+    """Verify the OTP sent to an email address."""
+    email = email.strip().lower()
+
+    attempts = cache.get(f"email_otp_attempts:{email}", 0)
+    if attempts >= MAX_OTP_ATTEMPTS:
+        return False, "Too many failed attempts. Try again in 30 minutes."
+
+    stored_otp = cache.get(f"email_otp:{email}")
+    if stored_otp is None:
+        return False, "OTP expired or not found. Request a new one."
+
+    if not secrets.compare_digest(str(stored_otp), str(otp)):
+        cache.set(f"email_otp_attempts:{email}", attempts + 1, timeout=LOCKOUT_TTL_SECONDS)
+        remaining = MAX_OTP_ATTEMPTS - (attempts + 1)
+        return False, f"Invalid OTP. {remaining} attempts remaining."
+
+    # OTP valid — set verification flag and clean up
+    cache.set(f"email_verified:{email}", True, timeout=VERIFICATION_TTL_SECONDS)
+    cache.delete(f"email_otp:{email}")
+    cache.delete(f"email_otp_attempts:{email}")
+    logger.info("Email OTP verified for %s", email)
+    return True, "Email verified."
+
+
+def is_email_verified(email: str) -> bool:
+    """Check if an email has been verified via OTP."""
+    email = email.strip().lower()
+    return cache.get(f"email_verified:{email}") is True
+
+
+def clear_email_verification(email: str):
+    """Clear the email verification flag after successful signup."""
+    email = email.strip().lower()
+    cache.delete(f"email_verified:{email}")
+
+
 def send_otp_whatsapp(phone: str, otp: str, template_name: str = "client_otp"):
     """
     Send the OTP to the user via WhatsApp template message.

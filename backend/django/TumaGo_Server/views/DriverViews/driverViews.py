@@ -14,6 +14,8 @@ from ...serializers.driverSerializer.rideSerializers import DeliverySerializer
 from ...models import DriverFinances, DriverVehicle, TripRequest, Delivery, CustomUser, Payment, DriverBalance, PartnerDeliveryRequest
 from .deliveryMatching.delivery import driver_found
 from ...busy_drivers import mark_driver_busy, mark_driver_available
+from ..EmailViews.emailService import send_email
+from ..EmailViews.templates import delivery_completed_email
 import googlemaps
 import logging
 from django.conf import settings
@@ -388,6 +390,21 @@ def end_trip(request):
                 fcm_messaging.send(msg)
             except Exception as e:
                 logger.error(f"FCM delivery_complete error: {e}")
+
+        # Send delivery complete email to client
+        if client.email:
+            try:
+                subject, text, html = delivery_completed_email(
+                    client_name=client.name,
+                    driver_name=f"{driver.name} {driver.surname}",
+                    delivery_id=str(delivery.delivery_id),
+                    fare=str(delivery.fare),
+                    vehicle=delivery.vehicle or "",
+                    payment_method=delivery.payment_method,
+                )
+                send_email(to=client.email, subject=subject, body_text=text, body_html=html)
+            except Exception as e:
+                logger.warning(f"Delivery complete email failed for {client.email}: {e}")
 
         if Driver.role == CustomUser.DRIVER:
             Driver.driver_available = True

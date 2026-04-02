@@ -84,10 +84,10 @@ services:
       GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY}
       FIREBASE_CREDENTIALS: ${FIREBASE_CREDENTIALS}
       FIREBASE_CREDENTIALS_PATH: /secrets/firebase-credentials.json
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
-      AWS_SES_REGION: ${AWS_SES_REGION:-af-south-1}
-      SES_FROM_EMAIL: ${SES_FROM_EMAIL:-noreply@tishanyq.co.zw}
+      RESENDAPIKEY: ${RESENDAPIKEY}
+      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL:-TumaGo <noreply@tumago.co.zw>}
+      RESEND_WEBHOOK_SECRET: ${RESEND_WEBHOOK_SECRET:-}
+      FRONTEND_URL: ${FRONTEND_URL:-https://tumago.co.zw}
       GATEWAY_URL: http://gateway:80
       LOCATION_SERVICE_URL: http://location:8001
       MATCHING_SERVICE_URL: http://matching:8002
@@ -115,10 +115,10 @@ services:
       DEBUG: "False"
       GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY}
       FIREBASE_CREDENTIALS: ${FIREBASE_CREDENTIALS}
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
-      AWS_SES_REGION: ${AWS_SES_REGION:-af-south-1}
-      SES_FROM_EMAIL: ${SES_FROM_EMAIL:-noreply@tishanyq.co.zw}
+      RESENDAPIKEY: ${RESENDAPIKEY}
+      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL:-TumaGo <noreply@tumago.co.zw>}
+      RESEND_WEBHOOK_SECRET: ${RESEND_WEBHOOK_SECRET:-}
+      FRONTEND_URL: ${FRONTEND_URL:-https://tumago.co.zw}
     depends_on:
       - redis
       - pgbouncer

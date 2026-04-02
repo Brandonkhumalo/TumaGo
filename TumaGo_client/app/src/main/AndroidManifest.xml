@@ -71,6 +71,9 @@
             android:name=".auth.UserInfo"
             android:exported="false" />
         <activity
+            android:name=".auth.EmailVerification"
+            android:exported="false" />
+        <activity
             android:name=".auth.SignUp"
             android:exported="false" />
         <activity

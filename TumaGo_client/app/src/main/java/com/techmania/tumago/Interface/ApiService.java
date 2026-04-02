@@ -10,6 +10,7 @@ import com.techmania.tumago.Model.PaymentResponse;
 import com.techmania.tumago.Model.PaymentStatusResponse;
 import com.techmania.tumago.Model.RateTrip;
 import com.techmania.tumago.Model.ResetPasswordModel;
+import com.techmania.tumago.Model.TermsResponse;
 import com.techmania.tumago.Model.TokenResponse;
 import com.techmania.tumago.Model.User;
 import com.techmania.tumago.Model.UserProfileData;
@@ -23,19 +24,32 @@ import retrofit2.http.GET;
 import retrofit2.http.Header;
 import retrofit2.http.POST;
 import retrofit2.http.Query;
+import retrofit2.http.Query;
 
 public interface ApiService {
+    @POST("api/v1/email/otp/send/")
+    Call<ResponseBody> sendEmailOtp(@Body java.util.Map<String, String> body);
+
+    @POST("api/v1/email/otp/verify/")
+    Call<ResponseBody> verifyEmailOtp(@Body java.util.Map<String, String> body);
+
+    @POST("api/v1/forgot-password/")
+    Call<ResponseBody> forgotPassword(@Body java.util.Map<String, String> body);
+
     @POST("api/v1/signup/")
     Call<TokenResponse> signup(@Body CreateUser request);
 
     @POST("api/v1/login/")
     Call<TokenResponse> login(@Body LoginUser request);
 
+    @GET("api/v1/terms/content/")
+    Call<TermsResponse> getTermsContent(@Query("app_type") String appType);
+
     @POST("api/v1/accept/terms/")
-    Call<ResponseBody> acceptTerms(@Header("Authorization") String authHeader);
+    Call<ResponseBody> acceptTerms(@Header("Authorization") String authHeader, @Body java.util.Map<String, String> body);
 
     @GET("api/v1/verifyTerms/")
-    Call<ResponseBody> checkTerms(@Header("Authorization") String authHeader);
+    Call<ResponseBody> checkTerms(@Header("Authorization") String authHeader, @Query("app_type") String appType);
 
     @POST("api/v1/logout/")
     Call<ResponseBody> logout(@Header("Authorization") String authHeader,@Query("refreshToken") String refreshToken);

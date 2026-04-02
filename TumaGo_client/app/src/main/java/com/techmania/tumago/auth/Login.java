@@ -28,12 +28,16 @@ import com.techmania.tumago.helper.UiHelper;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 public class Login extends AppCompatActivity {
-    TextView signup;
+    TextView signup, forgetPass;
     EditText userName, pass;
     Button loginBtn;
     CheckBox checked;
@@ -86,6 +90,9 @@ public class Login extends AppCompatActivity {
                 LoginUser();
             }
         });
+
+        forgetPass = findViewById(R.id.forgetPass);
+        forgetPass.setOnClickListener(v -> showForgotPasswordDialog());
 
         checked.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -194,6 +201,46 @@ public class Login extends AppCompatActivity {
         startActivity(i);
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
         finish();
+    }
+
+    private void showForgotPasswordDialog() {
+        final EditText emailInput = new EditText(this);
+        emailInput.setHint("Enter your email address");
+        emailInput.setInputType(InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
+        emailInput.setPadding(48, 32, 48, 32);
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Reset Password")
+                .setMessage("Enter your email and we'll send you a link to reset your password.")
+                .setView(emailInput)
+                .setPositiveButton("Send Link", (dialog, which) -> {
+                    String email = emailInput.getText().toString().trim();
+                    if (email.isEmpty() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                        Toast.makeText(this, "Please enter a valid email", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    sendForgotPasswordRequest(email);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void sendForgotPasswordRequest(String email) {
+        ApiService apiService = ApiClient.getClient().create(ApiService.class);
+        Map<String, String> body = new HashMap<>();
+        body.put("email", email);
+
+        apiService.forgotPassword(body).enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                Toast.makeText(Login.this, "If an account exists with that email, a reset link has been sent.", Toast.LENGTH_LONG).show();
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                Toast.makeText(Login.this, "Connection error. Please try again.", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }
 

@@ -23,6 +23,7 @@ from ...models import (
     PartnerDeliveryRequest,
     PartnerTransaction,
     DriverLocations,
+    TermsContent,
 )
 from ...token import JWTAuthentication
 
@@ -1484,3 +1485,55 @@ def admin_delete_partner(request, partner_id):
     partner.delete()
     logger.info(f"Admin {request.user.email} deleted partner {name}")
     return Response({'message': f'Partner {name} deleted permanently'})
+
+
+# ── Terms & Conditions management ────────────────────────────────────────
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def admin_get_terms(request):
+    """Get the latest T&C content for each app type."""
+    result = {}
+    for app_type in ('client', 'driver'):
+        latest = TermsContent.objects.filter(app_type=app_type).first()
+        if latest:
+            result[app_type] = {
+                'id': latest.id,
+                'content': latest.content,
+                'version': latest.version,
+                'updated_at': latest.updated_at.isoformat(),
+            }
+        else:
+            result[app_type] = None
+    return Response(result)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def admin_update_terms(request):
+    """Create or update T&C for a specific app type. Auto-increments version."""
+    app_type = request.data.get('app_type')
+    content = request.data.get('content', '').strip()
+
+    if app_type not in ('client', 'driver'):
+        return Response({'detail': 'app_type must be "client" or "driver".'}, status=status.HTTP_400_BAD_REQUEST)
+    if not content:
+        return Response({'detail': 'content is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    latest = TermsContent.objects.filter(app_type=app_type).first()
+    new_version = (latest.version + 1) if latest else 1
+
+    terms = TermsContent.objects.create(
+        app_type=app_type,
+        content=content,
+        version=new_version,
+    )
+
+    logger.info(f"Admin {request.user.email} updated {app_type} T&C to v{new_version}")
+    return Response({
+        'id': terms.id,
+        'app_type': terms.app_type,
+        'content': terms.content,
+        'version': terms.version,
+        'updated_at': terms.updated_at.isoformat(),
+    }, status=status.HTTP_201_CREATED)

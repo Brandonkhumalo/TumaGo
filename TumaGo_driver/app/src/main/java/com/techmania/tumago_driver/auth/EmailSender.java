@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.security.crypto.EncryptedSharedPreferences;
 import androidx.security.crypto.MasterKey;
@@ -21,6 +23,23 @@ public class EmailSender extends AppCompatActivity {
     Button ConfirmEmail;
     EditText emailReg;
     LinearLayout goToLogin;
+
+    // Launcher for email verification — on success, proceed to Register
+    private final ActivityResultLauncher<Intent> emailVerificationLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                    boolean verified = result.getData().getBooleanExtra("email_verified", false);
+                    if (verified) {
+                        String email = emailReg.getText().toString().trim();
+                        storeEmail(EmailSender.this, email);
+                        storeVerified(EmailSender.this, true);
+
+                        Intent i = new Intent(EmailSender.this, Register.class);
+                        startActivity(i);
+                        finish();
+                    }
+                }
+            });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,13 +58,15 @@ public class EmailSender extends AppCompatActivity {
                     Toast.makeText(EmailSender.this, "Please enter your email", Toast.LENGTH_SHORT).show();
                     return;
                 }
+                if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                    Toast.makeText(EmailSender.this, "Please enter a valid email", Toast.LENGTH_SHORT).show();
+                    return;
+                }
 
-                storeEmail(EmailSender.this, email);
-                storeVerified(EmailSender.this, true);
-
-                Intent i = new Intent(EmailSender.this, Register.class);
-                startActivity(i);
-                finish();
+                // Launch email verification activity
+                Intent i = new Intent(EmailSender.this, verification.class);
+                i.putExtra("email", email);
+                emailVerificationLauncher.launch(i);
             }
         });
 

@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.throttling import AnonRateThrottle
 
-from ...otp import generate_otp, verify_otp, send_otp_whatsapp
+from ...otp import generate_otp, verify_otp, send_otp_whatsapp, generate_email_otp, verify_email_otp, send_otp_email
 
 logger = logging.getLogger(__name__)
 
@@ -94,6 +94,78 @@ def verify_otp_view(request):
         )
 
     success, message = verify_otp(phone, otp)
+
+    if not success:
+        return Response(
+            {"detail": message},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    return Response(
+        {"detail": message, "verified": True},
+        status=status.HTTP_200_OK,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Email OTP — verify email address during registration
+# ---------------------------------------------------------------------------
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+@throttle_classes([OTPSendThrottle])
+def send_email_otp(request):
+    """Send a 6-digit OTP to the given email address.
+
+    Request body:
+        email (str): Email address to verify
+
+    The OTP is valid for 10 minutes.
+    """
+    email = (request.data.get("email") or "").strip().lower()
+    if not email or "@" not in email:
+        return Response(
+            {"detail": "A valid email is required."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    otp = generate_email_otp(email)
+    sent = send_otp_email(email, otp)
+
+    if not sent:
+        return Response(
+            {"detail": "Failed to send verification email. Please try again."},
+            status=status.HTTP_502_BAD_GATEWAY,
+        )
+
+    return Response(
+        {"detail": "Verification code sent to your email."},
+        status=status.HTTP_200_OK,
+    )
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+@throttle_classes([OTPVerifyThrottle])
+def verify_email_otp_view(request):
+    """Verify the OTP sent to an email address.
+
+    Request body:
+        email (str): Email address used when sending the OTP
+        otp (str): The 6-digit code received via email
+
+    On success, the email is marked as verified for 15 minutes.
+    """
+    email = (request.data.get("email") or "").strip().lower()
+    otp = request.data.get("otp")
+
+    if not email or not otp:
+        return Response(
+            {"detail": "email and otp are required."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    success, message = verify_email_otp(email, otp)
 
     if not success:
         return Response(

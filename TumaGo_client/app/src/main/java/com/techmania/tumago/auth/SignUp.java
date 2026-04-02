@@ -23,6 +23,9 @@ import com.techmania.tumago.helper.ApiClient;
 import com.techmania.tumago.helper.Token;
 import com.techmania.tumago.helper.UiHelper;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -35,11 +38,24 @@ public class SignUp extends AppCompatActivity {
     private Spinner spinnerCountryCode;
     private EditText phoneNumberInput;
     String countryCode;
+    private boolean emailVerified = false;
 
     // Page containers
     LinearLayout infoRegister, dataForm;
     TextView pageNumberTextView;
     int currentPage = 1;
+
+    // Launcher for EmailVerification activity — receives result when email is verified
+    private final ActivityResultLauncher<Intent> emailVerificationLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                    emailVerified = result.getData().getBooleanExtra("email_verified", false);
+                    if (emailVerified) {
+                        // Email verified — proceed with registration
+                        RegisterUser();
+                    }
+                }
+            });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -160,7 +176,7 @@ public class SignUp extends AppCompatActivity {
         btnLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                RegisterUser();
+                launchEmailVerification();
             }
         });
 
@@ -173,6 +189,25 @@ public class SignUp extends AppCompatActivity {
             }
         });
 
+    }
+
+    private void launchEmailVerification() {
+        String emailText = email.getText().toString().trim();
+        String passwordText = password.getText().toString().trim();
+
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(emailText).matches()) {
+            Toast.makeText(SignUp.this, "Please enter a valid email address", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (passwordText.length() < 6) {
+            Toast.makeText(SignUp.this, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Launch email verification activity — on success it calls RegisterUser() via the launcher callback
+        Intent i = new Intent(SignUp.this, EmailVerification.class);
+        i.putExtra("email", emailText);
+        emailVerificationLauncher.launch(i);
     }
 
     public void RegisterUser(){

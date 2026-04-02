@@ -7,8 +7,10 @@ from rest_framework.throttling import AnonRateThrottle
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 import logging
-from ...models import BlacklistedToken, Delivery, TermsAndConditions
-from ...otp import is_phone_verified, clear_verification
+from ...models import BlacklistedToken, Delivery, TermsAndConditions, TermsContent
+from ...otp import is_phone_verified, clear_verification, is_email_verified, clear_email_verification
+from ..EmailViews.emailService import send_email
+from ..EmailViews.templates import welcome_client_email
 
 logger = logging.getLogger(__name__)
 from ...serializers.userSerializer.authserializers import (
@@ -70,6 +72,20 @@ def signup(request):
         # Clear the OTP verification flag so it can't be reused
         if phone and not is_whatsapp_internal:
             clear_verification(phone)
+
+        # Mark email as verified if email OTP was completed
+        if user.email and is_email_verified(user.email):
+            user.verifiedEmail = True
+            user.save(update_fields=["verifiedEmail"])
+            clear_email_verification(user.email)
+
+        # Send welcome email (non-blocking — don't fail signup if email fails)
+        if user.email:
+            try:
+                subject, text, html = welcome_client_email(user.name)
+                send_email(to=user.email, subject=subject, body_text=text, body_html=html)
+            except Exception as e:
+                logger.warning(f"Welcome email failed for {user.email}: {e}")
 
         return Response({
             'accessToken': access_token,
@@ -172,25 +188,66 @@ def VerifyToken(request):
     return Response(status=status.HTTP_200_OK)
 
 @api_view(["GET"])
+@permission_classes([AllowAny])
+def get_terms_content(request):
+    """Return the latest T&C text for the given app_type (client or driver)."""
+    app_type = request.query_params.get('app_type', 'client')
+    if app_type not in ('client', 'driver'):
+        return Response({'detail': 'app_type must be "client" or "driver".'}, status=status.HTTP_400_BAD_REQUEST)
+
+    latest = TermsContent.objects.filter(app_type=app_type).first()
+    if not latest:
+        return Response({'detail': 'No terms and conditions available yet.'}, status=status.HTTP_404_NOT_FOUND)
+
+    return Response({
+        'content': latest.content,
+        'version': latest.version,
+        'updated_at': latest.updated_at.isoformat(),
+    })
+
+
+@api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def check_terms(request):
+    """Check if user accepted the latest T&C version for their app type."""
     user = request.user
-    terms = TermsAndConditions.objects.filter(user=user, terms_and_conditions=True).first()
+    app_type = request.query_params.get('app_type', 'client')
+    if app_type not in ('client', 'driver'):
+        app_type = 'driver' if user.role == 'driver' else 'client'
 
-    if terms:
-        return Response({"message": "Terms accepted."}, status=status.HTTP_200_OK)
-    return Response({"message": "Terms not accepted."}, status=status.HTTP_403_FORBIDDEN)
+    latest = TermsContent.objects.filter(app_type=app_type).first()
+    if not latest:
+        # No T&C published yet — let user through
+        return Response({"message": "Terms accepted.", "version": 0}, status=status.HTTP_200_OK)
+
+    terms = TermsAndConditions.objects.filter(user=user, terms_and_conditions=True).first()
+    if terms and terms.accepted_version >= latest.version:
+        return Response({"message": "Terms accepted.", "version": latest.version}, status=status.HTTP_200_OK)
+
+    return Response({
+        "message": "Terms not accepted.",
+        "latest_version": latest.version,
+    }, status=status.HTTP_403_FORBIDDEN)
+
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def accept_terms(request):
+    """Accept the latest T&C version for the given app type."""
     user = request.user
+    app_type = request.data.get('app_type', 'client')
+    if app_type not in ('client', 'driver'):
+        app_type = 'driver' if user.role == 'driver' else 'client'
 
-    updated = TermsAndConditions.objects.filter(user=user).update(terms_and_conditions=True)
-    if updated == 0:
-        TermsAndConditions.objects.create(user=user, terms_and_conditions=True)
+    latest = TermsContent.objects.filter(app_type=app_type).first()
+    version = latest.version if latest else 0
 
-    return Response({"message": "Successfully agreed to the terms and conditions"}, status=status.HTTP_202_ACCEPTED)
+    terms, created = TermsAndConditions.objects.get_or_create(user=user)
+    terms.terms_and_conditions = True
+    terms.accepted_version = version
+    terms.save(update_fields=['terms_and_conditions', 'accepted_version'])
+
+    return Response({"message": "Successfully agreed to the terms and conditions", "version": version}, status=status.HTTP_202_ACCEPTED)
 
 # Admin-only endpoints — require authenticated staff user
 @api_view(['GET'])

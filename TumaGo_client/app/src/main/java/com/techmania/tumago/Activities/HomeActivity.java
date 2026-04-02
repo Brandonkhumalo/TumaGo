@@ -164,22 +164,21 @@ public class HomeActivity extends AppCompatActivity {
             return;
         }
 
-        SharedPreferences cache = getSharedPreferences("app_cache", MODE_PRIVATE);
-        if (cache.getBoolean("terms_accepted", false)) {
-            getUserData(accessToken);
-            return;
-        }
-
+        // Always check with the server — the admin may have published new T&C
         String authHeader = "Bearer " + accessToken;
         ApiService apiService = ApiClient.getClient().create(ApiService.class);
-        Call<ResponseBody> call = apiService.checkTerms(authHeader);
+        Call<ResponseBody> call = apiService.checkTerms(authHeader, "client");
         call.enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                 if (response.isSuccessful()) {
-                    cache.edit().putBoolean("terms_accepted", true).apply();
+                    getSharedPreferences("app_cache", MODE_PRIVATE)
+                            .edit().putBoolean("terms_accepted", true).apply();
                     getUserData(accessToken);
                 } else {
+                    // New version or never accepted — clear cache and show T&C
+                    getSharedPreferences("app_cache", MODE_PRIVATE)
+                            .edit().putBoolean("terms_accepted", false).apply();
                     Intent terms = new Intent(HomeActivity.this, TermsAgreement.class);
                     terms.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(terms);

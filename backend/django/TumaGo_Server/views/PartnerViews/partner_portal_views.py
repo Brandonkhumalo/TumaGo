@@ -22,6 +22,8 @@ from ...models import (
     CustomUser,
 )
 from ...partner_auth import PartnerJWTAuthentication
+from ..EmailViews.emailService import send_email
+from ..EmailViews.templates import welcome_partner_email
 
 import logging
 
@@ -111,6 +113,13 @@ def partner_register(request):
         is_active=False,
         setup_fee_paid=False,
     )
+
+    # Send welcome email
+    try:
+        subject, text, html = welcome_partner_email(name)
+        send_email(to=email, subject=subject, body_text=text, body_html=html)
+    except Exception as e:
+        logger.warning(f"Partner welcome email failed for {email}: {e}")
 
     return Response(
         {

@@ -90,6 +90,12 @@ export const adminAPI = {
     fetchAPI(`/admin/users/${userId}/ban/`, { method: 'POST', token, body: JSON.stringify(data) }),
   unbanUser: (token: string, userId: string) =>
     fetchAPI(`/admin/users/${userId}/unban/`, { method: 'POST', token }),
+
+  // Terms & Conditions
+  getTerms: (token: string) =>
+    fetchAPI('/admin/terms/', { token }),
+  updateTerms: (token: string, data: { app_type: string; content: string }) =>
+    fetchAPI('/admin/terms/update/', { method: 'POST', token, body: JSON.stringify(data) }),
 };
 
 // ---------------------------------------------------------------------------

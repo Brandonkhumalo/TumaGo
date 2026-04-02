@@ -12,6 +12,7 @@ import {
   DollarSign,
   Building2,
   Activity,
+  FileText,
   LogOut,
   Menu,
   X,
@@ -50,6 +51,11 @@ const NAV_ITEMS = [
     label: "Partners",
     href: "/tumago/admin/partners",
     icon: Building2,
+  },
+  {
+    label: "Terms & Conditions",
+    href: "/tumago/admin/terms",
+    icon: FileText,
   },
   {
     label: "System Health",

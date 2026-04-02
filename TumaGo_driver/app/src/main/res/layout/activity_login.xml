@@ -89,6 +89,17 @@
             android:textColorHint="@color/hint_text"
             android:inputType="textPassword"
             android:textColor="@color/blackish"
+            android:layout_marginBottom="8dp"/>
+
+        <TextView
+            android:id="@+id/forgotPassword"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Forgot Password?"
+            android:textColor="@color/primary"
+            android:textSize="13sp"
+            android:fontFamily="sans-serif-medium"
+            android:layout_gravity="end"
             android:layout_marginBottom="24dp"/>
 
         <ProgressBar

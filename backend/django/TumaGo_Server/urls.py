@@ -32,6 +32,10 @@ urlpatterns = [
     path('otp/send/', otpViews.send_otp, name='send_otp'),
     path('otp/verify/', otpViews.verify_otp_view, name='verify_otp'),
 
+    # Email OTP (verify email address during registration)
+    path('email/otp/send/', otpViews.send_email_otp, name='send_email_otp'),
+    path('email/otp/verify/', otpViews.verify_email_otp_view, name='verify_email_otp'),
+
     path('signup/', views.signup, name='signup'),
     path('update/user/profile/', views.update_profile, name='update_profile'),
     path('user/Data/', userViews.GetUserData, name='User_Data'),
@@ -48,7 +52,10 @@ urlpatterns = [
     path('delete/account/', authViews.delete_account, name='delete_account'),
     path('delivery/request/', driverViews.RequestDelivery, name='Delivery_Request'),
     path('reset_password/', authViews.change_password, name='change_password'), #Both apps
+    path('forgot-password/', authViews.forgot_password, name='forgot_password'),
+    path('reset-password-confirm/', authViews.reset_password_confirm, name='reset_password_confirm'),
     path('get/deliveries/', driverViews.get_deliveries, name='get_user_or_driver_deliveries'),
+    path('terms/content/', views.get_terms_content, name='get_terms_content'),
     path('verifyTerms/', views.check_terms, name='Check_User_Terms'),
     path('accept/terms/', views.accept_terms, name='Accept_terms'),
 
@@ -101,8 +108,12 @@ urlpatterns = [
     path('admin/partners/<uuid:partner_id>/suspend/', admin_views.admin_suspend_partner, name='admin_suspend_partner'),
     path('admin/partners/<uuid:partner_id>/delete/', admin_views.admin_delete_partner, name='admin_delete_partner'),
 
-    # SES (email bounce/complaint handling via SNS)
-    path('ses/notifications/', snsViews.ses_notifications, name='ses_notifications'),
+    # Admin Terms & Conditions management
+    path('admin/terms/', admin_views.admin_get_terms, name='admin_get_terms'),
+    path('admin/terms/update/', admin_views.admin_update_terms, name='admin_update_terms'),
+
+    # Email webhooks (Resend bounce/complaint handling)
+    path('email/webhooks/', snsViews.resend_webhooks, name='resend_webhooks'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # Serve media files during development

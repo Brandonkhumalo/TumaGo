@@ -1,18 +1,24 @@
 """
-SNS Notification Endpoint — handles AWS SNS subscription confirmation
-and SES bounce/complaint notifications.
+Resend Webhook Endpoint — handles email bounce and complaint notifications.
 
-AWS sends 3 types of POST requests:
-1. SubscriptionConfirmation — first request, must GET the SubscribeURL to confirm
-2. Notification (Bounce)    — a sent email bounced, add to suppression list
-3. Notification (Complaint) — recipient marked email as spam, add to suppression list
+Resend uses Svix under the hood for webhook delivery. Each request includes:
+- svix-id: unique message ID
+- svix-timestamp: unix timestamp
+- svix-signature: HMAC-SHA256 signature(s) prefixed with "v1,"
 
-Endpoint: POST /api/v1/ses/notifications/
+We verify the signature, then add bounced/complained addresses to the
+suppression list so we never email them again.
+
+Endpoint: POST /api/v1/email/webhooks/
 """
+import base64
+import hashlib
+import hmac
 import json
 import logging
+import time
 
-import requests
+from django.conf import settings
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -21,99 +27,123 @@ from TumaGo_Server.models import SESSuppressionList
 
 logger = logging.getLogger(__name__)
 
+# Max age of a webhook before we reject it (5 minutes) — prevents replay attacks
+TIMESTAMP_TOLERANCE_SECONDS = 300
 
-@csrf_exempt  # SNS sends raw POSTs without CSRF tokens
+
+def _verify_webhook(payload: bytes, headers: dict) -> bool:
+    """Verify the Resend/Svix webhook signature.
+
+    The signing secret (from Resend dashboard) starts with "whsec_".
+    We strip the prefix, base64-decode it, then HMAC-SHA256 the signed content:
+        "{svix-id}.{svix-timestamp}.{body}"
+    and compare against the signature(s) in the svix-signature header.
+    """
+    secret = settings.RESEND_WEBHOOK_SECRET
+    if not secret:
+        logger.warning("RESEND_WEBHOOK_SECRET not set — skipping signature verification")
+        return True
+
+    svix_id = headers.get("svix-id", "")
+    svix_timestamp = headers.get("svix-timestamp", "")
+    svix_signature = headers.get("svix-signature", "")
+
+    if not svix_id or not svix_timestamp or not svix_signature:
+        logger.error("Missing Svix headers — rejecting webhook")
+        return False
+
+    # Replay protection — reject timestamps older than 5 minutes
+    try:
+        ts = int(svix_timestamp)
+        if abs(time.time() - ts) > TIMESTAMP_TOLERANCE_SECONDS:
+            logger.error("Webhook timestamp too old — possible replay attack")
+            return False
+    except ValueError:
+        logger.error("Invalid svix-timestamp header")
+        return False
+
+    # Decode the signing secret (strip "whsec_" prefix, base64-decode)
+    secret_bytes = base64.b64decode(secret.removeprefix("whsec_"))
+
+    # Build the signed content: "{svix-id}.{svix-timestamp}.{raw_body}"
+    to_sign = f"{svix_id}.{svix_timestamp}.{payload.decode()}".encode()
+    expected = base64.b64encode(
+        hmac.new(secret_bytes, to_sign, hashlib.sha256).digest()
+    ).decode()
+
+    # The header may contain multiple signatures separated by spaces, each prefixed with "v1,"
+    signatures = [
+        s.removeprefix("v1,")
+        for s in svix_signature.split(" ")
+        if s.startswith("v1,")
+    ]
+
+    if not any(hmac.compare_digest(expected, sig) for sig in signatures):
+        logger.error("Invalid webhook signature — rejecting")
+        return False
+
+    return True
+
+
+@csrf_exempt
 @require_POST
-def ses_notifications(request):
-    """Single endpoint for both SNS subscription confirmation and SES notifications.
-    SNS sends JSON with Content-Type: text/plain, so we parse the body directly."""
+def resend_webhooks(request):
+    """Handle Resend webhook events for bounces and complaints."""
+    # Verify signature before processing
+    headers = {
+        "svix-id": request.headers.get("svix-id", ""),
+        "svix-timestamp": request.headers.get("svix-timestamp", ""),
+        "svix-signature": request.headers.get("svix-signature", ""),
+    }
+    if not _verify_webhook(request.body, headers):
+        return JsonResponse({"error": "Invalid signature"}, status=401)
+
+    # Parse the webhook payload
     try:
         payload = json.loads(request.body)
     except (json.JSONDecodeError, ValueError):
         return JsonResponse({"error": "Invalid JSON"}, status=400)
 
-    message_type = request.headers.get("x-amz-sns-message-type", "")
+    event_type = payload.get("type", "")
 
-    # --- Step 1: Subscription Confirmation ---
-    # AWS sends this once when you create the SNS subscription.
-    # We must GET the SubscribeURL to confirm. Until confirmed, no notifications arrive.
-    if message_type == "SubscriptionConfirmation":
-        subscribe_url = payload.get("SubscribeURL")
-        if not subscribe_url:
-            logger.error("SubscriptionConfirmation missing SubscribeURL")
-            return JsonResponse({"error": "Missing SubscribeURL"}, status=400)
+    if event_type == "email.bounced":
+        _handle_bounce(payload.get("data", {}))
+    elif event_type == "email.complained":
+        _handle_complaint(payload.get("data", {}))
+    else:
+        logger.debug(f"Resend webhook event ignored: {event_type}")
 
-        # Confirm the subscription by visiting the URL AWS provided
-        try:
-            resp = requests.get(subscribe_url, timeout=10)
-            resp.raise_for_status()
-            logger.info(f"SNS subscription confirmed: {payload.get('TopicArn')}")
-            return JsonResponse({"status": "subscription_confirmed"})
-        except requests.RequestException as e:
-            logger.error(f"Failed to confirm SNS subscription: {e}")
-            return JsonResponse({"error": "Confirmation failed"}, status=500)
-
-    # --- Step 2: Handle Bounce/Complaint Notifications ---
-    if message_type == "Notification":
-        try:
-            # SNS wraps the SES notification inside a "Message" field as a JSON string
-            message = json.loads(payload.get("Message", "{}"))
-        except (json.JSONDecodeError, ValueError):
-            logger.error("Failed to parse SNS Message field")
-            return JsonResponse({"error": "Invalid Message JSON"}, status=400)
-
-        notification_type = message.get("notificationType")
-
-        if notification_type == "Bounce":
-            _handle_bounce(message)
-        elif notification_type == "Complaint":
-            _handle_complaint(message)
-        else:
-            logger.warning(f"Unknown SES notification type: {notification_type}")
-
-        return JsonResponse({"status": "processed"})
-
-    logger.warning(f"Unknown SNS message type: {message_type}")
-    return JsonResponse({"status": "ignored"})
+    return JsonResponse({"status": "processed"})
 
 
-def _handle_bounce(message: dict):
-    """Process a bounce notification. Hard bounces = permanent, must suppress.
-    Transient bounces = temporary (mailbox full), log but don't suppress immediately."""
-    bounce = message.get("bounce", {})
-    bounce_type = bounce.get("bounceType", "")  # "Permanent" or "Transient"
+def _handle_bounce(data: dict):
+    """Process a bounce event. Add the recipient to the suppression list."""
+    to_list = data.get("to", [])
+    email_id = data.get("email_id", "")
 
-    for recipient in bounce.get("bouncedRecipients", []):
-        email = recipient.get("emailAddress", "").lower()
-        diagnostic = recipient.get("diagnosticCode", "")
-
+    for email in to_list:
+        email = email.strip().lower()
         if not email:
             continue
 
-        # Only suppress on permanent (hard) bounces — these will never work.
-        # Transient bounces (mailbox full) can resolve themselves.
-        if bounce_type == "Permanent":
-            SESSuppressionList.objects.update_or_create(
-                email=email,
-                defaults={
-                    "reason": SESSuppressionList.BOUNCE,
-                    "bounce_type": bounce_type,
-                    "diagnostic": diagnostic,
-                },
-            )
-            logger.info(f"Suppressed (hard bounce): {email}")
-        else:
-            logger.info(f"Transient bounce (not suppressed): {email} — {diagnostic}")
+        SESSuppressionList.objects.update_or_create(
+            email=email,
+            defaults={
+                "reason": SESSuppressionList.BOUNCE,
+                "bounce_type": "Permanent",
+                "diagnostic": f"Resend bounce — email_id: {email_id}",
+            },
+        )
+        logger.info(f"Suppressed (bounce): {email}")
 
 
-def _handle_complaint(message: dict):
-    """Process a complaint notification. Someone marked the email as spam.
-    Always suppress — SES suspends accounts above 0.1% complaint rate."""
-    complaint = message.get("complaint", {})
+def _handle_complaint(data: dict):
+    """Process a complaint event. Recipient marked the email as spam."""
+    to_list = data.get("to", [])
+    email_id = data.get("email_id", "")
 
-    for recipient in complaint.get("complainedRecipients", []):
-        email = recipient.get("emailAddress", "").lower()
-
+    for email in to_list:
+        email = email.strip().lower()
         if not email:
             continue
 
@@ -122,7 +152,7 @@ def _handle_complaint(message: dict):
             defaults={
                 "reason": SESSuppressionList.COMPLAINT,
                 "bounce_type": "",
-                "diagnostic": complaint.get("complaintFeedbackType", ""),
+                "diagnostic": f"Resend complaint — email_id: {email_id}",
             },
         )
         logger.info(f"Suppressed (complaint): {email}")

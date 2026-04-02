@@ -43,21 +43,43 @@
             android:layout_marginTop="4dp"/>
     </LinearLayout>
 
-    <!-- Scrollable content -->
-    <ScrollView
+    <!-- Loading spinner (shown while fetching T&C) -->
+    <ProgressBar
+        android:id="@+id/loading_spinner"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="center"
+        android:layout_marginTop="48dp"
+        android:indeterminateTint="@color/light_blue"
+        android:visibility="gone"/>
+
+    <!-- Content container (hidden until loaded) -->
+    <LinearLayout
+        android:id="@+id/content_container"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:padding="24dp">
+        android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/terms_text"
+        <!-- Scrollable T&C text -->
+        <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="14sp"
-            android:textColor="@color/blackish"
-            android:lineSpacingMultiplier="1.5"/>
-    </ScrollView>
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:fadingEdge="vertical"
+            android:requiresFadingEdge="vertical"
+            android:fadingEdgeLength="24dp">
+
+            <TextView
+                android:id="@+id/terms_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="24dp"
+                android:textSize="14sp"
+                android:textColor="@color/blackish"
+                android:lineSpacingMultiplier="1.5"/>
+        </ScrollView>
+    </LinearLayout>
 
     <!-- Accept button -->
     <LinearLayout
