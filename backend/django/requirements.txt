@@ -47,5 +47,8 @@ paynow==1.0.8
 # Email sending (Resend)
 resend>=2.0,<3.0
 
+# Structured JSON logging (production)
+python-json-logger>=2.0,<3.0
+
 # Timezone
 pytz==2025.2

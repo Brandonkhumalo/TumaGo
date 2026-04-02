@@ -22,7 +22,7 @@ You don't need to touch Docker, nginx configs, or service restarts — just push
 
 ## What You Need To Do (One-Time)
 
-There are only **5 manual steps**. Do them in order.
+There are only **6 manual steps**. Do them in order.
 
 ### 1. DNS — Point domain to your Elastic IP
 
@@ -103,19 +103,56 @@ cd ~/TumaGo/backend
 docker compose -f docker-compose.prod.yml up -d
 ```
 
-**Do NOT change** `SES_FROM_EMAIL` — email sending stays on `noreply@tishanyq.co.zw`.
+Add the Resend email variables:
+
+```
+RESENDAPIKEY=re_xxxxxxxxxxxx
+RESEND_FROM_EMAIL=TumaGo <noreply@tumago.co.zw>
+RESEND_WEBHOOK_SECRET=whsec_xxxxxxxxxxxx
+FRONTEND_URL=https://tumago.co.zw
+```
+
+Remove the old SES variables (no longer used):
+
+```
+# DELETE these lines:
+AWS_ACCESS_KEY_ID=...
+AWS_SECRET_ACCESS_KEY=...
+AWS_SES_REGION=...
+SES_FROM_EMAIL=...
+```
+
+---
+
+### 6. Resend Email Setup (One-Time)
+
+Go to [resend.com](https://resend.com) dashboard:
+
+**a) Verify domain:**
+- Add `tumago.co.zw` → copy the DNS records (MX + TXT) → add them at your domain registrar
+- Wait for verification (usually a few minutes)
+
+**b) Create API key:**
+- Generate an API key → this is your `RESENDAPIKEY` value for `.env`
+
+**c) Set up webhooks:**
+- Add webhook endpoint: `https://tumago.co.zw/api/v1/email/webhooks/`
+- Select events: `email.bounced` and `email.complained`
+- Copy the signing secret → this is your `RESEND_WEBHOOK_SECRET` value for `.env`
 
 ---
 
 ## Verify Everything Works
 
-Once all 5 steps are done:
+Once all 6 steps are done:
 
 | Test | How |
 |------|-----|
 | Frontend loads | Visit `https://tumago.co.zw` in a browser |
 | API responds | Visit `https://tumago.co.zw/api/v1/health` |
 | SSL valid | Browser shows padlock icon, no warnings |
+| Password reset page | Visit `https://tumago.co.zw/reset-password` — should show the form |
+| Email sending | Test forgot password from app login → check email arrives |
 | Android apps | Rebuild with `prod` flavor, test login + delivery request |
 
 ---

@@ -9,7 +9,7 @@ from firebase_admin import messaging
 from TumaGo.firebase_init import initialize_firebase
 from django.shortcuts import get_object_or_404
 from ...busy_drivers import mark_driver_available
-from ..EmailViews.emailService import send_email
+from ..EmailViews.emailService import send_email_async
 from ..EmailViews.templates import delivery_cancelled_email
 import logging
 logger = logging.getLogger(__name__)
@@ -88,17 +88,14 @@ def cancel_delivery(request):
 
         update_driver_delivery_cancelled(driver, client_name, client_surname)
 
-        # Send cancellation email to client
+        # Send cancellation email via background task
         if client.email:
-            try:
-                subject, text, html = delivery_cancelled_email(
-                    client_name=client_name,
-                    delivery_id=str(delivery.delivery_id),
-                    driver_name=f"{driver.name} {driver.surname}",
-                )
-                send_email(to=client.email, subject=subject, body_text=text, body_html=html)
-            except Exception as e:
-                logger.warning(f"Delivery cancelled email failed for {client.email}: {e}")
+            subject, text, html = delivery_cancelled_email(
+                client_name=client_name,
+                delivery_id=str(delivery.delivery_id),
+                driver_name=f"{driver.name} {driver.surname}",
+            )
+            send_email_async.send(client.email, subject, text, html)
 
         # B2B: If this delivery is linked to a partner, update status + fire webhook
         partner_req = PartnerDeliveryRequest.objects.filter(delivery=delivery).first()

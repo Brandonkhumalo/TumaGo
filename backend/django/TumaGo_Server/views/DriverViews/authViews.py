@@ -8,7 +8,7 @@ from ...serializers.driverSerializer.authSerializers import RegisterSerializer, 
 from ...token import JWTAuthentication
 from ...otp import is_phone_verified, clear_verification, is_email_verified, clear_email_verification
 from ...busy_drivers import mark_driver_available
-from ..EmailViews.emailService import send_email
+from ..EmailViews.emailService import send_email, send_email_async
 from ..EmailViews.templates import welcome_driver_email, password_reset_email
 import logging
 import secrets
@@ -72,13 +72,10 @@ def driver_register(request):
             user.save(update_fields=["verifiedEmail"])
             clear_email_verification(user.email)
 
-        # Send welcome email
+        # Send welcome email via background task (retries automatically on failure)
         if user.email:
-            try:
-                subject, text, html = welcome_driver_email(user.name)
-                send_email(to=user.email, subject=subject, body_text=text, body_html=html)
-            except Exception as e:
-                logger.warning(f"Welcome email failed for {user.email}: {e}")
+            subject, text, html = welcome_driver_email(user.name)
+            send_email_async.send(user.email, subject, text, html)
 
         return Response({
             'accessToken': token,

@@ -205,7 +205,10 @@ def _get_distance_meters(origin_lat, origin_lng, dest_lat, dest_lng):
             return meters
     except Exception as e:
         logger.error("Google Maps distance error: %s", e)
-    return 0
+
+    # Return None instead of 0 so callers can detect the failure
+    # and decide whether to proceed or error out
+    return None
 
 
 def send_request_to_driver(driver, request_payload, trip_id):

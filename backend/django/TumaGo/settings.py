@@ -29,7 +29,7 @@ RESEND_API_KEY = config("RESENDAPIKEY", default="")
 RESEND_FROM_EMAIL = config("RESEND_FROM_EMAIL", default="TumaGo <noreply@tumago.co.zw>")
 RESEND_WEBHOOK_SECRET = config("RESEND_WEBHOOK_SECRET", default="")
 FRONTEND_URL = config("FRONTEND_URL", default="https://tumago.co.zw")
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*').split(',')
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,tumago.co.zw,www.tumago.co.zw').split(',')
 
 # Application definition
 INSTALLED_APPS = [
@@ -217,11 +217,16 @@ LOGGING = {
             'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
             'style': '{',
         },
+        'json': {
+            'format': '{levelname} {asctime} {name} {module} {message}',
+            'style': '{',
+            'class': 'pythonjsonlogger.jsonlogger.JsonFormatter',
+        },
     },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
+            'formatter': 'json' if not DEBUG else 'verbose',
         },
     },
     'root': {

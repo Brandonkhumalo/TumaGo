@@ -96,7 +96,7 @@
             android:exported="false" />
         <activity
             android:name=".Activities.HomeActivity"
-            android:exported="true" />
+            android:exported="false" />
     </application>
 
 </manifest>

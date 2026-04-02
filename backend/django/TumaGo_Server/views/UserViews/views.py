@@ -9,7 +9,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 import logging
 from ...models import BlacklistedToken, Delivery, TermsAndConditions, TermsContent
 from ...otp import is_phone_verified, clear_verification, is_email_verified, clear_email_verification
-from ..EmailViews.emailService import send_email
+from ..EmailViews.emailService import send_email_async
 from ..EmailViews.templates import welcome_client_email
 
 logger = logging.getLogger(__name__)
@@ -79,13 +79,10 @@ def signup(request):
             user.save(update_fields=["verifiedEmail"])
             clear_email_verification(user.email)
 
-        # Send welcome email (non-blocking — don't fail signup if email fails)
+        # Send welcome email via background task (retries automatically on failure)
         if user.email:
-            try:
-                subject, text, html = welcome_client_email(user.name)
-                send_email(to=user.email, subject=subject, body_text=text, body_html=html)
-            except Exception as e:
-                logger.warning(f"Welcome email failed for {user.email}: {e}")
+            subject, text, html = welcome_client_email(user.name)
+            send_email_async.send(user.email, subject, text, html)
 
         return Response({
             'accessToken': access_token,

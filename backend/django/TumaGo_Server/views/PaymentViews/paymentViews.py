@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from paynow import Paynow
 from django.conf import settings
+from django.db import transaction
 from django.utils import timezone
 from decimal import Decimal
 import hashlib
@@ -218,24 +219,34 @@ def paynow_callback(request):
         return Response({"error": "Missing reference"}, status=status.HTTP_400_BAD_REQUEST)
 
     # Reference format: TumaGo-<uuid>
-    try:
-        payment_uuid = reference.replace("TumaGo-", "")
-        payment_record = Payment.objects.get(id=payment_uuid)
-    except (Payment.DoesNotExist, ValueError):
-        logger.warning(f"Paynow callback: unknown reference {reference}")
-        return Response({"error": "Unknown reference"}, status=status.HTTP_404_NOT_FOUND)
+    payment_uuid = reference.replace("TumaGo-", "")
 
     paynow_status_lower = paynow_status.lower()
 
-    if paynow_status_lower in ('paid', 'delivered'):
-        payment_record.status = Payment.PAID
-        payment_record.paid_at = timezone.now()
-        logger.info(f"Payment {payment_record.id} confirmed via callback")
-    elif paynow_status_lower in ('failed', 'cancelled'):
-        payment_record.status = Payment.FAILED
-        logger.info(f"Payment {payment_record.id} failed/cancelled via callback")
+    # Atomic lock prevents double-processing if Paynow sends duplicate callbacks
+    try:
+        with transaction.atomic():
+            payment_record = Payment.objects.select_for_update().get(id=payment_uuid)
 
-    payment_record.save()
+            # Idempotency: if already resolved, skip
+            if payment_record.status in (Payment.PAID, Payment.FAILED, Payment.CANCELLED):
+                logger.info(f"Payment {payment_record.id} already {payment_record.status} — skipping callback")
+                return Response({"status": "ok"})
+
+            if paynow_status_lower in ('paid', 'delivered'):
+                payment_record.status = Payment.PAID
+                payment_record.paid_at = timezone.now()
+                payment_record.save()
+                logger.info(f"Payment {payment_record.id} confirmed via callback")
+            elif paynow_status_lower in ('failed', 'cancelled'):
+                payment_record.status = Payment.FAILED
+                payment_record.save()
+                logger.info(f"Payment {payment_record.id} failed/cancelled via callback")
+
+    except Payment.DoesNotExist:
+        logger.warning(f"Paynow callback: unknown reference {reference}")
+        return Response({"error": "Unknown reference"}, status=status.HTTP_404_NOT_FOUND)
+
     return Response({"status": "ok"})
 
 

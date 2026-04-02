@@ -16,6 +16,7 @@ Usage:
 """
 import logging
 
+import dramatiq
 import resend
 from django.conf import settings
 
@@ -105,3 +106,13 @@ def send_email_bulk(
             results["failed"].append(email)
 
     return results
+
+
+@dramatiq.actor(max_retries=3, min_backoff=5000, max_backoff=60000)
+def send_email_async(to: str, subject: str, body_text: str, body_html: str = "", from_email: str = ""):
+    """Dramatiq task — sends email with automatic retries on failure.
+
+    Use this for non-critical emails (welcome, delivery receipts) where
+    a small delay is acceptable but delivery must be guaranteed.
+    """
+    send_email(to=to, subject=subject, body_text=body_text, body_html=body_html, from_email=from_email)

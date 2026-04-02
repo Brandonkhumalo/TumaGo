@@ -930,9 +930,10 @@ def admin_user_detail(request, user_id):
         'ban_reason': user.ban_reason,
     }
 
-    # Recent deliveries as client (last 10)
+    # Recent deliveries as client (last 10) — single query with select_related
     recent_deliveries = list(
         Delivery.objects.filter(client=user)
+        .select_related('driver')
         .order_by('-date', '-start_time')[:10]
         .values(
             'delivery_id', 'fare', 'payment_method', 'successful',
@@ -949,6 +950,7 @@ def admin_user_detail(request, user_id):
         entry['driver_name'] = f"{entry.pop('driver__name', '') or ''} {entry.pop('driver__surname', '') or ''}".strip()
 
     user_data['recent_deliveries'] = recent_deliveries
+    # Use len() on the already-fetched list if <=10 deliveries, otherwise count
     user_data['delivery_count'] = Delivery.objects.filter(client=user).count()
 
     # Recent payments (last 10)
@@ -965,51 +967,42 @@ def admin_user_detail(request, user_id):
 
     user_data['recent_payments'] = recent_payments
 
-    # Driver-specific data
+    # Driver-specific data — batch queries to avoid N+1
     if user.role == 'driver':
-        # Latest DriverFinances
         latest_finances = (
             DriverFinances.objects.filter(driver=user)
             .order_by('-today')
+            .values('earnings', 'charges', 'profit', 'total_trips',
+                    'today', 'week_start', 'week_end', 'month_start', 'month_end')
             .first()
         )
         if latest_finances:
             user_data['driver_finances'] = {
-                'earnings': float(latest_finances.earnings),
-                'charges': float(latest_finances.charges),
-                'profit': float(latest_finances.profit),
-                'total_trips': latest_finances.total_trips,
-                'today': str(latest_finances.today) if latest_finances.today else None,
-                'week_start': str(latest_finances.week_start) if latest_finances.week_start else None,
-                'week_end': str(latest_finances.week_end) if latest_finances.week_end else None,
-                'month_start': str(latest_finances.month_start) if latest_finances.month_start else None,
-                'month_end': str(latest_finances.month_end) if latest_finances.month_end else None,
+                k: float(v) if isinstance(v, Decimal) else (str(v) if v else None)
+                for k, v in latest_finances.items()
             }
         else:
             user_data['driver_finances'] = None
 
-        # DriverVehicle
-        vehicle = DriverVehicle.objects.filter(driver=user).first()
-        if vehicle:
-            user_data['driver_vehicle'] = {
-                'delivery_vehicle': vehicle.delivery_vehicle,
-                'car_name': vehicle.car_name,
-                'number_plate': vehicle.number_plate,
-                'color': vehicle.color,
-                'vehicle_model': vehicle.vehicle_model,
+        vehicle = (
+            DriverVehicle.objects.filter(driver=user)
+            .values('delivery_vehicle', 'car_name', 'number_plate', 'color', 'vehicle_model')
+            .first()
+        )
+        user_data['driver_vehicle'] = vehicle or None
+
+        balance = (
+            DriverBalance.objects.filter(driver=user)
+            .values('owed_amount', 'total_paid', 'last_paid_at')
+            .first()
+        )
+        if balance:
+            user_data['driver_balance'] = {
+                'owed_amount': float(balance['owed_amount']),
+                'total_paid': float(balance['total_paid']),
+                'last_paid_at': str(balance['last_paid_at']) if balance['last_paid_at'] else None,
             }
         else:
-            user_data['driver_vehicle'] = None
-
-        # DriverBalance
-        try:
-            balance = DriverBalance.objects.get(driver=user)
-            user_data['driver_balance'] = {
-                'owed_amount': float(balance.owed_amount),
-                'total_paid': float(balance.total_paid),
-                'last_paid_at': str(balance.last_paid_at) if balance.last_paid_at else None,
-            }
-        except DriverBalance.DoesNotExist:
             user_data['driver_balance'] = None
 
     return Response(user_data)

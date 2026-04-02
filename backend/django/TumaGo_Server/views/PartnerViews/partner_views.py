@@ -11,6 +11,8 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 from django.conf import settings
+from django.db import transaction
+from django.db.models import F
 
 from ...partner_auth import PartnerAPIKeyAuthentication
 from ...models import (
@@ -104,74 +106,79 @@ def partner_request_delivery(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    # Check partner has sufficient balance
     fare_decimal = Decimal(str(fare))
-    if partner.balance < fare_decimal:
-        return Response(
-            {
-                "detail": f"Insufficient balance. Current balance: ${float(partner.balance):.2f}, delivery fare: ${fare:.2f}"
+
+    # Atomic lock prevents race condition on concurrent balance deductions
+    with transaction.atomic():
+        partner = PartnerCompany.objects.select_for_update().get(id=partner.id)
+
+        if partner.balance < fare_decimal:
+            return Response(
+                {
+                    "detail": f"Insufficient balance. Current balance: ${float(partner.balance):.2f}, delivery fare: ${fare:.2f}"
+                },
+                status=status.HTTP_402_PAYMENT_REQUIRED,
+            )
+
+        # We need a system user to act as the "requester" for the TripRequest.
+        # Use or create a dedicated partner system account.
+        system_user, _ = CustomUser.objects.get_or_create(
+            email=f"partner+{partner.id}@system.tumago.internal",
+            defaults={
+                "name": partner.name,
+                "surname": "Partner",
+                "phone_number": "0000000000",
+                "streetAdress": "N/A",
+                "city": "N/A",
+                "province": "N/A",
+                "postalCode": "0000",
+                "role": CustomUser.USER,
             },
-            status=status.HTTP_402_PAYMENT_REQUIRED,
         )
 
-    # We need a system user to act as the "requester" for the TripRequest.
-    # Use or create a dedicated partner system account.
-    system_user, _ = CustomUser.objects.get_or_create(
-        email=f"partner+{partner.id}@system.tumago.internal",
-        defaults={
-            "name": partner.name,
-            "surname": "Partner",
-            "phone_number": "0000000000",
-            "streetAdress": "N/A",
-            "city": "N/A",
-            "province": "N/A",
-            "postalCode": "0000",
-            "role": CustomUser.USER,
-        },
-    )
+        # Build delivery_details in the same shape the Android app sends
+        delivery_details = {
+            "origin_lat": float(data["origin_lat"]),
+            "origin_lng": float(data["origin_lng"]),
+            "destination_lat": float(data["destination_lat"]),
+            "destination_lng": float(data["destination_lng"]),
+            "vehicle": data["vehicle"],
+            "fare": float(data.get("fare", 0)),
+            "payment_method": data.get("payment_method", "account"),
+        }
 
-    # Build delivery_details in the same shape the Android app sends
-    delivery_details = {
-        "origin_lat": float(data["origin_lat"]),
-        "origin_lng": float(data["origin_lng"]),
-        "destination_lat": float(data["destination_lat"]),
-        "destination_lng": float(data["destination_lng"]),
-        "vehicle": data["vehicle"],
-        "fare": float(data.get("fare", 0)),
-        "payment_method": data.get("payment_method", "account"),
-    }
+        # Create TripRequest (same model the Android app uses)
+        trip = TripRequest.objects.create(
+            requester=system_user,
+            delivery_details=delivery_details,
+        )
 
-    # Create TripRequest (same model the Android app uses)
-    trip = TripRequest.objects.create(
-        requester=system_user,
-        delivery_details=delivery_details,
-    )
+        # Create PartnerDeliveryRequest to track this partner delivery
+        pdr = PartnerDeliveryRequest.objects.create(
+            partner=partner,
+            partner_reference=data.get("partner_reference", ""),
+            trip_request=trip,
+            status="matching",
+            pickup_contact=data.get("pickup_contact", ""),
+            dropoff_contact=data.get("dropoff_contact", ""),
+            package_description=data.get("package_description", ""),
+        )
 
-    # Create PartnerDeliveryRequest to track this partner delivery
-    pdr = PartnerDeliveryRequest.objects.create(
-        partner=partner,
-        partner_reference=data.get("partner_reference", ""),
-        trip_request=trip,
-        status="matching",
-        pickup_contact=data.get("pickup_contact", ""),
-        dropoff_contact=data.get("dropoff_contact", ""),
-        package_description=data.get("package_description", ""),
-    )
+        # Atomic balance deduction using F() to prevent race condition
+        partner.balance = F('balance') - fare_decimal
+        partner.save(update_fields=['balance'])
+        partner.refresh_from_db(fields=['balance'])
 
-    # Deduct fare from partner balance
-    partner.balance -= fare_decimal
-    partner.save(update_fields=['balance'])
-
-    # Record the delivery charge transaction
-    PartnerTransaction.objects.create(
-        partner=partner,
-        transaction_type='delivery_charge',
-        amount=-fare_decimal,
-        balance_after=partner.balance,
-        description=f"Delivery charge for {pdr.partner_reference or 'delivery'}",
-        delivery_request=pdr,
-        fare=fare_decimal,
-    )
+        # Record the delivery charge transaction
+        PartnerTransaction.objects.create(
+            partner=partner,
+            transaction_type='delivery_charge',
+            amount=-fare_decimal,
+            balance_after=partner.balance,
+            description=f"Delivery charge for {pdr.partner_reference or 'delivery'}",
+            delivery_request=pdr,
+            fare=fare_decimal,
+        )
 
     # Fire existing matching task — same flow as the Android app
     try:
